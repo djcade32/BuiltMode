@@ -1,0 +1,21 @@
+name: Run Unit Tests on Pull Request to Develop Branch
+
+# Trigger the workflow when a pull request is detected for 'develop'
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened # Trigger when a pull request is opened
+      - synchronize # Trigger when a pull request is updated
+
+# Define jobs to run in this workflow
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code from the repository
+      - name: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v6
