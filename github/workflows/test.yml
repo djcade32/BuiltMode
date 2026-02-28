@@ -17,4 +17,5 @@ jobs:
     steps:
       # Step 1: Check out the code from the repository
       - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v6
