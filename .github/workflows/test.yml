@@ -20,14 +20,15 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Change directory to functions project
-        run: |
-          ls
-          cd functions
+        run: cd functions
 
       - name: Install dependencies
-        run: |
-          pwd
-          npm install
+        run: npm install
+
+      - name: Build functions
+        run: npm run build
 
       - name: Test functions logic
-        run: npm run test
+        run: |
+          ls 
+          npm run test
