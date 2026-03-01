@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the code from the repository
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -32,17 +31,6 @@ jobs:
 
       - name: Test functions logic
         working-directory: functions
+        env:
+          EXPO_IS_GITHUB_PIPELINE: true
         run: npm run test
-
-      # - name: Install dependencies
-      #   run: npm install
-
-      # - name: Build functions
-      #   run: |
-      #     ls
-      #     npm run build
-
-      # - name: Test functions logic
-      #   run: |
-      #     ls
-      #     npm run test
