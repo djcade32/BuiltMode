@@ -18,3 +18,11 @@ jobs:
       # Step 1: Check out the code from the repository
       - name: Checkout code
         uses: actions/checkout@v6
+
+      # Step 3: Install project dependencies
+      - name: Change directory to functions project
+        run: cd functions
+
+      # Step 3: Install project dependencies
+      - name: Test functions logic
+        run: npm run test
