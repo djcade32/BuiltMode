@@ -26,7 +26,9 @@ jobs:
         run: npm install
 
       - name: Build functions
-        run: npm run build
+        run: |
+          ls 
+          npm run build
 
       - name: Test functions logic
         run: |
