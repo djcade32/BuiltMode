@@ -19,10 +19,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      # Step 3: Install project dependencies
       - name: Change directory to functions project
         run: cd functions
 
-      # Step 3: Install project dependencies
+      - name: Install dependencies
+        run: |
+          pwd
+          npm install
+
       - name: Test functions logic
         run: npm run test
