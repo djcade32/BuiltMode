@@ -10,3 +10,4 @@ node_modules/
 *.local
 
 firestore-debug.log
+firebase-debug.log
