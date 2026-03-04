@@ -8,7 +8,7 @@ dayjs.extend(timezone);
 /** 
   Returns the deterministic BuiltMode week identifier based on the
   user’s home timezone and the Monday 4:00 AM weekly reset rule.
-  @param {string} date Date as isoString in UTC
+  @param {Date | string} date 
   @param {string} homeTimezone IANA valid timezone
 */
 export function handleGetWeekId(date: Date | string, homeTimezone: string) {
@@ -22,7 +22,7 @@ export function handleGetWeekId(date: Date | string, homeTimezone: string) {
 
 /** 
   Returns the BuiltMode week identifier for a user's first official week
-  @param {string} date Date as isoString in UTC
+  @param {Date | string} date 
   @param {string} homeTimezone IANA valid timezone
 */
 export function handleGetNextOfficialStartWeekId(date: Date | string, homeTimezone: string) {
