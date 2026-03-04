@@ -27,6 +27,6 @@ export function handleGetWeekId(date: Date | string, homeTimezone: string) {
 export function handleGetNextOfficialStartWeekId(date: Date | string, homeTimezone: string) {
   const currentMondayDateStr = handleGetWeekId(date, homeTimezone);
   const currentMondayDate = dayjs(currentMondayDateStr).set("hour", 4).set("minute", 0);
-  const nextWeekId = dayjs(currentMondayDate).add(7, "days").tz(homeTimezone);
+  const nextWeekId = dayjs(currentMondayDate).tz(homeTimezone).add(7, "days");
   return nextWeekId.format("YYYY-MM-DD");
 }
