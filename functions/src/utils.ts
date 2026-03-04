@@ -12,7 +12,6 @@ dayjs.extend(timezone);
   @param {string} homeTimezone IANA valid timezone
 */
 export function handleGetWeekId(date: Date | string, homeTimezone: string) {
-  dayjs.tz.setDefault(homeTimezone);
   const startOfWeek = dayjs(date).startOf("week").add(1, "day").tz(homeTimezone);
   const boundary = startOfWeek.set("day", 1).set("hour", 4); // Change to current weeks Monday at 4:00 am
   const isBeforeReset = dayjs(date).isBefore(boundary);
