@@ -40,4 +40,5 @@ yarn-error.*
 app-example
 
 firestore-debug.log
+firebase-debug.log
 

@@ -1,3 +1,6 @@
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone.js";
+import utc from "dayjs/plugin/utc";
 import { Image } from "expo-image";
 import { Button, Platform, StyleSheet } from "react-native";
 
@@ -9,23 +12,29 @@ import { functions } from "@/lib/firebase";
 import { Link } from "expo-router";
 import { httpsCallable } from "firebase/functions";
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 export default function HomeScreen() {
   const callFunction = async () => {
     console.log("calling function");
     try {
       // Get the callable function reference
-      const callableFunction = httpsCallable(functions, "testFunc");
+      const callableFunction = httpsCallable(functions, "getNextOfficialStartWeekId");
+      const currentDate = new Date();
+      // currentDate.setFullYear(2026, 2, 9);
+      // currentDate.setHours(3, 59, 0, 0);
+
+      console.log("currentDate: ", currentDate.toLocaleString());
 
       // Call the function and pass data
-      const response = await callableFunction({ message: "Hello from React!" });
-
-      // setResult(response.data); // The result is in the .data property
-      // setError(null);
-      console.log("data: ", response);
+      const response = await callableFunction({
+        date: currentDate,
+        homeTimezone: "America/New_York",
+      });
+      console.log("weekId: ", response.data);
     } catch (err) {
       console.error("Error calling function:", err);
-      // setError(err.message);
-      // setResult(null);
     }
   };
   return (

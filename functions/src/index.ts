@@ -8,8 +8,8 @@
  */
 
 import { setGlobalOptions } from "firebase-functions/v2";
-import { onCall } from "firebase-functions/v2/https";
-import { handleTestFunc } from "./testFunc.js";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils.js";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -26,6 +26,18 @@ import { handleTestFunc } from "./testFunc.js";
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
 
-export const testFunc = onCall((request) => {
-  return handleTestFunc(request.data);
+export const getWeekId = onCall((request) => {
+  const { date, homeTimezone } = request.data;
+  if (!date || typeof homeTimezone !== "string") {
+    throw new HttpsError("invalid-argument", "Expected { date, homeTimezone }.");
+  }
+  return handleGetWeekId(date, homeTimezone);
+});
+
+export const getNextOfficialStartWeekId = onCall((request) => {
+  const { date, homeTimezone } = request.data;
+  if (!date || typeof homeTimezone !== "string") {
+    throw new HttpsError("invalid-argument", "Expected { date, homeTimezone }.");
+  }
+  return handleGetNextOfficialStartWeekId(date, homeTimezone);
 });
