@@ -14,9 +14,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app); // Optional: specify region here if not us-central1
 // For local development with the emulator:
-// if (process.env.EXPO_IS_GITHUB_PIPELINE) {
-connectFunctionsEmulator(functions, "localhost", 5001); //
-// }
+if (process.env.EXPO_IS_GITHUB_PIPELINE) {
+  connectFunctionsEmulator(functions, "localhost", 5001); //
+}
 
 // const analytics = getAnalytics(app);
 
