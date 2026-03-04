@@ -20,11 +20,18 @@ export default function HomeScreen() {
     console.log("calling function");
     try {
       // Get the callable function reference
-      const callableFunction = httpsCallable(functions, "getWeekId");
+      const callableFunction = httpsCallable(functions, "getNextOfficialStartWeekId");
       const currentDate = new Date();
+      currentDate.setFullYear(2026, 2, 9);
+      // currentDate.setHours(3, 59, 0, 0);
+
+      console.log("currentDate: ", currentDate.toLocaleString());
 
       // Call the function and pass data
-      const response = await callableFunction({ date: currentDate });
+      const response = await callableFunction({
+        date: currentDate,
+        homeTimezone: "America/New_York",
+      });
       console.log("weekId: ", response.data);
     } catch (err) {
       console.error("Error calling function:", err);

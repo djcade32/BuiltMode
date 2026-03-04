@@ -9,7 +9,7 @@
 
 import { setGlobalOptions } from "firebase-functions/v2";
 import { onCall } from "firebase-functions/v2/https";
-import { handleGetWeekId } from "./utils.js";
+import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils.js";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -29,4 +29,9 @@ setGlobalOptions({ maxInstances: 10 });
 export const getWeekId = onCall((request) => {
   const { date, homeTimezone } = request.data;
   return handleGetWeekId(date, homeTimezone);
+});
+
+export const getNextOfficialStartWeekId = onCall((request) => {
+  const { date, homeTimezone } = request.data;
+  return handleGetNextOfficialStartWeekId(date, homeTimezone);
 });
