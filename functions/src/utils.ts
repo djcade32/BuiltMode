@@ -5,6 +5,14 @@ import utc from "dayjs/plugin/utc.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+function assertValidTimezone(homeTimezone: string) {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: homeTimezone });
+  } catch {
+    throw new Error("Invalid IANA timezone");
+  }
+}
+
 /** 
   Returns the deterministic BuiltMode week identifier based on the
   user’s home timezone and the Monday 4:00 AM weekly reset rule.
@@ -12,6 +20,7 @@ dayjs.extend(timezone);
   @param {string} homeTimezone IANA valid timezone
 */
 export function handleGetWeekId(date: Date | string, homeTimezone: string) {
+  assertValidTimezone(homeTimezone);
   const startOfWeek = dayjs(date).startOf("week").add(1, "day").tz(homeTimezone);
   const boundary = startOfWeek.set("day", 1).set("hour", 4); // Change to current weeks Monday at 4:00 am
   const isBeforeReset = dayjs(date).isBefore(boundary);
@@ -25,8 +34,11 @@ export function handleGetWeekId(date: Date | string, homeTimezone: string) {
   @param {string} homeTimezone IANA valid timezone
 */
 export function handleGetNextOfficialStartWeekId(date: Date | string, homeTimezone: string) {
+  assertValidTimezone(homeTimezone);
   const currentMondayDateStr = handleGetWeekId(date, homeTimezone);
-  const currentMondayDate = dayjs(currentMondayDateStr).set("hour", 4).set("minute", 0);
-  const nextWeekId = dayjs(currentMondayDate).tz(homeTimezone).add(7, "days");
+  // const currentMondayDate = dayjs(currentMondayDateStr).set("hour", 4).set("minute", 0);
+  // const nextWeekId = dayjs(currentMondayDate).tz(homeTimezone).add(7, "days");
+  const currentMondayDate = dayjs.tz(`${currentMondayDateStr}T04:00:00`, homeTimezone);
+  const nextWeekId = currentMondayDate.add(1, "week");
   return nextWeekId.format("YYYY-MM-DD");
 }

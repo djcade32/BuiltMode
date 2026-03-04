@@ -8,7 +8,7 @@
  */
 
 import { setGlobalOptions } from "firebase-functions/v2";
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils.js";
 
 // Start writing functions
@@ -28,10 +28,16 @@ setGlobalOptions({ maxInstances: 10 });
 
 export const getWeekId = onCall((request) => {
   const { date, homeTimezone } = request.data;
+  if (!date || typeof homeTimezone !== "string") {
+    throw new HttpsError("invalid-argument", "Expected { date, homeTimezone }.");
+  }
   return handleGetWeekId(date, homeTimezone);
 });
 
 export const getNextOfficialStartWeekId = onCall((request) => {
   const { date, homeTimezone } = request.data;
+  if (!date || typeof homeTimezone !== "string") {
+    throw new HttpsError("invalid-argument", "Expected { date, homeTimezone }.");
+  }
   return handleGetNextOfficialStartWeekId(date, homeTimezone);
 });
