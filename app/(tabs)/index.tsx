@@ -8,44 +8,49 @@ import { HelloWave } from "@/components/hello-wave";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { UserDoc } from "@/functions/src/types";
-import { functions } from "@/lib/firebase";
+import { useWorkoutStore } from "@/stores/workout-store";
 import { Link } from "expo-router";
-import { httpsCallable } from "firebase/functions";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export default function HomeScreen() {
+  const { activeWorkoutDraft } = useWorkoutStore();
   const callFunction = async () => {
     console.log("calling function");
-    try {
-      // Get the callable function reference
-      const callableFunction = httpsCallable(functions, "createUserProfile");
-      const currentDate = new Date();
-      // currentDate.setFullYear(2026, 2, 9);
-      // currentDate.setHours(3, 59, 0, 0);
+    console.log("Before start workout: ", activeWorkoutDraft);
+    // startWorkout({
+    //   sessionId: "1",
+    //   uid: "123",
+    // });
 
-      console.log("currentDate: ", currentDate.toLocaleString());
+    // setTimeout(() => {
+    //   console.log("After start workout: ", activeWorkoutDraft);
+    // }, 3000);
+    // try {
+    //   // Get the callable function reference
+    //   const callableFunction = httpsCallable(functions, "createUserProfile");
+    //   const currentDate = new Date();
 
-      const userDoc: Partial<UserDoc> = {
-        uid: "123",
-        displayName: "Norman",
-        username: "djcade32",
-        usernameLower: "djcade32",
-        homeTimezone: "America/New_York",
-      };
+    //   const userDoc: Partial<UserDoc> = {
+    //     uid: "123",
+    //     displayName: "Norman",
+    //     username: "djcade32",
+    //     usernameLower: "djcade32",
+    //     homeTimezone: "America/New_York",
+    //   };
 
-      // Call the function and pass data
-      const response = await callableFunction({
-        date: currentDate,
-        user: userDoc,
-      });
-      console.log("user created: ", response);
-    } catch (err) {
-      console.error("Error calling function:", err);
-    }
+    //   // Call the function and pass data
+    //   const response = await callableFunction({
+    //     date: currentDate,
+    //     user: userDoc,
+    //   });
+    //   console.log("user created: ", response);
+    // } catch (err) {
+    //   console.error("Error calling function:", err);
+    // }
   };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -113,7 +118,7 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
-      <Button title="Call Function" onPress={callFunction} />
+      <Button title="Start Workout" onPress={callFunction} />
     </ParallaxScrollView>
   );
 }

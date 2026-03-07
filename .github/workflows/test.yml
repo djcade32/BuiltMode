@@ -1,17 +1,18 @@
-name: Run Unit Tests on Pull Request to Develop Branch
+name: Run Tests on Pull Request to Develop
 
-# Trigger the workflow when a pull request is detected for 'develop'
 on:
   pull_request:
     branches:
       - develop
-    types:
-      - opened # Trigger when a pull request is opened
-      - synchronize # Trigger when a pull request is updated
+    types: [opened, synchronize, reopened]
 
-# Define jobs to run in this workflow
+concurrency:
+  group: pr-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  server_test:
+    name: Server tests
     runs-on: ubuntu-latest
 
     defaults:
@@ -20,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -29,26 +30,50 @@ jobs:
           cache: npm
           cache-dependency-path: functions/package-lock.json
 
-      - name: Install JDK
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
 
-      - name: Install functions dependencies
-        run: npm install
-
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Run Unit Tests
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
         env:
-          EXPO_IS_GITHUB_PIPELINE: true
+          CI: true
         run: npm run test:unit
 
-      - name: Run Integration Tests
+      - name: Build functions
+        run: npm run build
+
+      - name: Run integration tests with emulators
         env:
-          EXPO_IS_GITHUB_PIPELINE: true
-        run: |
-          npm run build
-          npx firebase emulators:exec --project demo-builtmode "npm run test:integration"
+          CI: true
+        run: npx firebase emulators:exec --project demo-builtmode "npm run test:integration"
+
+  client_test:
+    name: Client tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run client unit tests
+        env:
+          CI: true
+        run: npm run test:unit
