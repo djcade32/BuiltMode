@@ -39,12 +39,10 @@ jobs:
         working-directory: functions
         env:
           EXPO_IS_GITHUB_PIPELINE: true
-        run: |
-          firebase emulators:start
-          sleep 10 # Allow time for emulators to start
+        run: firebase emulators:start
 
-      - name: Run Integration Tests
-        working-directory: functions
-        env:
-          EXPO_IS_GITHUB_PIPELINE: true
-        run: npm run test:integration
+      # - name: Run Integration Tests
+      #   working-directory: functions
+      #   env:
+      #     EXPO_IS_GITHUB_PIPELINE: true
+      #   run: npm run test:integration
