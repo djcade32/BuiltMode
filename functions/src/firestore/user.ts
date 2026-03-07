@@ -7,15 +7,8 @@ import { LeaderboardDoc, UserDoc } from "../types.js";
 */
 export const createUserDoc = (batch: FirebaseFirestore.WriteBatch, user: UserDoc) => {
   const { uid } = user;
-  console.log("Attempting to create user: ", uid);
-  try {
-    const userRef = db.collection("users").doc(uid);
-    batch.set(userRef, { ...user });
-
-    console.log(`User ${uid} created `);
-  } catch (error) {
-    console.error("Error creating user: ", error);
-  }
+  const userRef = db.collection("users").doc(uid);
+  batch.create(userRef, { ...user });
 };
 
 /**
@@ -24,13 +17,6 @@ export const createUserDoc = (batch: FirebaseFirestore.WriteBatch, user: UserDoc
 */
 export const AddUserToLeaderboard = (batch: FirebaseFirestore.WriteBatch, user: LeaderboardDoc) => {
   const { uid } = user;
-  console.log("Attempting to write user to leaderboard: ", uid);
-  try {
-    const userRef = db.collection("leaderboardEntries").doc(uid);
-    batch.set(userRef, { ...user });
-
-    console.log(`User ${uid} added to leaderboard.`);
-  } catch (error) {
-    console.error("Error writing user to leaderboard: ", error);
-  }
+  const userRef = db.collection("leaderboardEntries").doc(uid);
+  batch.create(userRef, { ...user });
 };

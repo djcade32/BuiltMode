@@ -13,6 +13,16 @@ export type UserDoc = {
   homeTimezoneUpdatedAt?: Timestamp;
 };
 
+export type UserDTO = {
+  uid: string;
+  username: string;
+  usernameLower: string;
+  displayName: string;
+  avatarUrl?: string;
+  homeTimezone: string;
+  officialStartWeekId: string;
+};
+
 export type LeaderboardDoc = {
   uid: string;
   weekId: string;
