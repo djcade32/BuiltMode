@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: functions/package-lock.json
 
@@ -32,6 +32,13 @@ jobs:
       - name: Install Firebase CLI
         working-directory: functions
         run: npm install -g firebase-tools
+
+      - name: Set up Firebase Authentication
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "${FIREBASE_SERVICE_ACCOUNT}" > firebase-service-account.json
+          export GOOGLE_APPLICATION_CREDENTIALS=firebase-service-account.json
 
       - name: Run Unit Tests
         working-directory: functions
