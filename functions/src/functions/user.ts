@@ -57,6 +57,6 @@ export async function handleCreateUserProfile(
     return userDto;
   } catch (error) {
     console.error("Error creating new user: ", error);
-    return null;
+    throw error;
   }
 }

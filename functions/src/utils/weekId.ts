@@ -14,10 +14,12 @@ dayjs.extend(timezone);
 */
 export function handleGetWeekId(date: Date | string, homeTimezone: string) {
   assertValidTimezone(homeTimezone);
-  const startOfWeek = dayjs(date).startOf("week").add(1, "day").tz(homeTimezone);
+  const startOfWeek = dayjs(date).tz(homeTimezone).startOf("week").add(1, "day");
   const boundary = startOfWeek.set("day", 1).set("hour", 4); // Change to current weeks Monday at 4:00 am
   const isBeforeReset = dayjs(date).isBefore(boundary);
-  const weekId = isBeforeReset ? boundary.add(-1, "week") : dayjs(date).set("day", 1);
+  const weekId = isBeforeReset
+    ? boundary.add(-1, "week")
+    : dayjs(date).tz(homeTimezone).set("day", 1);
   return weekId.format("YYYY-MM-DD");
 }
 

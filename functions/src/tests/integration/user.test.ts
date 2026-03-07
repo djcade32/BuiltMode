@@ -11,28 +11,66 @@ const userDoc: UserDoc = {
 } as UserDoc;
 
 describe("handleCreateUserProfile", () => {
-  test("creates user doc and leaderboard entry", async () => {
+  beforeEach(async () => {
+    await db
+      .doc(`users/${userDoc.uid}`)
+      .delete()
+      .catch(() => null);
+    await db
+      .doc(`leaderboardEntries/${userDoc.uid}`)
+      .delete()
+      .catch(() => null);
+  });
+
+  test("creates user doc in users/{uid} and leaderboardEntries/{uid}", async () => {
     const currentDate = new Date();
 
     await handleCreateUserProfile(currentDate, userDoc);
 
-    const userSnap = await db.doc("users/123").get();
-    const leaderboardSnap = await db.doc("leaderboardEntries/123").get();
+    const userSnap = await db.doc(`users/${userDoc.uid}`).get();
+    const leaderboardSnap = await db.doc(`leaderboardEntries/${userDoc.uid}`).get();
 
     expect(userSnap.exists).toBe(true);
     expect(leaderboardSnap.exists).toBe(true);
 
     expect(userSnap.data()).toMatchObject({
-      uid: "123",
-      displayName: "Norman",
-      username: "djcade32",
-      usernameLower: "djcade32",
-      homeTimezone: "America/New_York",
+      uid: userDoc.uid,
+      displayName: userDoc.displayName,
+      username: userDoc.username,
+      usernameLower: userDoc.usernameLower,
+      homeTimezone: userDoc.homeTimezone,
     });
 
     expect(leaderboardSnap.data()).toMatchObject({
-      uid: "123",
-      usernameLower: "djcade32",
+      uid: userDoc.uid,
+      usernameLower: userDoc.usernameLower,
     });
-  }, 50000);
+  });
+
+  test("throws if user profile already exists", async () => {
+    const currentDate = new Date();
+
+    await handleCreateUserProfile(currentDate, userDoc);
+
+    await expect(handleCreateUserProfile(currentDate, userDoc)).rejects.toThrow();
+
+    const userSnap = await db.doc(`users/${userDoc.uid}`).get();
+    const leaderboardSnap = await db.doc(`leaderboardEntries/${userDoc.uid}`).get();
+
+    expect(userSnap.exists).toBe(true);
+    expect(leaderboardSnap.exists).toBe(true);
+
+    expect(userSnap.data()).toMatchObject({
+      uid: userDoc.uid,
+      displayName: userDoc.displayName,
+      username: userDoc.username,
+      usernameLower: userDoc.usernameLower,
+      homeTimezone: userDoc.homeTimezone,
+    });
+
+    expect(leaderboardSnap.data()).toMatchObject({
+      uid: userDoc.uid,
+      usernameLower: userDoc.usernameLower,
+    });
+  });
 });

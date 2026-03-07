@@ -29,9 +29,17 @@ setGlobalOptions({ maxInstances: 10 });
 
 export const createUserProfile = onCall(async (request) => {
   const { date, user } = request.data;
-  if (!date || typeof user !== "object") {
-    throw new HttpsError("invalid-argument", "Expected {date, user }.");
+  if (!date || typeof user !== "object" || user === null) {
+    throw new HttpsError("invalid-argument", "Expected { date, user }.");
   }
+  const { uid, username, usernameLower, displayName, homeTimezone } = user;
+  if (!uid || !username || !usernameLower || !displayName || !homeTimezone) {
+    throw new HttpsError(
+      "invalid-argument",
+      "user must include uid, username, usernameLower, displayName, and homeTimezone.",
+    );
+  }
+
   return await handleCreateUserProfile(date, user);
 });
 
