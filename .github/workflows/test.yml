@@ -21,9 +21,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
           cache: npm
           cache-dependency-path: functions/package-lock.json
+
+      - name: Install JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
 
       - name: Install functions dependencies
         working-directory: functions
@@ -33,27 +39,14 @@ jobs:
         working-directory: functions
         run: npm install -g firebase-tools
 
-      - name: Set up Firebase Authentication
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          echo "${FIREBASE_SERVICE_ACCOUNT}" > firebase-service-account.json
-          export GOOGLE_APPLICATION_CREDENTIALS=firebase-service-account.json
-
       - name: Run Unit Tests
         working-directory: functions
         env:
           EXPO_IS_GITHUB_PIPELINE: true
         run: npm run test:unit
 
-      - name: Start Firebase Emulators
+      - name: Run Integration Tests
         working-directory: functions
         env:
           EXPO_IS_GITHUB_PIPELINE: true
-        run: firebase emulators:start
-
-      # - name: Run Integration Tests
-      #   working-directory: functions
-      #   env:
-      #     EXPO_IS_GITHUB_PIPELINE: true
-      #   run: npm run test:integration
+        run: npx firebase emulators:exec --project demo-builtmode "npm test:integration"
