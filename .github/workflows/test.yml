@@ -14,6 +14,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: functions
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -32,21 +36,19 @@ jobs:
           java-version: "21"
 
       - name: Install functions dependencies
-        working-directory: functions
         run: npm install
 
       - name: Install Firebase CLI
-        working-directory: functions
         run: npm install -g firebase-tools
 
       - name: Run Unit Tests
-        working-directory: functions
         env:
           EXPO_IS_GITHUB_PIPELINE: true
         run: npm run test:unit
 
       - name: Run Integration Tests
-        working-directory: functions
         env:
           EXPO_IS_GITHUB_PIPELINE: true
-        run: npx firebase emulators:exec --project demo-builtmode "npm test:integration"
+        run: |
+          npm run build
+          npx firebase emulators:exec --project demo-builtmode "npm run test:integration"
