@@ -9,7 +9,8 @@
 
 import { setGlobalOptions } from "firebase-functions/v2";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils.js";
+import { handleCreateUserProfile } from "./functions/user.js";
+import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekId.js";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -25,6 +26,14 @@ import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils.js";
 // In the v1 API, each function can only serve one request per container, so
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
+
+export const createUserProfile = onCall(async (request) => {
+  const { date, user } = request.data;
+  if (!date || typeof user !== "object") {
+    throw new HttpsError("invalid-argument", "Expected {date, user }.");
+  }
+  return await handleCreateUserProfile(date, user);
+});
 
 export const getWeekId = onCall((request) => {
   const { date, homeTimezone } = request.data;

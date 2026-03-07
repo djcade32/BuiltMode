@@ -8,6 +8,7 @@ import { HelloWave } from "@/components/hello-wave";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { UserDoc } from "@/functions/src/types";
 import { functions } from "@/lib/firebase";
 import { Link } from "expo-router";
 import { httpsCallable } from "firebase/functions";
@@ -20,19 +21,27 @@ export default function HomeScreen() {
     console.log("calling function");
     try {
       // Get the callable function reference
-      const callableFunction = httpsCallable(functions, "getNextOfficialStartWeekId");
+      const callableFunction = httpsCallable(functions, "createUserProfile");
       const currentDate = new Date();
       // currentDate.setFullYear(2026, 2, 9);
       // currentDate.setHours(3, 59, 0, 0);
 
       console.log("currentDate: ", currentDate.toLocaleString());
 
+      const userDoc: Partial<UserDoc> = {
+        uid: "123",
+        displayName: "Norman",
+        username: "djcade32",
+        usernameLower: "djcade32",
+        homeTimezone: "America/New_York",
+      };
+
       // Call the function and pass data
       const response = await callableFunction({
         date: currentDate,
-        homeTimezone: "America/New_York",
+        user: userDoc,
       });
-      console.log("weekId: ", response.data);
+      console.log("user created: ", response);
     } catch (err) {
       console.error("Error calling function:", err);
     }

@@ -1,4 +1,6 @@
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
@@ -13,6 +15,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app); // Optional: specify region here if not us-central1
+const auth = getAuth(app);
+const db = getFirestore(app);
 // For local development with the emulator:
 if (process.env.EXPO_IS_GITHUB_PIPELINE) {
   connectFunctionsEmulator(functions, "localhost", 5001); //
@@ -20,4 +24,4 @@ if (process.env.EXPO_IS_GITHUB_PIPELINE) {
 
 // const analytics = getAnalytics(app);
 
-export { functions };
+export { auth, db, functions };
