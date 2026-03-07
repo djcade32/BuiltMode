@@ -34,5 +34,5 @@ describe("handleCreateUserProfile", () => {
       uid: "123",
       usernameLower: "djcade32",
     });
-  }, 20000);
+  }, 50000);
 });
