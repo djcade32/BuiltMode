@@ -15,14 +15,13 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export default function HomeScreen() {
-  const { activeWorkoutDraft } = useWorkoutStore();
+  const { activeWorkoutDraft, startWorkout } = useWorkoutStore();
   const callFunction = async () => {
     console.log("calling function");
-    console.log("Before start workout: ", activeWorkoutDraft);
-    // startWorkout({
-    //   sessionId: "1",
-    //   uid: "123",
-    // });
+    startWorkout({
+      sessionId: "1",
+      uid: "123",
+    });
 
     // setTimeout(() => {
     //   console.log("After start workout: ", activeWorkoutDraft);
