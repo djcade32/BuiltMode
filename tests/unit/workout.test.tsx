@@ -35,17 +35,22 @@ describe("workout store", () => {
     const workout = {
       sessionId: "abc123",
       uid: "user1",
-      startedAtMs: Date.now(),
-      exercises: [],
-      status: "active" as const,
-      lastEditedAtMs: Date.now(),
     };
 
     act(() => {
       useWorkoutStore.getState().startWorkout(workout);
     });
 
-    expect(useWorkoutStore.getState().activeWorkoutDraft).toEqual(workout);
+    expect(useWorkoutStore.getState().activeWorkoutDraft).toMatchObject({
+      sessionId: "abc123",
+      uid: "user1",
+      exercises: [],
+      status: "active",
+    });
+    expect(useWorkoutStore.getState().activeWorkoutDraft?.startedAtMs).toEqual(expect.any(Number));
+    expect(useWorkoutStore.getState().activeWorkoutDraft?.lastEditedAtMs).toEqual(
+      expect.any(Number),
+    );
   });
 });
 
