@@ -47,6 +47,18 @@ jobs:
           CI: true
         run: npm run test:unit
 
+      - name: Install shared packages dependencies
+        run: |
+          cd ..
+          cd packages/shared
+          npm ci
+
+      - name: Build shared packages
+        run: |
+          cd ..
+          cd packages/shared
+          npm run build
+
       - name: Build functions
         run: |
           cd ..
