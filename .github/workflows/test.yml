@@ -48,7 +48,9 @@ jobs:
         run: npm run test:unit
 
       - name: Build functions
-        run: npm run build
+        run: |
+          cd ..
+          npm run build
 
       - name: Run integration tests with emulators
         env:
