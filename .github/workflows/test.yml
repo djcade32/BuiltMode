@@ -15,10 +15,6 @@ jobs:
     name: Server tests
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: functions
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -28,7 +24,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: functions/package.json
+          cache-dependency-path: package-lock.json
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -42,32 +38,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build shared package
+        run: npm run build --workspace @builtmode/shared
+
+      - name: Build functions
+        run: npm run build --workspace functions
+
       - name: Run unit tests
         env:
           CI: true
-        run: npm run test:unit
-
-      - name: Install shared packages dependencies
-        run: |
-          cd ..
-          cd packages/shared
-          npm ci
-
-      - name: Build shared packages
-        run: |
-          cd ..
-          cd packages/shared
-          npm run build
-
-      - name: Build functions
-        run: |
-          cd ..
-          npm run build
+        run: npm run test:unit --workspace functions
 
       - name: Run integration tests with emulators
         env:
           CI: true
-        run: npx firebase emulators:exec --project demo-builtmode "npm run test:integration"
+        run: npx firebase emulators:exec --project demo-builtmode "npm run test:integration --workspace functions"
 
   client_test:
     name: Client tests
