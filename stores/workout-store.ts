@@ -1,18 +1,10 @@
+import { ActiveWorkoutDraft } from "@/types";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkvStorageWrapper";
 
 export interface WorkoutState {
-  activeWorkoutDraft: {
-    sessionId: string;
-    uid: string;
-    startedAtMs: number;
-    workoutType?: string;
-    notes?: string;
-    exercises: any[];
-    status: "active" | "finishing";
-    lastEditedAtMs: number;
-  } | null;
+  activeWorkoutDraft: ActiveWorkoutDraft | null;
 
   startWorkout: (payload: { sessionId: string; uid: string }) => void;
 

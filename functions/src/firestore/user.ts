@@ -1,22 +1,32 @@
+import { Timestamp, Transaction } from "firebase-admin/firestore";
 import { db } from "../lib/firebaseAdmin.js";
-import { LeaderboardDoc, UserDoc } from "../types.js";
+import { UserDoc, UsernameIndexDoc } from "../types/user.js";
 
-/**
-  Write User to `user/{uid}` in Firestore
-  @param {UserDoc} user User object to save in Firestore
-*/
-export const createUserDoc = (batch: FirebaseFirestore.WriteBatch, user: UserDoc) => {
-  const { uid } = user;
-  const userRef = db.collection("users").doc(uid);
-  batch.create(userRef, { ...user });
+export const getUserByUid = (tx: Transaction, uid: string) => {
+  return tx.get(db.collection("users").doc(uid));
 };
 
-/**
-  Write User to `leaderboardEntries/{uid}` in Firestore
-  @param {LeaderboardDoc} user LeaderboardDoc object to save in Firestore
-*/
-export const AddUserToLeaderboard = (batch: FirebaseFirestore.WriteBatch, user: LeaderboardDoc) => {
-  const { uid } = user;
-  const userRef = db.collection("leaderboardEntries").doc(uid);
-  batch.create(userRef, { ...user });
+export const getUsernameIndex = (tx: Transaction, usernameLower: string) => {
+  return tx.get(db.collection("usernames").doc(usernameLower));
+};
+
+export const createUser = (tx: Transaction, user: UserDoc) => {
+  const ref = db.collection("users").doc(user.uid);
+  tx.set(ref, user);
+};
+
+export const createUsernameIndex = (
+  tx: Transaction,
+  usernameLower: string,
+  uid: string,
+  createdAt: Timestamp,
+) => {
+  const ref = db.collection("usernames").doc(usernameLower);
+
+  const doc: UsernameIndexDoc = {
+    uid,
+    createdAt,
+  };
+
+  tx.set(ref, doc);
 };

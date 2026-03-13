@@ -7,9 +7,13 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
+import { createUserProfileRequestSchema } from "@builtmode/shared/schemas/user";
+import { completeWorkoutRequestSchema } from "@builtmode/shared/schemas/workout";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { handleCreateUserProfile } from "./functions/user.js";
+import { handleCompleteWorkout } from "./functions/workout.js";
+import { assertValidTimezone } from "./utils/time.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekId.js";
 
 // Start writing functions
@@ -27,21 +31,22 @@ import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekI
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
 
-export const createUserProfile = onCall(async (request) => {
-  const { date, user } = request.data;
-  if (!date || typeof user !== "object" || user === null) {
-    throw new HttpsError("invalid-argument", "Expected { date, user }.");
-  }
-  const { uid, username, usernameLower, displayName, homeTimezone } = user;
-  if (!uid || !username || !usernameLower || !displayName || !homeTimezone) {
-    throw new HttpsError(
-      "invalid-argument",
-      "user must include uid, username, usernameLower, displayName, and homeTimezone.",
-    );
-  }
+export const createUserProfile = onCall(
+  async (request: { auth?: { uid?: string } | null; data: unknown }) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "User must be signed in.");
+    }
 
-  return await handleCreateUserProfile(date, user);
-});
+    const parsed = createUserProfileRequestSchema.safeParse(request.data);
+
+    if (!parsed.success) {
+      throw new HttpsError("invalid-argument", "Invalid profile payload.");
+    }
+    assertValidTimezone(parsed.data.homeTimezone);
+
+    return await handleCreateUserProfile(request.auth.uid, parsed.data);
+  },
+);
 
 export const getWeekId = onCall((request) => {
   const { date, homeTimezone } = request.data;
@@ -58,3 +63,19 @@ export const getNextOfficialStartWeekId = onCall((request) => {
   }
   return handleGetNextOfficialStartWeekId(date, homeTimezone);
 });
+
+export const completeWorkout = onCall(
+  async (request: { auth?: { uid?: string } | null; data: unknown }) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "User must be signed in.");
+    }
+
+    const parsed = completeWorkoutRequestSchema.safeParse(request.data);
+
+    if (!parsed.success) {
+      throw new HttpsError("invalid-argument", "Invalid complete workout payload.");
+    }
+
+    return await handleCompleteWorkout(request.auth.uid, parsed.data);
+  },
+);
