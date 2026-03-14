@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
-import { assertValidTimezone } from "../utils.js";
+import { assertValidTimezone } from "./time.js";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -31,9 +31,18 @@ export function handleGetWeekId(date: Date | string, homeTimezone: string) {
 export function handleGetNextOfficialStartWeekId(date: Date | string, homeTimezone: string) {
   assertValidTimezone(homeTimezone);
   const currentMondayDateStr = handleGetWeekId(date, homeTimezone);
-  // const currentMondayDate = dayjs(currentMondayDateStr).set("hour", 4).set("minute", 0);
-  // const nextWeekId = dayjs(currentMondayDate).tz(homeTimezone).add(7, "days");
   const currentMondayDate = dayjs.tz(`${currentMondayDateStr}T04:00:00`, homeTimezone);
   const nextWeekId = currentMondayDate.add(1, "week");
   return nextWeekId.format("YYYY-MM-DD");
+}
+
+/** 
+  Returns a local date key in the format of "YYYY-MM-DD" in homeTimezone
+  @param {Date | string} date 
+  @param {string} homeTimezone IANA valid timezone
+*/
+export function handleGetLocalDateKey(date: Date | string, homeTimezone: string) {
+  assertValidTimezone(homeTimezone);
+  const localDateKey = dayjs(date).tz(homeTimezone);
+  return localDateKey.format("YYYY-MM-DD");
 }

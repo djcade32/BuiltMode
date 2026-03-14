@@ -1,76 +1,130 @@
+import type { CreateUserProfileRequest } from "@builtmode/shared/types/user";
 import { handleCreateUserProfile } from "../../functions/user.js";
 import { db } from "../../lib/firebaseAdmin.js";
-import { UserDoc } from "../../types.js";
-
-const userDoc: Partial<UserDoc> = {
-  uid: "123",
-  displayName: "Norman",
-  username: "djcade32",
-  usernameLower: "djcade32",
-  homeTimezone: "America/New_York",
-};
 
 describe("handleCreateUserProfile", () => {
+  const uid = "test-user-123";
+  const uid2 = "other-user-456";
+  const usernameLower = "djcade32";
+
+  const input: CreateUserProfileRequest = {
+    username: "djcade32",
+    displayName: "Norman",
+    homeTimezone: "America/New_York",
+    weeklyTargetDays: 4,
+  };
+
   beforeEach(async () => {
-    await db
-      .doc(`users/${userDoc.uid}`)
-      .delete()
-      .catch(() => null);
-    await db
-      .doc(`leaderboardEntries/${userDoc.uid}`)
-      .delete()
-      .catch(() => null);
+    await Promise.all([
+      db
+        .doc(`users/${uid}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`users/${uid2}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`leaderboardEntries/${uid}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`leaderboardEntries/${uid2}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`usernames/${usernameLower}`)
+        .delete()
+        .catch(() => null),
+    ]);
   });
 
-  test("creates user doc in users/{uid} and leaderboardEntries/{uid}", async () => {
-    const currentDate = new Date();
+  test("creates user doc, username index, and leaderboard entry", async () => {
+    await handleCreateUserProfile(uid, input);
 
-    await handleCreateUserProfile(currentDate, userDoc as UserDoc);
-
-    const userSnap = await db.doc(`users/${userDoc.uid}`).get();
-    const leaderboardSnap = await db.doc(`leaderboardEntries/${userDoc.uid}`).get();
+    const [userSnap, leaderboardSnap, usernameSnap] = await Promise.all([
+      db.doc(`users/${uid}`).get(),
+      db.doc(`leaderboardEntries/${uid}`).get(),
+      db.doc(`usernames/${usernameLower}`).get(),
+    ]);
 
     expect(userSnap.exists).toBe(true);
     expect(leaderboardSnap.exists).toBe(true);
+    expect(usernameSnap.exists).toBe(true);
 
     expect(userSnap.data()).toMatchObject({
-      uid: userDoc.uid,
-      displayName: userDoc.displayName,
-      username: userDoc.username,
-      usernameLower: userDoc.usernameLower,
-      homeTimezone: userDoc.homeTimezone,
+      uid,
+      username: input.username,
+      usernameLower,
+      displayName: input.displayName,
+      homeTimezone: input.homeTimezone,
+      weeklyTargetDays: input.weeklyTargetDays,
     });
 
     expect(leaderboardSnap.data()).toMatchObject({
-      uid: userDoc.uid,
-      usernameLower: userDoc.usernameLower,
+      uid,
+      usernameLower,
+      displayName: input.displayName,
+      isRanked: false,
+      modeScore: 0,
+      streakWeeks: 0,
+    });
+
+    expect(usernameSnap.data()).toMatchObject({
+      uid,
     });
   });
 
   test("throws if user profile already exists", async () => {
-    const currentDate = new Date();
+    await handleCreateUserProfile(uid, input);
 
-    await handleCreateUserProfile(currentDate, userDoc as UserDoc);
+    await expect(handleCreateUserProfile(uid, input)).rejects.toThrow();
 
-    await expect(handleCreateUserProfile(currentDate, userDoc as UserDoc)).rejects.toThrow();
-
-    const userSnap = await db.doc(`users/${userDoc.uid}`).get();
-    const leaderboardSnap = await db.doc(`leaderboardEntries/${userDoc.uid}`).get();
+    const [userSnap, leaderboardSnap, usernameSnap] = await Promise.all([
+      db.doc(`users/${uid}`).get(),
+      db.doc(`leaderboardEntries/${uid}`).get(),
+      db.doc(`usernames/${usernameLower}`).get(),
+    ]);
 
     expect(userSnap.exists).toBe(true);
     expect(leaderboardSnap.exists).toBe(true);
+    expect(usernameSnap.exists).toBe(true);
+  });
 
-    expect(userSnap.data()).toMatchObject({
-      uid: userDoc.uid,
-      displayName: userDoc.displayName,
-      username: userDoc.username,
-      usernameLower: userDoc.usernameLower,
-      homeTimezone: userDoc.homeTimezone,
-    });
+  test("throws if username is already taken by another user", async () => {
+    await handleCreateUserProfile(uid2, input);
 
-    expect(leaderboardSnap.data()).toMatchObject({
-      uid: userDoc.uid,
-      usernameLower: userDoc.usernameLower,
-    });
+    await expect(handleCreateUserProfile(uid, input)).rejects.toThrow();
+
+    const originalUserSnap = await db.doc(`users/${uid2}`).get();
+    const duplicateUserSnap = await db.doc(`users/${uid}`).get();
+
+    expect(originalUserSnap.exists).toBe(true);
+    expect(duplicateUserSnap.exists).toBe(false);
+  });
+
+  afterAll(async () => {
+    await Promise.all([
+      db
+        .doc(`users/${uid}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`users/${uid2}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`leaderboardEntries/${uid}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`leaderboardEntries/${uid2}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`usernames/${usernameLower}`)
+        .delete()
+        .catch(() => null),
+    ]);
   });
 });

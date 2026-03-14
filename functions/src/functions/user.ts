@@ -1,62 +1,91 @@
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { AddUserToLeaderboard, createUserDoc } from "../firestore/user.js";
+import {
+  CreateUserProfileRequest,
+  CreateUserProfileResponse,
+} from "@builtmode/shared/schemas/user";
+import { Timestamp } from "firebase-admin/firestore";
+import { HttpsError } from "firebase-functions/https";
+import { createInitialEntry } from "../firestore/leaderboard.js";
+import {
+  createUser,
+  createUsernameIndex,
+  getUserByUid,
+  getUsernameIndex,
+} from "../firestore/user.js";
 import { db } from "../lib/firebaseAdmin.js";
-import { LeaderboardDoc, UserDoc, UserDTO } from "../types.js";
-import { assertValidTimezone } from "../utils.js";
-import { handleGetNextOfficialStartWeekId } from "../utils/weekId.js";
+import { LeaderboardEntry } from "../types/leaderboard.js";
+import { UserDoc } from "../types/user.js";
+import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "../utils/weekId.js";
 
 /** 
   Create new user profile.
 
   Add User to `user/{uid}` and `leaderboardEntries/{uid}` in Firestore
-  @param {Date | string} date 
-  @param {UserDoc} user User object to save in Firestore
+  @param {string} uid User's uid
+  @param {CreateUserProfileRequest} user User object to save in Firestore
   @return On success return User else return null
 */
 export async function handleCreateUserProfile(
-  date: Date | string,
-  user: UserDoc,
-): Promise<UserDTO | null> {
-  const { homeTimezone } = user;
-  const batch: FirebaseFirestore.WriteBatch = db.batch();
-  assertValidTimezone(homeTimezone);
+  uid: string,
+  user: CreateUserProfileRequest,
+): Promise<CreateUserProfileResponse> {
+  const { homeTimezone, username, displayName, avatarUrl, weeklyTargetDays } = user;
+  const usernameLower = user.username.trim().toLowerCase();
+  const now = Timestamp.now();
+  const currentWeekId = handleGetWeekId(now.toDate(), homeTimezone);
+  const officialStartWeekId = handleGetNextOfficialStartWeekId(now.toDate(), homeTimezone);
 
-  const officialStartWeekId = handleGetNextOfficialStartWeekId(date, homeTimezone);
-  const now = FieldValue.serverTimestamp() as Timestamp;
-  const userPayload: UserDoc = {
-    ...user,
-    officialStartWeekId,
-    homeTimezoneSetAt: now,
-    createdAt: now,
-    homeTimezoneUpdatedAt: now,
-  };
-  const { displayName, avatarUrl, usernameLower, uid } = user;
-  const leaderboardPayload: LeaderboardDoc = {
-    uid,
-    displayName,
-    usernameLower,
-    weekId: officialStartWeekId,
-    streakWeeks: 0,
-    isRanked: false,
-    updatedAt: now,
-    modeScore: 0,
-  };
-  if (avatarUrl) {
-    leaderboardPayload["avatarUrl"] = avatarUrl;
-  }
+  const isPracticeWeek = currentWeekId < officialStartWeekId;
 
-  try {
-    createUserDoc(batch, userPayload);
-    AddUserToLeaderboard(batch, leaderboardPayload);
-    await batch.commit();
+  await db.runTransaction(async (tx) => {
+    const existingUser = await getUserByUid(tx, uid);
+    if (existingUser.exists) {
+      throw new HttpsError("already-exists", "Profile already exists.");
+    }
 
-    const userDto: UserDTO = {
-      ...user,
+    const usernameTaken = await getUsernameIndex(tx, usernameLower);
+    if (usernameTaken.exists) {
+      throw new HttpsError("already-exists", "Username is already taken.");
+    }
+
+    const userDoc: UserDoc = {
+      uid,
+      username: username.trim(),
+      usernameLower,
+      displayName: displayName.trim(),
+      avatarUrl: avatarUrl ?? "",
+      homeTimezone: homeTimezone,
       officialStartWeekId,
+      weeklyTargetDays: weeklyTargetDays,
+      createdAt: now,
+      updatedAt: now,
+      homeTimezoneSetAt: now,
     };
-    return userDto;
-  } catch (error) {
-    console.error("Error creating new user: ", error);
-    throw error;
-  }
+
+    const leaderboardEntry: LeaderboardEntry = {
+      uid,
+      weekId: currentWeekId,
+      isRanked: false,
+      modeScore: 0,
+      streakWeeks: 0,
+      usernameLower,
+      displayName: userDoc.displayName,
+      avatarUrl: userDoc.avatarUrl,
+      updatedAt: now,
+    };
+
+    createUser(tx, userDoc);
+    createUsernameIndex(tx, usernameLower, uid, now);
+    createInitialEntry(tx, leaderboardEntry);
+  });
+
+  return {
+    uid,
+    username: username.trim(),
+    displayName: displayName.trim(),
+    avatarUrl: avatarUrl ?? "",
+    homeTimezone: homeTimezone,
+    officialStartWeekId,
+    weeklyTargetDays: weeklyTargetDays,
+    isPracticeWeek,
+  };
 }

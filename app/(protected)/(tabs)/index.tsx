@@ -8,8 +8,11 @@ import { HelloWave } from "@/components/hello-wave";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { functions } from "@/lib/firebase";
+import { CompleteWorkoutRequest, CompleteWorkoutResponse } from "@/packages/shared/src";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Link } from "expo-router";
+import { httpsCallable } from "firebase/functions";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -18,36 +21,129 @@ export default function HomeScreen() {
   const { activeWorkoutDraft, startWorkout } = useWorkoutStore();
   const callFunction = async () => {
     console.log("calling function");
-    startWorkout({
-      sessionId: "1",
-      uid: "123",
-    });
 
-    // setTimeout(() => {
-    //   console.log("After start workout: ", activeWorkoutDraft);
-    // }, 3000);
-    // try {
-    //   // Get the callable function reference
-    //   const callableFunction = httpsCallable(functions, "createUserProfile");
-    //   const currentDate = new Date();
+    try {
+      // const createUserProfile = httpsCallable<CreateUserProfileRequest, CreateUserProfileResponse>(
+      //   functions,
+      //   "createUserProfile",
+      // );
 
-    //   const userDoc: Partial<UserDoc> = {
-    //     uid: "123",
-    //     displayName: "Norman",
-    //     username: "djcade32",
-    //     usernameLower: "djcade32",
-    //     homeTimezone: "America/New_York",
-    //   };
+      // const user = await createUserProfile({
+      //   username: "djcade32",
+      //   displayName: "Norman",
+      //   homeTimezone: "America/New_York",
+      //   weeklyTargetDays: 4,
+      // });
+      // console.log("created user: ", user);
 
-    //   // Call the function and pass data
-    //   const response = await callableFunction({
-    //     date: currentDate,
-    //     user: userDoc,
-    //   });
-    //   console.log("user created: ", response);
-    // } catch (err) {
-    //   console.error("Error calling function:", err);
-    // }
+      const workout: CompleteWorkoutRequest = {
+        sessionId: "session_9f82ab47",
+        name: "Thursday Grinder",
+        workoutType: "conditioning",
+        exercises: [
+          {
+            id: "ex_1",
+            name: "Back Squat",
+            metricType: "weight_reps",
+            notes: "Focus on depth",
+
+            sets: [
+              {
+                id: "set_1",
+                reps: 5,
+                weight: 225,
+                rpe: 7,
+                completed: true,
+              },
+              {
+                id: "set_2",
+                reps: 5,
+                weight: 245,
+                rpe: 8,
+                completed: true,
+              },
+              {
+                id: "set_3",
+                reps: 3,
+                weight: 275,
+                rpe: 9,
+                completed: true,
+              },
+            ],
+          },
+
+          {
+            id: "ex_2",
+            name: "Pull Ups",
+            metricType: "reps_only",
+
+            sets: [
+              {
+                id: "set_4",
+                reps: 12,
+                completed: true,
+              },
+              {
+                id: "set_5",
+                reps: 10,
+                completed: true,
+              },
+              {
+                id: "set_6",
+                reps: 8,
+                completed: true,
+              },
+            ],
+          },
+
+          {
+            id: "ex_3",
+            name: "Assault Bike",
+            metricType: "calories",
+
+            sets: [
+              {
+                id: "set_7",
+                calories: 20,
+                durationSec: 60,
+                completed: true,
+              },
+              {
+                id: "set_8",
+                calories: 18,
+                durationSec: 60,
+                completed: true,
+              },
+            ],
+          },
+
+          {
+            id: "ex_4",
+            name: "1 Mile Run",
+            metricType: "distance",
+
+            sets: [
+              {
+                id: "set_9",
+                distanceMeters: 1609,
+                durationSec: 480,
+                completed: true,
+              },
+            ],
+          },
+        ],
+      };
+
+      const completeWorkout = httpsCallable<CompleteWorkoutRequest, CompleteWorkoutResponse>(
+        functions,
+        "completeWorkout",
+      );
+
+      const resp = await completeWorkout(workout);
+      console.log("Workout logged: ", resp.data);
+    } catch (err) {
+      console.error("Error calling function:", err);
+    }
   };
 
   return (
