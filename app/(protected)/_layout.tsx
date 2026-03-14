@@ -1,9 +1,15 @@
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, Stack } from "expo-router";
 import React from "react";
 
 const ProtectedLayout = () => {
+  const { isAuthenticated } = useAuthStore();
   const { activeWorkoutDraft } = useWorkoutStore();
+
+  if (!isAuthenticated) {
+    return <Redirect href={"/(auth)/signin"} />;
+  }
 
   if (activeWorkoutDraft) {
     return <Redirect href="/modal" />;
@@ -17,6 +23,7 @@ const ProtectedLayout = () => {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
     </Stack>
   );
 };

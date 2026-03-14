@@ -22,7 +22,8 @@ const auth = initializeAuth(app, {
 });
 const db = getFirestore(app);
 // For local development with the emulator:
-if (process.env.EXPO_IS_GITHUB_PIPELINE) {
+if (__DEV__) {
+  console.warn("Running Dev mode. Connecting to Firebase Emulator.");
   connectFunctionsEmulator(functions, "localhost", 5001);
 }
 

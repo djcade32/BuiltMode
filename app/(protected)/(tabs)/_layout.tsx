@@ -3,16 +3,14 @@ import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: Colors.accent.primary,
+        tabBarInactiveTintColor: Colors.icon,
         headerShown: false,
         tabBarButton: HapticTab,
       }}
@@ -31,6 +29,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <MaterialIcons name="rss-feed" size={28} color={color} />,
         }}
       />
+
       <Tabs.Screen
         name="log"
         options={{
