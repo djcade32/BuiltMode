@@ -33,9 +33,9 @@ setGlobalOptions({ maxInstances: 10 });
 
 export const createUserProfile = onCall(
   async (request: { auth?: { uid?: string } | null; data: unknown }) => {
-    // if (!request.auth?.uid) {
-    //   throw new HttpsError("unauthenticated", "User must be signed in.");
-    // }
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "User must be signed in.");
+    }
 
     const parsed = createUserProfileRequestSchema.safeParse(request.data);
 
@@ -44,8 +44,7 @@ export const createUserProfile = onCall(
     }
     assertValidTimezone(parsed.data.homeTimezone);
 
-    return await handleCreateUserProfile("123", parsed.data);
-    // return await handleCreateUserProfile(request.auth.uid, parsed.data);
+    return await handleCreateUserProfile(request.auth.uid, parsed.data);
   },
 );
 
@@ -67,9 +66,9 @@ export const getNextOfficialStartWeekId = onCall((request) => {
 
 export const completeWorkout = onCall(
   async (request: { auth?: { uid?: string } | null; data: unknown }) => {
-    // if (!request.auth?.uid) {
-    //   throw new HttpsError("unauthenticated", "User must be signed in.");
-    // }
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "User must be signed in.");
+    }
 
     const parsed = completeWorkoutRequestSchema.safeParse(request.data);
 
@@ -77,7 +76,6 @@ export const completeWorkout = onCall(
       throw new HttpsError("invalid-argument", "Invalid complete workout payload.");
     }
 
-    return await handleCompleteWorkout("123", parsed.data);
-    // return await handleCompleteWorkout(request.auth.uid, parsed.data);
+    return await handleCompleteWorkout(request.auth.uid, parsed.data);
   },
 );
