@@ -2,6 +2,7 @@ import { CompleteWorkoutRequest, CompleteWorkoutResponse } from "@builtmode/shar
 import dayjs from "dayjs";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
+import { updateLeaderboardEntry } from "../firestore/leaderboard.js";
 import { getUserByUid } from "../firestore/user.js";
 import {
   calculateModeScore,
@@ -13,6 +14,7 @@ import {
   getWorkoutsWithinLast30Days,
 } from "../firestore/workout.js";
 import { db } from "../lib/firebaseAdmin.js";
+import { LeaderboardEntry } from "../types/leaderboard.js";
 import { DayMarker, UserWeekAggregate, Workout } from "../types/workout.js";
 import { handleGetLocalDateKey, handleGetWeekId } from "../utils/weekId.js";
 
@@ -126,9 +128,18 @@ export async function handleCompleteWorkout(
       isDeloadWeek,
     };
 
+    const updatedLeaderboardEntry: Partial<LeaderboardEntry> = {
+      uid,
+      modeScore: modeScore === null ? 0 : modeScore,
+      streakWeeks,
+      updatedAt: now,
+      weekId,
+    };
+
     createCompleteWorkout(tx, workoutDoc);
     createDayMarker(tx, dayMarkerDoc);
     createUserWeekAggregate(tx, uid, weekId, userWeekAggregateDoc);
+    updateLeaderboardEntry(tx, updatedLeaderboardEntry);
 
     return {
       activeDaysThisWeek,

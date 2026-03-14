@@ -22,9 +22,9 @@ const auth = initializeAuth(app, {
 });
 const db = getFirestore(app);
 // For local development with the emulator:
-if (process.env.EXPO_IS_GITHUB_PIPELINE) {
-  connectFunctionsEmulator(functions, "localhost", 5001);
-}
+// if (process.env.EXPO_IS_GITHUB_PIPELINE) {
+connectFunctionsEmulator(functions, "localhost", 5001);
+// }
 
 // const analytics = getAnalytics(app);
 

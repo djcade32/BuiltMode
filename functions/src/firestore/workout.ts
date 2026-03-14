@@ -44,6 +44,37 @@ export const getDayMarker = (
   return tx.get(db.collection(`userWeekDays/${uid}_${weekId}/days`).doc(localDateKey));
 };
 
+export const calculateModeScore = (input: ModeScoreInput): ModeScoreBreakdown => {
+  const {
+    weeklyAdherenceStreak,
+    completedWorkoutsThisWeek,
+    completedWorkoutsLast30Days,
+    weeklyTarget,
+    streakMaxWeeks = 12,
+  } = input;
+
+  const streakScore = calculateStreakScore(weeklyAdherenceStreak, streakMaxWeeks);
+
+  const weeklyAdherenceRateScore = calculateWeeklyAdherenceRateScore(
+    completedWorkoutsThisWeek,
+    weeklyTarget,
+  );
+
+  const { activity30DayScore, numOfdaysWorkedout } = calculate30DayActivityScore(
+    completedWorkoutsLast30Days,
+  );
+
+  const rawModeScore =
+    streakScore * 0.45 + weeklyAdherenceRateScore * 0.3 + activity30DayScore * 0.25;
+
+  return {
+    modeScore: roundToNearestInt(rawModeScore),
+    streakScore: roundToNearestInt(streakScore),
+    weeklyAdherenceRateScore: roundToNearestInt(weeklyAdherenceRateScore),
+    activity30DayScore: roundToNearestInt(activity30DayScore),
+    activeDaysLast30: numOfdaysWorkedout,
+  };
+};
 // Helper functions
 
 export const getLast30DayDateKeys = (todayLocalDateKey: string): Set<string> => {
@@ -99,36 +130,4 @@ const calculateStreakScore = (
   if (streakMaxWeeks <= 0) return 0;
 
   return clamp((weeklyAdherenceStreak / streakMaxWeeks) * 100, 0, 100);
-};
-
-export const calculateModeScore = (input: ModeScoreInput): ModeScoreBreakdown => {
-  const {
-    weeklyAdherenceStreak,
-    completedWorkoutsThisWeek,
-    completedWorkoutsLast30Days,
-    weeklyTarget,
-    streakMaxWeeks = 12,
-  } = input;
-
-  const streakScore = calculateStreakScore(weeklyAdherenceStreak, streakMaxWeeks);
-
-  const weeklyAdherenceRateScore = calculateWeeklyAdherenceRateScore(
-    completedWorkoutsThisWeek,
-    weeklyTarget,
-  );
-
-  const { activity30DayScore, numOfdaysWorkedout } = calculate30DayActivityScore(
-    completedWorkoutsLast30Days,
-  );
-
-  const rawModeScore =
-    streakScore * 0.45 + weeklyAdherenceRateScore * 0.3 + activity30DayScore * 0.25;
-
-  return {
-    modeScore: roundToNearestInt(rawModeScore),
-    streakScore: roundToNearestInt(streakScore),
-    weeklyAdherenceRateScore: roundToNearestInt(weeklyAdherenceRateScore),
-    activity30DayScore: roundToNearestInt(activity30DayScore),
-    activeDaysLast30: numOfdaysWorkedout,
-  };
 };
