@@ -52,15 +52,18 @@ export async function handleCompleteWorkout(
 
     const weekId = handleGetWeekId(now.toDate(), homeTimezone);
     const localDateKey = handleGetLocalDateKey(now.toDate(), homeTimezone);
+
+    const isOfficialWeek = officialStartWeekId < weekId;
+
+    const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
     const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(
       tx,
       uid,
       localDateKey,
     );
-
-    const isOfficialWeek = officialStartWeekId < weekId;
-
-    const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
+    const completedWorkoutsLast30Days = dayMarkerExists
+      ? numOfCompletedWorkoutsLast30Days
+      : numOfCompletedWorkoutsLast30Days + 1;
     const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
     const weekAggregateExists = weekAggregate.exists;
 
@@ -70,14 +73,14 @@ export async function handleCompleteWorkout(
         ? weekAggregate.get("activeDaysThisWeek") + 1
         : weekAggregate.get("activeDaysThisWeek")
       : 1;
-    const metTargetThisWeek = weekAggregateExists ? activeDaysThisWeek > weeklyTargetDays : false;
+    const metTargetThisWeek = weekAggregateExists ? activeDaysThisWeek >= weeklyTargetDays : false;
     const isDeloadWeek = weekAggregateExists ? weekAggregate.get("isDeloadWeek") : false;
     const streakWeeks = weekAggregateExists ? weekAggregate.get("streakWeeks") : 0;
     const modeScore =
       weekAggregateExists && isOfficialWeek
         ? calculateModeScore({
             weeklyTarget: weeklyTargetDays,
-            completedWorkoutsLast30Days: numOfCompletedWorkoutsLast30Days,
+            completedWorkoutsLast30Days,
             weeklyAdherenceStreak: streakWeeks,
             completedWorkoutsThisWeek: activeDaysThisWeek,
           }).modeScore
@@ -130,7 +133,7 @@ export async function handleCompleteWorkout(
     return {
       activeDaysThisWeek,
       isOfficialWeek,
-      modeScore: null,
+      modeScore,
       streakWeeks,
       weekId,
       weeklyTargetDays,

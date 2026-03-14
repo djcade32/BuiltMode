@@ -294,6 +294,7 @@ describe("handleCompleteWorkout", () => {
   });
 
   test("should not increment activeDaysThisWeek when logging two workouts for the same day", async () => {
+    await handleCompleteWorkout(uid, workout);
     await handleCompleteWorkout(uid, workout2);
 
     const workoutDoc = await db.doc(`workouts/${workout2.sessionId}`).get();
@@ -346,5 +347,24 @@ describe("handleCompleteWorkout", () => {
       modeScore: null,
       scoreVersion: 1,
     });
+  });
+  afterAll(async () => {
+    await Promise.all([
+      db
+        .doc(`users/${uid}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`leaderboardEntries/${uid}`)
+        .delete()
+        .catch(() => null),
+      db
+        .doc(`usernames/${usernameLower}`)
+        .delete()
+        .catch(() => null),
+      deleteCollection(db, "workouts").catch(() => null),
+      deleteCollection(db, "userWeekDays").catch(() => null),
+      deleteCollection(db, "userWeekAggregates").catch(() => null),
+    ]);
   });
 });

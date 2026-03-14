@@ -1,3 +1,5 @@
+import { WeeklyTargetDays } from "./user.js";
+
 export type WorkoutType = "strength" | "conditioning" | "hybrid" | "skill" | "recovery" | "other";
 
 export type ExerciseMetricType =
@@ -52,7 +54,7 @@ export type CompleteWorkoutResponse = {
   weekId: string;
   isOfficialWeek: boolean;
   activeDaysThisWeek: number;
-  weeklyTargetDays: number;
+  weeklyTargetDays: WeeklyTargetDays;
   streakWeeks: number;
   modeScore: number | null;
   lockedAt: string;

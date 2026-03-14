@@ -20,7 +20,7 @@ describe("calculateModeScore", () => {
   });
 });
 
-describe("getLast30DayDateKeys", () => {
+describe("returns the previous 30 local date keys including today", () => {
   test("returns proper metrics and mode score calculations", () => {
     const localDateKey = "2026-03-12";
     const last30DateKeys = getLast30DayDateKeys(localDateKey);

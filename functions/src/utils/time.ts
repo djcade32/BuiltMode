@@ -1,13 +1,16 @@
+export class InvalidTimezoneError extends Error {
+  constructor() {
+    super("Invalid IANA timezone");
+    this.name = "InvalidTimezoneError";
+  }
+}
+
 export const assertValidTimezone = (homeTimezone: string) => {
   try {
     new Intl.DateTimeFormat("en-US", { timeZone: homeTimezone });
   } catch {
-    throw new Error("Invalid IANA timezone");
+    throw new InvalidTimezoneError();
   }
-};
-
-export const toDateOnlyUtc = (dateKey: string): Date => {
-  return new Date(`${dateKey}T00:00:00.000Z`);
 };
 
 export const formatDateKeyUtc = (date: Date): string => {

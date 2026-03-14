@@ -9,7 +9,6 @@ import {
   Workout,
 } from "../types/workout.js";
 import { clamp, roundToNearestInt } from "../utils/math.js";
-import { formatDateKeyUtc, toDateOnlyUtc } from "../utils/time.js";
 
 export const createCompleteWorkout = (tx: Transaction, workout: Workout) => {
   const ref = db.collection("workouts").doc(workout.sessionId);
@@ -49,12 +48,9 @@ export const getDayMarker = (
 
 export const getLast30DayDateKeys = (todayLocalDateKey: string): Set<string> => {
   const result = new Set<string>();
-  const today = toDateOnlyUtc(todayLocalDateKey);
 
   for (let i = 0; i < 30; i++) {
-    const d = new Date(today);
-    d.setUTCDate(today.getUTCDate() - i);
-    result.add(formatDateKeyUtc(d));
+    result.add(dayjs(todayLocalDateKey).subtract(i, "day").format("YYYY-MM-DD"));
   }
 
   return result;
