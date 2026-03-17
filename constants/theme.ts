@@ -5,11 +5,9 @@
 
 import { Platform } from "react-native";
 
-const tintColorDark = "#fff";
-
 export const Colors = {
   text: {
-    primary: "#EDEDED",
+    primary: "white",
     secondary: "#8A8F98",
   },
   background: {
@@ -20,24 +18,49 @@ export const Colors = {
     primary: "#C6A34A",
     secondary: "#4A6C8C",
   },
-  tint: tintColorDark,
   icon: "#6B7280",
   tabIconDefault: "#6B7280",
   gray: "#9CA3AF",
+  input: "#1F2228",
+  inputBorder: "#2A2E35",
 };
 
 export const Typography = {
-  primary: {
-    regular: "Inter_400Regular",
-    medium: "Inter_500Medium",
-    semibold: "Inter_600SemiBold",
-    bold: "Inter_700Bold",
+  size: {
+    /**
+     * @property {8}
+     */
+    xxs: 8,
+    xs: 12,
+    sm: 16,
+    md: 24,
+    lg: 32,
+    xl: 50,
   },
-  secondary: {
-    regular: "JetBrainsMono_400Regular",
-    medium: "JetBrainsMono_500Medium",
-    semibold: "JetBrainsMono_600SemiBold",
-    bold: "JetBrainsMono_700Bold",
+  family: {
+    primary: {
+      regular: "Inter_400Regular",
+      medium: "Inter_500Medium",
+      semibold: "Inter_600SemiBold",
+      bold: "Inter_700Bold",
+    },
+    secondary: {
+      regular: "JetBrainsMono_400Regular",
+      medium: "JetBrainsMono_500Medium",
+      semibold: "JetBrainsMono_600SemiBold",
+      bold: "JetBrainsMono_700Bold",
+    },
+    tertiary: {
+      regular: "ArchivoBlack_400Regular",
+    },
+  },
+};
+
+export const Border = {
+  radius: {
+    sm: 5,
+    md: 8,
+    lg: 20,
   },
 };
 

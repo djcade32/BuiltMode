@@ -19,6 +19,8 @@ import {
   JetBrainsMono_700Bold,
 } from "@expo-google-fonts/jetbrains-mono";
 
+import { ArchivoBlack_400Regular } from "@expo-google-fonts/archivo-black";
+
 export const unstable_settings = {
   anchor: "(protected)",
 };
@@ -33,6 +35,7 @@ export default function RootLayout() {
     JetBrainsMono_500Medium,
     JetBrainsMono_600SemiBold,
     JetBrainsMono_700Bold,
+    ArchivoBlack_400Regular,
   });
 
   if (!fontsLoaded) {

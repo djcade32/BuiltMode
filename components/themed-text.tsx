@@ -31,28 +31,28 @@ export function ThemedText({
 
 const styles = StyleSheet.create({
   default: {
-    fontSize: 16,
-    fontFamily: Typography.primary.regular,
+    fontSize: Typography.size.sm,
+    fontFamily: Typography.family.primary.regular,
   },
   defaultSemiBold: {
-    fontSize: 16,
+    fontSize: Typography.size.sm,
     fontWeight: "600",
-    fontFamily: Typography.primary.semibold,
+    fontFamily: Typography.family.primary.semibold,
   },
   title: {
-    fontSize: 32,
+    fontSize: Typography.size.lg,
     fontWeight: "bold",
     letterSpacing: -1,
-    fontFamily: Typography.primary.bold,
+    fontFamily: Typography.family.primary.bold,
   },
   subtitle: {
-    fontSize: 20,
+    fontSize: Typography.size.md,
     fontWeight: "bold",
-    fontFamily: Typography.primary.bold,
+    fontFamily: Typography.family.primary.bold,
   },
   link: {
-    fontSize: 16,
+    fontSize: Typography.size.sm,
     color: Colors.accent.secondary,
-    fontFamily: Typography.primary.regular,
+    fontFamily: Typography.family.primary.regular,
   },
 });

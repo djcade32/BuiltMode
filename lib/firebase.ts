@@ -1,9 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 //@ts-ignore
-import { getReactNativePersistence, initializeAuth } from "firebase/auth";
+import { connectAuthEmulator, getReactNativePersistence, initializeAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCQ8jRXtG4oiI8xPxTiX7yirskttvyEScM",
@@ -25,6 +25,8 @@ const db = getFirestore(app);
 if (__DEV__) {
   console.warn("Running Dev mode. Connecting to Firebase Emulator.");
   connectFunctionsEmulator(functions, "localhost", 5001);
+  connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  connectFirestoreEmulator(db, "localhost", 8080);
 }
 
 // const analytics = getAnalytics(app);

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react-native";
 import { act } from "react";
 import ProtectedLayout from "../../app/(protected)/_layout";
-import { storage } from "../../stores/mmkvStorageWrapper";
+import { storage } from "../../stores/mmkv-storage-wrapper";
 import { useWorkoutStore } from "../../stores/workout-store";
 
 jest.mock("expo-router", () => {

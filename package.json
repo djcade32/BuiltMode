@@ -20,6 +20,7 @@
     "build": "npm run build:shared && npm run build:functions"
   },
   "dependencies": {
+    "@expo-google-fonts/archivo-black": "^0.4.1",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
@@ -44,6 +45,7 @@
     "firebase": "^12.10.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-hook-form": "^7.71.2",
     "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-mmkv": "^4.1.2",
