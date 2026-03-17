@@ -1,9 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import {
+  connectAuthEmulator,
+  getAuth,
+  //@ts-ignore
+  getReactNativePersistence,
+  initializeAuth,
+} from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
-//@ts-ignore
-import { connectAuthEmulator, getReactNativePersistence, initializeAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCQ8jRXtG4oiI8xPxTiX7yirskttvyEScM",
@@ -15,20 +20,24 @@ const firebaseConfig = {
   measurementId: "G-PK7Z4PVE11",
 };
 
-const app = initializeApp(firebaseConfig);
-const functions = getFunctions(app); // Optional: specify region here if not us-central1
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const functions = getFunctions(app);
 const db = getFirestore(app);
-// For local development with the emulator:
+
+let auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch {
+  auth = getAuth(app);
+}
+
 if (__DEV__) {
   console.warn("Running Dev mode. Connecting to Firebase Emulator.");
   connectFunctionsEmulator(functions, "localhost", 5001);
   connectAuthEmulator(auth, "http://127.0.0.1:9099");
   connectFirestoreEmulator(db, "localhost", 8080);
 }
-
-// const analytics = getAnalytics(app);
 
 export { auth, db, functions };
