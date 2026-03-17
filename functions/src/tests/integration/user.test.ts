@@ -1,6 +1,7 @@
 import type { CreateUserProfileRequest } from "@builtmode/shared/types/user";
 import { handleCreateUserProfile } from "../../functions/user.js";
 import { db } from "../../lib/firebaseAdmin.js";
+import { clearFirestore } from "../utils/clearFirestore.js";
 
 describe("handleCreateUserProfile", () => {
   const uid = "test-user-123";
@@ -15,28 +16,7 @@ describe("handleCreateUserProfile", () => {
   };
 
   beforeEach(async () => {
-    await Promise.all([
-      db
-        .doc(`users/${uid}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`users/${uid2}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`leaderboardEntries/${uid}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`leaderboardEntries/${uid2}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`usernames/${usernameLower}`)
-        .delete()
-        .catch(() => null),
-    ]);
+    await clearFirestore();
   });
 
   test("creates user doc, username index, and leaderboard entry", async () => {
@@ -101,30 +81,5 @@ describe("handleCreateUserProfile", () => {
 
     expect(originalUserSnap.exists).toBe(true);
     expect(duplicateUserSnap.exists).toBe(false);
-  });
-
-  afterAll(async () => {
-    await Promise.all([
-      db
-        .doc(`users/${uid}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`users/${uid2}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`leaderboardEntries/${uid}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`leaderboardEntries/${uid2}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`usernames/${usernameLower}`)
-        .delete()
-        .catch(() => null),
-    ]);
   });
 });

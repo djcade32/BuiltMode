@@ -4,15 +4,10 @@ import { handleCreateUserProfile } from "../../functions/user.js";
 import { handleCompleteWorkout } from "../../functions/workout.js";
 import { db } from "../../lib/firebaseAdmin.js";
 import { Workout } from "../../types/workout.js";
-
-async function deleteCollection(db: FirebaseFirestore.Firestore, collectionPath: string) {
-  const collectionRef = db.collection(collectionPath);
-  return await db.recursiveDelete(collectionRef);
-}
+import { clearFirestore } from "../utils/clearFirestore.js";
 
 describe("handleCompleteWorkout", () => {
   const uid = "test-user-123";
-  const usernameLower = "djcade32";
 
   const user: CreateUserProfileRequest = {
     username: "djcade32",
@@ -218,23 +213,7 @@ describe("handleCompleteWorkout", () => {
   };
 
   beforeEach(async () => {
-    await Promise.all([
-      db
-        .doc(`users/${uid}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`leaderboardEntries/${uid}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`usernames/${usernameLower}`)
-        .delete()
-        .catch(() => null),
-      deleteCollection(db, "workouts").catch(() => null),
-      deleteCollection(db, "userWeekDays").catch(() => null),
-      deleteCollection(db, "userWeekAggregates").catch(() => null),
-    ]);
+    await clearFirestore();
     await handleCreateUserProfile(uid, user);
   });
 
@@ -347,24 +326,5 @@ describe("handleCompleteWorkout", () => {
       modeScore: null,
       scoreVersion: 1,
     });
-  });
-  afterAll(async () => {
-    await Promise.all([
-      db
-        .doc(`users/${uid}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`leaderboardEntries/${uid}`)
-        .delete()
-        .catch(() => null),
-      db
-        .doc(`usernames/${usernameLower}`)
-        .delete()
-        .catch(() => null),
-      deleteCollection(db, "workouts").catch(() => null),
-      deleteCollection(db, "userWeekDays").catch(() => null),
-      deleteCollection(db, "userWeekAggregates").catch(() => null),
-    ]);
   });
 });
