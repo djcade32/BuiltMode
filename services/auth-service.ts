@@ -1,5 +1,5 @@
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 export type SignInParams = {
   email: string;
@@ -18,6 +18,18 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
   }
 };
 
+export const signUpWithEmail = async ({ email, password }: SignInParams) => {
+  try {
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+
+    return {
+      user: credential.user,
+    };
+  } catch (error) {
+    throw new Error(mapFirebaseAuthError(error));
+  }
+};
+
 export const signOutUser = async () => {
   await signOut(auth);
 };
@@ -28,6 +40,8 @@ const mapFirebaseAuthError = (error: any): string => {
       return "Invalid email or password.";
     case "auth/invalid-email":
       return "Invalid email or password.";
+    case "auth/email-already-in-use":
+      return "Email already in use.";
     case "auth/too-many-requests":
       return "Too many attempts. Try again later.";
     default:

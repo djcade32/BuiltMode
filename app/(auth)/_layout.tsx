@@ -6,7 +6,6 @@ export default function AuthLayout() {
   const { isAuthenticated, isHydrated } = useAuthStore();
 
   if (!isHydrated) {
-    console.log("Checking if hydrated: ", isHydrated);
     return null; // or a loading spinner
   }
 

@@ -1,14 +1,17 @@
 import { act } from "react";
-import { signInWithEmail } from "../../services/auth-service";
+import { signInWithEmail, signOutUser, signUpWithEmail } from "../../services/auth-service";
 import { useAuthStore } from "../../stores/auth-store";
 import { storage } from "../../stores/mmkv-storage-wrapper";
 
 jest.mock("../../services/auth-service", () => ({
   signInWithEmail: jest.fn(),
+  signUpWithEmail: jest.fn(),
   signOutUser: jest.fn(),
 }));
 
 const mockedSignInWithEmail = signInWithEmail as jest.MockedFunction<typeof signInWithEmail>;
+const mockedSignUpWithEmail = signUpWithEmail as jest.MockedFunction<typeof signUpWithEmail>;
+const mockedSignOutUser = signOutUser as jest.MockedFunction<typeof signOutUser>;
 
 describe("auth store", () => {
   beforeEach(() => {
@@ -18,6 +21,7 @@ describe("auth store", () => {
     useAuthStore.setState({
       user: null,
       isAuthenticated: false,
+      isHydrated: true,
       isSigningIn: false,
       error: null,
     });
@@ -71,6 +75,50 @@ describe("auth store", () => {
     expect(useAuthStore.getState().error).toBe("Invalid email or password.");
   });
 
+  test("signup stores authenticated user on success", async () => {
+    mockedSignUpWithEmail.mockResolvedValue({
+      user: {
+        uid: "new-user-123",
+        email: "norman@example.com",
+      },
+    } as any);
+
+    await act(async () => {
+      await useAuthStore.getState().signup("norman@example.com", "Password1");
+    });
+
+    expect(mockedSignUpWithEmail).toHaveBeenCalledWith({
+      email: "norman@example.com",
+      password: "Password1",
+    });
+
+    expect(useAuthStore.getState().user).toEqual({
+      uid: "new-user-123",
+      email: "norman@example.com",
+    });
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().error).toBeNull();
+  });
+
+  test("signup clears prior error before attempting request", async () => {
+    mockedSignUpWithEmail.mockResolvedValue({
+      user: {
+        uid: "new-user-123",
+        email: "norman@example.com",
+      },
+    } as any);
+
+    useAuthStore.setState({
+      error: "old error",
+    });
+
+    await act(async () => {
+      await useAuthStore.getState().signup("norman@example.com", "Password1");
+    });
+
+    expect(useAuthStore.getState().error).toBeNull();
+  });
+
   test("signout clears user and auth state", async () => {
     useAuthStore.setState({
       user: {
@@ -78,6 +126,7 @@ describe("auth store", () => {
         email: "norman@example.com",
       },
       isAuthenticated: true,
+      isHydrated: true,
       isSigningIn: false,
       error: "old error",
     });
@@ -86,6 +135,7 @@ describe("auth store", () => {
       await useAuthStore.getState().signout();
     });
 
+    expect(mockedSignOutUser).toHaveBeenCalled();
     expect(useAuthStore.getState().user).toBeNull();
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
@@ -97,6 +147,7 @@ describe("auth store", () => {
         email: "norman@example.com",
       },
       isAuthenticated: true,
+      isHydrated: true,
       isSigningIn: true,
       error: "temporary error",
     });
