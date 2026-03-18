@@ -4,10 +4,11 @@ import { Redirect, Stack } from "expo-router";
 import React from "react";
 
 const ProtectedLayout = () => {
-  const { isAuthenticated, isHydrated } = useAuthStore();
+  const { isAuthenticated, isHydrated, reset } = useAuthStore();
   const { activeWorkoutDraft } = useWorkoutStore();
 
   if (!isHydrated) {
+    console.log("Checking if hydrated: ", isHydrated);
     return null; // or a loading spinner
   }
 

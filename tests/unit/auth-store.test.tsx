@@ -5,6 +5,7 @@ import { storage } from "../../stores/mmkv-storage-wrapper";
 
 jest.mock("../../services/auth-service", () => ({
   signInWithEmail: jest.fn(),
+  signOutUser: jest.fn(),
 }));
 
 const mockedSignInWithEmail = signInWithEmail as jest.MockedFunction<typeof signInWithEmail>;

@@ -9,6 +9,7 @@ type AuthStore = {
   isHydrated: boolean;
   isSigningIn: boolean;
   error: string | null;
+  setHydrated: (value: boolean) => void;
   signin: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, username: string) => Promise<void>;
   signout: () => Promise<void>;
@@ -20,13 +21,14 @@ const initialState = {
   isSigningIn: false,
   error: null,
   isAuthenticated: false,
-  isHydrated: false,
 };
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       ...initialState,
+      isHydrated: false,
+      setHydrated: (value) => set({ isHydrated: value }),
       signin: async (email: string, password: string) => {
         set({ isSigningIn: true, error: null });
 
@@ -56,7 +58,7 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
       signout: async () => {
-        set(initialState);
+        set({ ...initialState, isHydrated: true });
         await signOutUser();
       },
       reset: () => set(initialState),
@@ -69,7 +71,7 @@ export const useAuthStore = create<AuthStore>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        state?.isHydrated !== undefined && useAuthStore.setState({ isHydrated: true });
+        state?.setHydrated(true);
       },
     },
   ),
