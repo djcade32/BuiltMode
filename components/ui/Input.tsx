@@ -19,6 +19,8 @@ type props = TextInputProps & {
         "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
       >
     | undefined;
+  onFoucus?: () => void;
+  onBlur?: () => void;
 };
 
 const Input = ({
@@ -32,6 +34,8 @@ const Input = ({
   style,
   placeholder,
   rules,
+  onFocus,
+  onBlur,
   ...rest
 }: props) => {
   const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -57,7 +61,7 @@ const Input = ({
         control={control}
         name={name}
         rules={rules}
-        render={({ field: { onChange, onBlur, value } }) => (
+        render={({ field: { onBlur: fieldOnBlur, onChange, value } }) => (
           <View style={styles.container}>
             {label && (
               <ThemedText style={[styles.label, isFocused && { color: Colors.accent.primary }]}>
@@ -76,12 +80,16 @@ const Input = ({
                 testID={label}
                 accessibilityLabel={label}
                 placeholder={placeholder}
-                onBlur={() => {
+                onBlur={(e) => {
                   setIsFocused(false);
-                  return onBlur();
+                  fieldOnBlur();
+                  onBlur && onBlur(e);
                 }}
                 onChangeText={onChange}
-                onFocus={() => setIsFocused(true)}
+                onFocus={(e) => {
+                  setIsFocused(true);
+                  onFocus && onFocus(e);
+                }}
                 value={value}
                 placeholderTextColor={Colors.text.secondary}
                 style={[styles.textInput, style]}
@@ -105,8 +113,11 @@ const Input = ({
           </View>
         )}
       />
+
       {errors && (
-        <ThemedText style={styles.errorText}>{errors.message || "This is required."}</ThemedText>
+        <ThemedText style={styles.errorText}>
+          {errors.message || `Must be a valid ${name}`}
+        </ThemedText>
       )}
     </View>
   );

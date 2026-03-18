@@ -1,3 +1,4 @@
+import AuthHeader from "@/components/auth/AuthHeader";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import Input from "@/components/ui/Input";
@@ -5,12 +6,10 @@ import ThemedButton from "@/components/ui/ThemedButton";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
-import Constants from "expo-constants";
 import { Link } from "expo-router";
 import React, { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -19,13 +18,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type FormInput = {
@@ -47,31 +39,7 @@ const Signin = () => {
     defaultValues: initialValues,
   });
   const { email, password } = useWatch({ control });
-  const { signin, isSigningIn, error, user } = useAuthStore();
-
-  const opacity = useSharedValue(0.4);
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-      transform: [{ scale: scale.value }],
-    };
-  });
-
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(withTiming(1, { duration: 600 }), withTiming(0.4, { duration: 600 })),
-      -1,
-      true,
-    );
-
-    scale.value = withRepeat(
-      withSequence(withTiming(1.4, { duration: 600 }), withTiming(1, { duration: 600 })),
-      -1,
-      true,
-    );
-  }, []);
+  const { signin, isSigningIn, error } = useAuthStore();
 
   useEffect(() => {
     error && useAuthStore.setState({ error: null });
@@ -99,37 +67,7 @@ const Signin = () => {
           showsVerticalScrollIndicator={false}
         >
           <ThemedView style={{ flex: 1, position: "relative" }}>
-            <ThemedView>
-              <ThemedView>
-                <ThemedText style={styles.version}>v{Constants.expoConfig?.version}</ThemedText>
-                <Image source={require("@/assets/images/full_logo.png")} style={styles.logo} />
-              </ThemedView>
-              <ThemedView style={styles.subtitle}>
-                <ThemedText type="defaultSemiBold" style={{ color: Colors.text.secondary }}>
-                  Build Daily.
-                </ThemedText>
-                <ThemedText type="defaultSemiBold" style={{ color: Colors.text.primary }}>
-                  {" "}
-                  Become Relentless
-                </ThemedText>
-              </ThemedView>
-              <View style={{ alignItems: "center" }}>
-                <ThemedView style={styles.systemBadgeContainer}>
-                  <Animated.View
-                    style={[
-                      {
-                        backgroundColor: "green",
-                        height: 7,
-                        aspectRatio: 1,
-                        borderRadius: 3.5,
-                      },
-                      animatedStyle,
-                    ]}
-                  />
-                  <ThemedText style={styles.systemBadgeText}>SYSTEM OPERATIONAL</ThemedText>
-                </ThemedView>
-              </View>
-            </ThemedView>
+            <AuthHeader />
 
             <ThemedView style={styles.formContainer}>
               <Input
@@ -276,7 +214,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontFamily: Typography.family.secondary.regular,
-    fontSize: Typography.size.xs,
+    fontSize: 10,
     color: Colors.inputBorder,
     letterSpacing: 2,
     textAlign: "center",
