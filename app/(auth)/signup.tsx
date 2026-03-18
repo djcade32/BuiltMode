@@ -34,8 +34,10 @@ const Signup = () => {
   const {
     control,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormInput>({
     defaultValues: initialValues,
   });
   const { email, password, confirmPassword } = useWatch({ control });
@@ -64,16 +66,17 @@ const Signup = () => {
 
   const isValidForm = (data: FormInput) => {
     const { email, password, confirmPassword } = data;
+    clearErrors(["password", "confirmPassword"]);
     if (!email || !password || !confirmPassword) return false;
     if (!isValidPassword) {
-      control.setError("password", {
+      setError("password", {
         message:
           "Password must be at least 8 characters; contain at least one uppercase character and one digit.",
       });
       return false;
     }
     if (password !== confirmPassword) {
-      control.setError("confirmPassword", {
+      setError("confirmPassword", {
         message: "Does not match password.",
       });
       return false;
@@ -103,7 +106,7 @@ const Signup = () => {
                 label="EMAIL"
                 placeholder="johndoe@email.com"
                 rules={{
-                  pattern: new RegExp("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"),
+                  pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
                   required: true,
                 }}
               />

@@ -14,7 +14,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       user: credential.user,
     };
   } catch (error: any) {
-    throw new Error(mapFirebaseAuthError(error));
+    throw new Error(mapFirebaseAuthError(error, "sign in"));
   }
 };
 
@@ -26,7 +26,7 @@ export const signUpWithEmail = async ({ email, password }: SignInParams) => {
       user: credential.user,
     };
   } catch (error) {
-    throw new Error(mapFirebaseAuthError(error));
+    throw new Error(mapFirebaseAuthError(error, "sign up"));
   }
 };
 
@@ -34,7 +34,7 @@ export const signOutUser = async () => {
   await signOut(auth);
 };
 
-const mapFirebaseAuthError = (error: any): string => {
+const mapFirebaseAuthError = (error: any, action: "sign in" | "sign up"): string => {
   switch (error?.code) {
     case "auth/invalid-credential":
       return "Invalid email or password.";
@@ -45,6 +45,6 @@ const mapFirebaseAuthError = (error: any): string => {
     case "auth/too-many-requests":
       return "Too many attempts. Try again later.";
     default:
-      return "Unable to sign in right now.";
+      return `Unable to ${action} right now.`;
   }
 };

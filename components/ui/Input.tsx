@@ -61,7 +61,7 @@ const Input = ({
         control={control}
         name={name}
         rules={rules}
-        render={({ field: { onChange, value } }) => (
+        render={({ field: { onBlur: fieldOnBlur, onChange, value } }) => (
           <View style={styles.container}>
             {label && (
               <ThemedText style={[styles.label, isFocused && { color: Colors.accent.primary }]}>
@@ -82,6 +82,7 @@ const Input = ({
                 placeholder={placeholder}
                 onBlur={(e) => {
                   setIsFocused(false);
+                  fieldOnBlur();
                   onBlur && onBlur(e);
                 }}
                 onChangeText={onChange}

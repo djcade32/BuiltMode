@@ -70,6 +70,7 @@ export const useAuthStore = create<AuthStore>()(
             error: error instanceof Error ? error.message : "Unable to sign up.",
             isSigningIn: false,
           });
+          throw error;
         }
       },
       signout: async () => {
