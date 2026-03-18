@@ -30,7 +30,8 @@ try {
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
   });
-} catch {
+} catch (error) {
+  console.warn("initializeAuth failed, falling back to getAuth:", error);
   auth = getAuth(app);
 }
 

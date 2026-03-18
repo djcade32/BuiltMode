@@ -91,7 +91,11 @@ const Input = ({
                 {...rest}
               />
               {password ? (
-                <Pressable onPress={() => setShowPassword((prev) => !prev)}>
+                <Pressable
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                >
                   {passwordIconComponent}
                 </Pressable>
               ) : (

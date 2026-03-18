@@ -58,8 +58,8 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
       signout: async () => {
-        set({ ...initialState, isHydrated: true });
         await signOutUser();
+        set({ ...initialState, isHydrated: true });
       },
       reset: () => set(initialState),
     }),
