@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
+  Auth,
   connectAuthEmulator,
   getAuth,
   //@ts-ignore
@@ -24,7 +25,7 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const functions = getFunctions(app);
 const db = getFirestore(app);
 
-let auth;
+let auth: Auth;
 try {
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),

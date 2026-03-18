@@ -3,7 +3,11 @@ import { Redirect, Stack } from "expo-router";
 import "react-native-reanimated";
 
 export default function AuthLayout() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isHydrated } = useAuthStore();
+
+  if (!isHydrated) {
+    return null; // or a loading spinner
+  }
 
   if (isAuthenticated) {
     return <Redirect href="/" />;

@@ -121,7 +121,7 @@ const Signin = () => {
                         backgroundColor: "green",
                         height: 7,
                         aspectRatio: 1,
-                        borderRadius: "50%",
+                        borderRadius: 3.5,
                       },
                       animatedStyle,
                     ]}

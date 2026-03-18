@@ -10,7 +10,7 @@
     "deploy": "ESLINT_USE_FLAT_CONFIG=false firebase deploy --only functions",
     "logs": "firebase functions:log",
     "test": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest",
-    "test:integration": "npm run test -- src/tests/integration",
+    "test:integration": "npm run test -- --runInBand src/tests/integration",
     "test:unit": "npm run test -- src/tests/unit"
   },
   "engines": {
@@ -38,7 +38,8 @@
     "firebase-functions-test": "^3.4.1",
     "jest": "^29.7.0",
     "ts-jest": "^29.4.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "node-fetch": "^2.7.0"
   },
   "private": true
 }

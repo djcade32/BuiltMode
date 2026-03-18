@@ -1,4 +1,4 @@
-import { signInWithEmail } from "@/services/auth-service";
+import { signInWithEmail, signOutUser } from "@/services/auth-service";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
@@ -6,6 +6,7 @@ import { mmkvStorage } from "./mmkv-storage-wrapper";
 type AuthStore = {
   user: { uid: string; email: string | null } | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   isSigningIn: boolean;
   error: string | null;
   signin: (email: string, password: string) => Promise<void>;
@@ -19,6 +20,7 @@ const initialState = {
   isSigningIn: false,
   error: null,
   isAuthenticated: false,
+  isHydrated: false,
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -55,6 +57,7 @@ export const useAuthStore = create<AuthStore>()(
       },
       signout: async () => {
         set(initialState);
+        await signOutUser();
       },
       reset: () => set(initialState),
     }),
@@ -65,6 +68,9 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.isHydrated !== undefined && useAuthStore.setState({ isHydrated: true });
+      },
     },
   ),
 );

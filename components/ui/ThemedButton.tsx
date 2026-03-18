@@ -13,7 +13,7 @@ const ThemedButton = ({ onPress, title, preIcon, postIcon, style, disabled, ...r
     return React.createElement(familyIcon, {
       name: name,
       size: 16,
-      color: Colors.background,
+      color: Colors.background.primary,
     });
   };
 

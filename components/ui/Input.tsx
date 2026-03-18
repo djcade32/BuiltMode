@@ -73,7 +73,8 @@ const Input = ({
               {preIconComponent}
 
               <TextInput
-                id={label}
+                testID={label}
+                accessibilityLabel={label}
                 placeholder={placeholder}
                 onBlur={() => {
                   setIsFocused(false);
@@ -100,7 +101,9 @@ const Input = ({
           </View>
         )}
       />
-      {errors && <ThemedText style={styles.errorText}>This is required.</ThemedText>}
+      {errors && (
+        <ThemedText style={styles.errorText}>{errors.message || "This is required."}</ThemedText>
+      )}
     </View>
   );
 };

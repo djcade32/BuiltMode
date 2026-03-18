@@ -4,8 +4,12 @@ import { Redirect, Stack } from "expo-router";
 import React from "react";
 
 const ProtectedLayout = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isHydrated } = useAuthStore();
   const { activeWorkoutDraft } = useWorkoutStore();
+
+  if (!isHydrated) {
+    return null; // or a loading spinner
+  }
 
   if (!isAuthenticated) {
     return <Redirect href={"/(auth)/signin"} />;

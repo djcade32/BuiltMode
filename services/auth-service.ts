@@ -1,5 +1,5 @@
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 export type SignInParams = {
   email: string;
@@ -16,6 +16,10 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
   } catch (error: any) {
     throw new Error(mapFirebaseAuthError(error));
   }
+};
+
+export const signOutUser = async () => {
+  await signOut(auth);
 };
 
 const mapFirebaseAuthError = (error: any): string => {
