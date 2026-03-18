@@ -1,7 +1,7 @@
 import type { ActiveWorkoutDraft } from "@builtmode/shared/types/workout";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { mmkvStorage } from "./mmkvStorageWrapper";
+import { mmkvStorage } from "./mmkv-storage-wrapper";
 
 export interface WorkoutState {
   activeWorkoutDraft: ActiveWorkoutDraft | null;

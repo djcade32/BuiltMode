@@ -1,9 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import {
+  Auth,
+  connectAuthEmulator,
+  getAuth,
+  //@ts-ignore
+  getReactNativePersistence,
+  initializeAuth,
+} from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
-//@ts-ignore
-import { getReactNativePersistence, initializeAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCQ8jRXtG4oiI8xPxTiX7yirskttvyEScM",
@@ -15,17 +21,25 @@ const firebaseConfig = {
   measurementId: "G-PK7Z4PVE11",
 };
 
-const app = initializeApp(firebaseConfig);
-const functions = getFunctions(app); // Optional: specify region here if not us-central1
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const functions = getFunctions(app);
 const db = getFirestore(app);
-// For local development with the emulator:
-if (process.env.EXPO_IS_GITHUB_PIPELINE) {
-  connectFunctionsEmulator(functions, "localhost", 5001);
+
+let auth: Auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch (error) {
+  console.warn("initializeAuth failed, falling back to getAuth:", error);
+  auth = getAuth(app);
 }
 
-// const analytics = getAnalytics(app);
+if (__DEV__) {
+  console.warn("Running Dev mode. Connecting to Firebase Emulator.");
+  connectFunctionsEmulator(functions, "localhost", 5001);
+  connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  connectFirestoreEmulator(db, "localhost", 8080);
+}
 
 export { auth, db, functions };
