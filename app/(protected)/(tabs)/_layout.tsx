@@ -1,11 +1,16 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
+import { useUserStore } from "@/stores/user-store";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
+  const { user } = useUserStore();
+  if (!user) {
+    return <Redirect href={"/(protected)/(onboarding)/welcome"} />;
+  }
   return (
     <Tabs
       screenOptions={{

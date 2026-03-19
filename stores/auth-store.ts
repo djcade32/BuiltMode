@@ -4,9 +4,11 @@ import {
   signOutUser,
   signUpWithEmail,
 } from "@/services/auth-service";
+import { checkForUserProfile } from "@/services/user-service";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
+import { useUserStore } from "./user-store";
 
 type AuthStore = {
   user: { uid: string; email: string | null } | null;
@@ -49,6 +51,10 @@ export const useAuthStore = create<AuthStore>()(
             isSigningIn: false,
             isAuthenticated: true,
           });
+          const user = await checkForUserProfile(result.user.uid);
+          if (user) {
+            useUserStore.getState().setUser(user);
+          }
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Unable to sign in.",
@@ -82,6 +88,7 @@ export const useAuthStore = create<AuthStore>()(
       signout: async () => {
         await signOutUser();
         set({ ...initialState, isHydrated: true });
+        useUserStore.getState().setUser(null);
       },
       reset: () => set(initialState),
       resetPassword: async (email: string) => {

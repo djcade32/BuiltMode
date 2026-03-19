@@ -1,14 +1,12 @@
 import { useAuthStore } from "@/stores/auth-store";
-import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, Stack } from "expo-router";
 import React from "react";
 
-const ProtectedLayout = () => {
+const OnboardingLayout = () => {
   const { isAuthenticated, isHydrated } = useAuthStore();
 
-  const { activeWorkoutDraft } = useWorkoutStore();
-
   if (!isHydrated) {
+    console.log("Checking if hydrated: ", isHydrated);
     return null; // or a loading spinner
   }
 
@@ -19,20 +17,13 @@ const ProtectedLayout = () => {
   return (
     <Stack>
       <Stack.Screen
-        name="(onboarding)"
+        name="welcome"
         options={{
           headerShown: false,
         }}
       />
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
     </Stack>
   );
 };
 
-export default ProtectedLayout;
+export default OnboardingLayout;

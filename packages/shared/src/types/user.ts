@@ -20,6 +20,7 @@ export type User = {
   createdAt: string;
   homeTimezoneSetAt: string;
   homeTimezoneUpdatedAt?: string;
+  updatedAt: string;
 };
 
 export type PublicUserProfile = {
