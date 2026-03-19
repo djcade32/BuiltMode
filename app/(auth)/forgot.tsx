@@ -6,15 +6,15 @@ import ThemedButton from "@/components/ui/ThemedButton";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Link } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -22,12 +22,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 type FormInput = {
   email: string;
-  password: string;
 };
 
 const initialValues: FormInput = {
   email: "",
-  password: "",
 };
 
 const Forgot = () => {
@@ -38,20 +36,26 @@ const Forgot = () => {
   } = useForm({
     defaultValues: initialValues,
   });
-  const { email, password } = useWatch({ control });
-  const { signin, isSigningIn, error } = useAuthStore();
+  const { email } = useWatch({ control });
+  const { resetPassword, error } = useAuthStore();
+  const [sendButtonPressed, setSendButtonPressed] = useState(false);
+  const [showEmailSent, setShowEmailSent] = useState(false);
 
   useEffect(() => {
     error && useAuthStore.setState({ error: null });
-  }, [email, password]);
+  }, [email]);
 
-  const handleSignin = async (data: FormInput) => {
-    const { email, password } = data;
-    if (!email || !password) return;
+  const handleResetPassword = async (data: FormInput) => {
+    const { email } = data;
+    if (!email) return;
+    setSendButtonPressed(true);
     try {
-      await signin(email, password);
+      await resetPassword(email);
+      setShowEmailSent(true);
     } catch (error) {
       console.error("Error Signing in: ", error);
+    } finally {
+      setSendButtonPressed(false);
     }
   };
 
@@ -69,70 +73,73 @@ const Forgot = () => {
           <ThemedView style={{ flex: 1, position: "relative" }}>
             <AuthHeader />
 
-            <ThemedView style={styles.formContainer}>
-              <Input
-                name="email"
-                control={control}
-                errors={errors.email}
-                label="IDENTITY // EMAIL"
-                preIcon={{
-                  familyIcon: FontAwesome,
-                  name: "envelope",
-                }}
-                placeholder="Enter your email"
-              />
-              <Input
-                name="password"
-                control={control}
-                errors={errors.password}
-                label="KEY // PASSWORD"
-                preIcon={{
-                  familyIcon: FontAwesome,
-                  name: "lock",
-                }}
-                password={true}
-                placeholder="••••••••••"
-              />
+            {showEmailSent ? (
+              <ThemedView style={styles.sentEmailConfirmation}>
+                <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
+                  <ThemedText type="title">Email Sent</ThemedText>
+                  <MaterialIcons name="check-circle" size={35} color="green" />
+                </View>
+                <ThemedText style={{ color: Colors.gray, marginVertical: 10 }}>
+                  If email address given exists, an email with instructions to reset your password
+                  will be sent to it.
+                </ThemedText>
+              </ThemedView>
+            ) : (
+              <ThemedView style={styles.formContainer}>
+                <View>
+                  <ThemedText type="title">RESET ACCESS</ThemedText>
+                  <ThemedText
+                    style={{
+                      fontSize: 14,
+                      color: Colors.gray,
+                      paddingRight: 20,
+                      marginVertical: 10,
+                    }}
+                  >
+                    Enter your email and we'll send instructions to reset your password.
+                  </ThemedText>
+                </View>
 
-              {error && <ThemedText style={styles.formError}>{error}</ThemedText>}
+                <Input
+                  name="email"
+                  control={control}
+                  errors={errors.email}
+                  label="EMAIL"
+                  placeholder="johndoe@email.com"
+                  rules={{
+                    pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                    required: true,
+                  }}
+                  preIcon={{
+                    familyIcon: FontAwesome,
+                    name: "envelope",
+                  }}
+                />
 
-              <Link href="/forgot" asChild>
-                <TouchableOpacity style={{ alignSelf: "flex-end" }}>
-                  <Text style={styles.forgotCredentials}>Forgot credentials?</Text>
-                </TouchableOpacity>
-              </Link>
-              <ThemedButton
-                disabled={
-                  email?.trim().length === 0 || password?.trim().length === 0 || isSigningIn
-                }
-                title="ENTER MODE"
-                postIcon={{
-                  familyIcon: FontAwesome6,
-                  name: "arrow-right",
-                }}
-                onPress={handleSubmit(handleSignin)}
-              />
-            </ThemedView>
+                {error && <ThemedText style={styles.formError}>{error}</ThemedText>}
 
-            <ThemedView style={{ flexDirection: "row", justifyContent: "center", marginTop: 45 }}>
-              <ThemedText
-                type="defaultSemiBold"
-                style={{
-                  color: Colors.text.secondary,
-                }}
-              >
-                New here?
-              </ThemedText>
-              <Link href="/signup" asChild>
+                <ThemedButton
+                  disabled={email?.trim().length === 0 || sendButtonPressed}
+                  title="SEND RESET LINK"
+                  postIcon={{
+                    familyIcon: FontAwesome6,
+                    name: "arrow-right",
+                  }}
+                  onPress={handleSubmit(handleResetPassword)}
+                />
+              </ThemedView>
+            )}
+
+            <ThemedView style={{ flexDirection: "row", justifyContent: "center" }}>
+              <Link href="/(auth)/signin" asChild onPress={() => setShowEmailSent(false)}>
                 <TouchableOpacity>
                   <ThemedText
                     type="defaultSemiBold"
                     style={{
-                      color: Colors.accent.primary,
+                      color: Colors.text.secondary,
                     }}
                   >
-                    {" "}
-                    Build your account
+                    Back to Sign in
                   </ThemedText>
                 </TouchableOpacity>
               </Link>
@@ -200,11 +207,16 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: "90%",
     gap: 20,
+    flex: 1,
+    justifyContent: "center",
   },
-  forgotCredentials: {
-    color: Colors.text.secondary,
-    fontFamily: Typography.family.primary.medium,
-    alignSelf: "flex-end",
+  sentEmailConfirmation: {
+    marginTop: 25,
+    alignSelf: "center",
+    width: "90%",
+    gap: 5,
+    flex: 1,
+    justifyContent: "center",
   },
   footerContainer: {
     paddingHorizontal: 20,

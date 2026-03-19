@@ -1,4 +1,9 @@
-import { signInWithEmail, signOutUser, signUpWithEmail } from "@/services/auth-service";
+import {
+  resetPassword,
+  signInWithEmail,
+  signOutUser,
+  signUpWithEmail,
+} from "@/services/auth-service";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
@@ -13,6 +18,7 @@ type AuthStore = {
   signin: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
   signout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   reset: () => void;
 };
 
@@ -78,6 +84,9 @@ export const useAuthStore = create<AuthStore>()(
         set({ ...initialState, isHydrated: true });
       },
       reset: () => set(initialState),
+      resetPassword: async (email: string) => {
+        await resetPassword(email);
+      },
     }),
     {
       name: "auth-storage",

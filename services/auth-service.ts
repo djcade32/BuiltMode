@@ -1,5 +1,10 @@
 import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 
 export type SignInParams = {
   email: string;
@@ -32,6 +37,15 @@ export const signUpWithEmail = async ({ email, password }: SignInParams) => {
 
 export const signOutUser = async () => {
   await signOut(auth);
+};
+
+export const resetPassword = async (email: string) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    console.log("Reset password email sent");
+  } catch (error) {
+    throw error;
+  }
 };
 
 const mapFirebaseAuthError = (error: any, action: "sign in" | "sign up"): string => {
