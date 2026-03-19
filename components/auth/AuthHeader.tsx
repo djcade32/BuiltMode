@@ -1,5 +1,6 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import Constants from "expo-constants";
+import { usePathname } from "expo-router";
 import React, { useEffect } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import "react-native-reanimated";
@@ -14,6 +15,8 @@ import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
 
 const AuthHeader = () => {
+  const pathname = usePathname();
+  const isForgotScreen = pathname === "/forgot";
   const opacity = useSharedValue(0.4);
   const scale = useSharedValue(1);
 
@@ -43,16 +46,19 @@ const AuthHeader = () => {
         <ThemedText style={styles.version}>v{Constants.expoConfig?.version}</ThemedText>
         <Image source={require("@/assets/images/full_logo.png")} style={styles.logo} />
       </ThemedView>
-      <ThemedView style={styles.subtitle}>
-        <ThemedText type="defaultSemiBold" style={{ color: Colors.text.secondary }}>
-          Build Daily.
-        </ThemedText>
-        <ThemedText type="defaultSemiBold" style={{ color: Colors.text.primary }}>
-          {" "}
-          Become Relentless
-        </ThemedText>
-      </ThemedView>
-      <View style={{ alignItems: "center" }}>
+      {!isForgotScreen && (
+        <ThemedView style={styles.subtitle}>
+          <ThemedText type="defaultSemiBold" style={{ color: Colors.text.secondary }}>
+            Build Daily.
+          </ThemedText>
+          <ThemedText type="defaultSemiBold" style={{ color: Colors.text.primary }}>
+            {" "}
+            Become Relentless
+          </ThemedText>
+        </ThemedView>
+      )}
+
+      <View style={[{ alignItems: "center" }, isForgotScreen && { marginTop: 20 }]}>
         <ThemedView style={styles.systemBadgeContainer}>
           <Animated.View
             style={[
