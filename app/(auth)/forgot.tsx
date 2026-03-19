@@ -8,7 +8,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Link } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
   KeyboardAvoidingView,
@@ -37,13 +37,9 @@ const Forgot = () => {
     defaultValues: initialValues,
   });
   const { email } = useWatch({ control });
-  const { resetPassword, error } = useAuthStore();
+  const { resetPassword } = useAuthStore();
   const [sendButtonPressed, setSendButtonPressed] = useState(false);
   const [showEmailSent, setShowEmailSent] = useState(false);
-
-  useEffect(() => {
-    error && useAuthStore.setState({ error: null });
-  }, [email]);
 
   const handleResetPassword = async (data: FormInput) => {
     const { email } = data;
@@ -53,7 +49,7 @@ const Forgot = () => {
       await resetPassword(email);
       setShowEmailSent(true);
     } catch (error) {
-      console.error("Error Signing in: ", error);
+      console.error("Error resetting password: ", error);
     } finally {
       setSendButtonPressed(false);
     }
@@ -115,8 +111,6 @@ const Forgot = () => {
                     name: "envelope",
                   }}
                 />
-
-                {error && <ThemedText style={styles.formError}>{error}</ThemedText>}
 
                 <ThemedButton
                   disabled={email?.trim().length === 0 || sendButtonPressed}
