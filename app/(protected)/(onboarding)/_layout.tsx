@@ -1,9 +1,13 @@
+import ScreenTracker from "@/components/onboarding/SceeenTracker";
+import { Colors } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { Redirect, Stack } from "expo-router";
 import React from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const OnboardingLayout = () => {
   const { isAuthenticated, isHydrated } = useAuthStore();
+
 
   if (!isHydrated) {
     console.log("Checking if hydrated: ", isHydrated);
@@ -15,14 +19,23 @@ const OnboardingLayout = () => {
   }
 
   return (
-    <Stack>
-      <Stack.Screen
-        name="welcome"
-        options={{
-          headerShown: false,
-        }}
-      />
-    </Stack>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background.primary, }}>
+      <ScreenTracker />
+      <Stack>
+        <Stack.Screen
+          name="welcome"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="username"
+          options={{
+            headerShown: false,
+          }}
+        />
+      </Stack>
+    </SafeAreaView>
   );
 };
 

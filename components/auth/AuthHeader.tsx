@@ -53,7 +53,7 @@ const AuthHeader = () => {
           </ThemedText>
           <ThemedText type="defaultSemiBold" style={{ color: Colors.text.primary }}>
             {" "}
-            Become Relentless
+            Become Relentless.
           </ThemedText>
         </ThemedView>
       )}
