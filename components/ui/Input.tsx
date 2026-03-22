@@ -22,6 +22,8 @@ type props = TextInputProps & {
   | undefined;
   onFoucus?: () => void;
   onBlur?: () => void;
+  changePostIconColorOnFocus?: boolean
+  changePreIconColorOnFocus?: boolean
 };
 
 const Input = ({
@@ -38,6 +40,8 @@ const Input = ({
   rules,
   onFocus,
   onBlur,
+  changePostIconColorOnFocus = true,
+  changePreIconColorOnFocus = true,
   ...rest
 }: props) => {
   const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -47,12 +51,12 @@ const Input = ({
     return React.createElement(familyIcon, {
       name: name,
       size: 16,
-      color: color ? color : (changeColorOnFocus ? Colors.accent.primary : Colors.text.primary),
+      color: changeColorOnFocus ? Colors.accent.primary : color ? color : Colors.text.primary,
     });
   };
 
-  const preIconComponent = preIcon && renderIcon(preIcon.familyIcon, preIcon.name, preIcon.color, isFocused);
-  const postIconComponent = postText ? <Text style={styles.postText}>{postText}</Text> : postIcon && renderIcon(postIcon.familyIcon, postIcon.name, postIcon.color, isFocused);
+  const preIconComponent = preIcon && renderIcon(preIcon.familyIcon, preIcon.name, preIcon.color, isFocused && changePreIconColorOnFocus);
+  const postIconComponent = postText ? <Text style={styles.postText} >{postText}</Text> : postIcon && renderIcon(postIcon.familyIcon, postIcon.name, postIcon.color, isFocused && changePostIconColorOnFocus);
   const passwordIconComponent = showPassword
     ? renderIcon(Ionicons, "eye-off", undefined, false)
     : renderIcon(Ionicons, "eye", undefined, false);

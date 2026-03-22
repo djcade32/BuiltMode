@@ -7,7 +7,7 @@ import { fromFeetToInches } from '@/lib/utils/conversions';
 import { useOnboardingStore } from '@/stores/onboarding-store';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Link, useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -17,42 +17,72 @@ const PRIMARY_GRADIENT_COLOR = Colors.accent.primary;
 const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 
 type FormInput = {
-    feetHeight: number | undefined,
-    inchHeight: number | undefined,
-    weight: number | undefined,
-    bodyFatPercentage: number | undefined
+    feetHeight: string | undefined,
+    inchHeight: string | undefined,
+    weight: string | undefined,
+    bodyFatPercentage: string | undefined
 }
 
 const metrics = () => {
     const {
         control,
         handleSubmit,
-        clearErrors,
         formState: { errors },
+        setValue
     } = useForm({
         defaultValues: {
             feetHeight: undefined,
             inchHeight: undefined,
             weight: undefined,
             bodyFatPercentage: undefined
-        },
+        } as FormInput,
     });
     const { bodyFatPercentage, feetHeight, inchHeight, weight } = useWatch({ control });
     const router = useRouter()
     const { setMetrics, nextScreen } = useOnboardingStore()
 
     const isFormValid = useMemo<boolean>(() => {
-        return !(bodyFatPercentage && feetHeight && inchHeight && weight)
+        return !!bodyFatPercentage && !!feetHeight && !!inchHeight && !!weight
     }, [bodyFatPercentage, feetHeight, inchHeight, weight])
+
+    useEffect(() => {
+        if (feetHeight) {
+            if (feetHeight.length > 2) {
+                setValue("feetHeight", feetHeight.slice(2).toString())
+            }
+            if (Number(feetHeight) > 10) return setValue("feetHeight", "10")
+        }
+
+        if (inchHeight) {
+            if (inchHeight.length > 2) {
+                setValue("inchHeight", inchHeight.slice(2).toString())
+            }
+            if (Number(inchHeight) > 11) return setValue("inchHeight", "11")
+        }
+
+        if (weight) {
+            if (Number(weight) > 1000) return setValue("weight", "1000")
+            if (weight.length > 4 && !weight.includes(".")) return setValue("weight", weight.slice(0, 3))
+            if (weight.length > 5 && weight.includes(".")) return setValue("weight", weight.slice(0, 5))
+        }
+
+        if (bodyFatPercentage) {
+            if (bodyFatPercentage.length > 3 && !bodyFatPercentage.includes(".")) return setValue("bodyFatPercentage", bodyFatPercentage.slice(0, 2))
+            if (bodyFatPercentage.length > 4 && bodyFatPercentage.includes(".")) return setValue("bodyFatPercentage", bodyFatPercentage.slice(0, 4))
+            if (Number(bodyFatPercentage) > 100) return setValue("bodyFatPercentage", "100")
+            if (Number(bodyFatPercentage) < 0) return setValue("bodyFatPercentage", "0")
+        }
+
+    }, [bodyFatPercentage, inchHeight, feetHeight, weight])
 
     const handleConfirmMetricsPressed = (data: FormInput) => {
         const { feetHeight, inchHeight, weight, bodyFatPercentage } = data
         if (!isFormValid) return;
-        const heightConversion = fromFeetToInches(feetHeight!, inchHeight)
+        const heightConversion = fromFeetToInches(Number(feetHeight!), Number(inchHeight))
         setMetrics({
             height: heightConversion,
-            weight: weight!,
-            bodyFatPercentage: bodyFatPercentage!,
+            weight: Number(weight!),
+            bodyFatPercentage: Number(bodyFatPercentage!),
         })
         nextScreen()
         router.replace("/(protected)/(onboarding)/weeklyStandard")
@@ -110,9 +140,9 @@ const metrics = () => {
                             name="weight"
                             control={control}
                             errors={errors.weight}
-                            placeholder="0"
+                            placeholder="0.0"
                             postText='LBS'
-                            keyboardType='number-pad'
+                            keyboardType='numeric'
                         />
                     </View>
                     <View>
@@ -121,9 +151,9 @@ const metrics = () => {
                             name="bodyFatPercentage"
                             control={control}
                             errors={errors.bodyFatPercentage}
-                            placeholder="0"
+                            placeholder="0.0"
                             postText='%'
-                            keyboardType='number-pad'
+                            keyboardType='numeric'
                         />
                     </View>
 
@@ -136,7 +166,7 @@ const metrics = () => {
                     <ThemedButton
                         title='CONFIRM METRICS'
                         fontSize={Typography.size.sm}
-                        disabled={isFormValid}
+                        disabled={!isFormValid}
                         onPress={handleSubmit(handleConfirmMetricsPressed)}
                         style={{ width: "100%" }}
                     />
@@ -195,6 +225,7 @@ const styles = StyleSheet.create({
         gap: 15,
         justifyContent: "flex-end",
         paddingBottom: 20,
+        marginTop: 15,
         flex: 1,
     },
 })
