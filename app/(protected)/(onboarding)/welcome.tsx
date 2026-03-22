@@ -138,8 +138,6 @@ const Welcome = () => {
         </View>
       </ThemedView>
 
-      <View style={styles.accentArt1} />
-      <View style={styles.accentArt2} />
     </View>
   );
 };
@@ -204,23 +202,5 @@ const styles = StyleSheet.create({
     color: Colors.inputBorder,
     letterSpacing: 2,
     textAlign: "center",
-  },
-  accentArt1: {
-    position: "absolute",
-    height: 64,
-    width: 4,
-    left: 0,
-    top: 300,
-    opacity: 0.2,
-    backgroundColor: Colors.accent.primary,
-  },
-  accentArt2: {
-    position: "absolute",
-    height: 48,
-    width: 4,
-    right: 0,
-    bottom: 240,
-    opacity: 0.2,
-    backgroundColor: Colors.accent.secondary,
   },
 });

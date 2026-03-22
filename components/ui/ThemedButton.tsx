@@ -6,9 +6,10 @@ type props = TouchableOpacityProps & {
   title: string;
   preIcon?: { familyIcon: any; name: string };
   postIcon?: { familyIcon: any; name: string };
+  fontSize?: number
 };
 
-const ThemedButton = ({ onPress, title, preIcon, postIcon, style, disabled, ...rest }: props) => {
+const ThemedButton = ({ onPress, title, preIcon, postIcon, style, disabled, fontSize, ...rest }: props) => {
   const renderIcon = (familyIcon: any, name: string) => {
     return React.createElement(familyIcon, {
       name: name,
@@ -28,7 +29,7 @@ const ThemedButton = ({ onPress, title, preIcon, postIcon, style, disabled, ...r
       {...rest}
     >
       {preIconComponent}
-      <Text style={styles.buttonText}>{title}</Text>
+      <Text style={[styles.buttonText, { fontSize: fontSize ?? Typography.size.md }]}>{title}</Text>
       {postIconComponent}
     </TouchableOpacity>
   );
@@ -49,7 +50,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: Typography.family.tertiary.regular,
-    fontSize: Typography.size.md,
     color: Colors.background.primary,
   },
 });

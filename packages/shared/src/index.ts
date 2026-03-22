@@ -1,4 +1,5 @@
 export * as UserSchemas from "./schemas/user.js";
 export * as WorkoutSchemas from "./schemas/workout.js";
+export * from "./types/onboarding.js";
 export * from "./types/user.js";
 export * from "./types/workout.js";

@@ -22,6 +22,7 @@ export const Colors = {
   tabIconDefault: "#6B7280",
   gray: "#9CA3AF",
   input: "#1F2228",
+  cardBorder: "#1F2228",
   inputBorder: "#2A2E35",
 };
 

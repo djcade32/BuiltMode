@@ -2,23 +2,24 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Controller, FieldError, FieldValues, RegisterOptions } from "react-hook-form";
-import { Pressable, StyleSheet, TextInput, TextInputProps, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 import { ThemedText } from "../themed-text";
 
 type props = TextInputProps & {
   name: string;
   control: any;
   errors: FieldError | undefined;
-  preIcon?: { familyIcon: any; name: string };
-  postIcon?: { familyIcon: any; name: string };
+  preIcon?: { familyIcon: any; name: string, color?: string };
+  postIcon?: { familyIcon: any; name: string, color?: string };
+  postText?: string;
   label?: string;
   password?: boolean;
   rules?:
-    | Omit<
-        RegisterOptions<FieldValues, string>,
-        "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
-      >
-    | undefined;
+  | Omit<
+    RegisterOptions<FieldValues, string>,
+    "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
+  >
+  | undefined;
   onFoucus?: () => void;
   onBlur?: () => void;
 };
@@ -28,6 +29,7 @@ const Input = ({
   errors,
   preIcon,
   postIcon,
+  postText,
   label,
   name,
   password,
@@ -41,19 +43,19 @@ const Input = ({
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const renderIcon = (familyIcon: any, name: string, changeColorOnFocus?: boolean) => {
+  const renderIcon = (familyIcon: any, name: string, color?: string, changeColorOnFocus?: boolean) => {
     return React.createElement(familyIcon, {
       name: name,
       size: 16,
-      color: changeColorOnFocus ? Colors.accent.primary : Colors.text.primary,
+      color: color ? color : (changeColorOnFocus ? Colors.accent.primary : Colors.text.primary),
     });
   };
 
-  const preIconComponent = preIcon && renderIcon(preIcon.familyIcon, preIcon.name, isFocused);
-  const postIconComponent = postIcon && renderIcon(postIcon.familyIcon, postIcon.name, isFocused);
+  const preIconComponent = preIcon && renderIcon(preIcon.familyIcon, preIcon.name, preIcon.color, isFocused);
+  const postIconComponent = postText ? <Text style={styles.postText}>{postText}</Text> : postIcon && renderIcon(postIcon.familyIcon, postIcon.name, postIcon.color, isFocused);
   const passwordIconComponent = showPassword
-    ? renderIcon(Ionicons, "eye-off", false)
-    : renderIcon(Ionicons, "eye", false);
+    ? renderIcon(Ionicons, "eye-off", undefined, false)
+    : renderIcon(Ionicons, "eye", undefined, false);
 
   return (
     <View>
@@ -71,7 +73,7 @@ const Input = ({
             <View
               style={[
                 styles.inputContainer,
-                { borderColor: isFocused ? Colors.accent.primary : Colors.inputBorder },
+                { borderColor: isFocused ? Colors.accent.primary : Colors.cardBorder },
               ]}
             >
               {preIconComponent}
@@ -137,13 +139,13 @@ const styles = StyleSheet.create({
   inputContainer: {
     paddingHorizontal: 10,
 
-    backgroundColor: Colors.input,
+    backgroundColor: Colors.background.secondary,
     borderRadius: Border.radius.md,
 
     flexDirection: "row",
     gap: 15,
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: 2,
   },
   textInput: {
     fontFamily: Typography.family.secondary.regular,
@@ -156,4 +158,8 @@ const styles = StyleSheet.create({
     fontSize: Typography.size.xs,
     marginTop: 5,
   },
+  postText: {
+    fontFamily: Typography.family.secondary.medium,
+    color: Colors.gray
+  }
 });

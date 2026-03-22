@@ -42,3 +42,14 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
     throw error;
   }
 };
+
+export const isUsernameAvailable = async (username: string): Promise<boolean> => {
+  try {
+    const usernameDoc = doc(db, `usernames/${username.trim().toLowerCase()}`);
+    return !(await getDoc(usernameDoc)).exists();
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+
