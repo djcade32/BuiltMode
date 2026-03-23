@@ -173,9 +173,10 @@ const metrics = () => {
                     <Link href="/(protected)/(onboarding)/weeklyStandard" asChild onPress={() => nextScreen()}>
                         <TouchableOpacity>
                             <ThemedText
-                                type="defaultSemiBold"
                                 style={{
-                                    color: Colors.gray,
+                                    color: Colors.icon,
+                                    fontFamily: Typography.family.primary.medium,
+                                    fontSize: 14
                                 }}
                             >
                                 SKIP FOR NOW

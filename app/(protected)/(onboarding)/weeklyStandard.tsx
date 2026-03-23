@@ -61,7 +61,7 @@ const weeklyStandard = () => {
                     {
                         Object.keys(NUM_OF_DAYS).map((day) =>
                             <Pressable key={day} onPress={() => setSelected(Number(day) as Days)}>
-                                <ThemedView style={[styles.numOfDay, { backgroundColor: Number(day) === selected ? Colors.accent.primary : Colors.background.secondary }]}>
+                                <ThemedView style={[styles.numOfDay, { backgroundColor: Number(day) === selected ? Colors.accent.primary : Colors.background.secondary, outlineColor: Number(day) === selected ? Colors.accent.primary : Colors.inputBorder }]}>
                                     <ThemedText style={[styles.numOfDayText, { color: Number(day) === selected ? Colors.background.primary : Colors.text.secondary }]}>{day}</ThemedText>
                                 </ThemedView>
                             </Pressable>
@@ -76,7 +76,7 @@ const weeklyStandard = () => {
                 <ThemedButton
                     title='CONFIRM STANDARD'
                     fontSize={Typography.size.sm}
-                    disabled={false}
+                    disabled={!selected}
                     onPress={handleConfirmStandard}
                 />
 
@@ -118,7 +118,6 @@ const styles = StyleSheet.create({
         paddingVertical: 11,
         justifyContent: "center",
         alignItems: "center",
-        outlineColor: Colors.cardBorder,
         outlineWidth: 2,
         borderRadius: Border.radius.md
     },

@@ -13,7 +13,6 @@ const OnboardingLayout = () => {
 
 
   if (!isHydrated) {
-    console.log("Checking if hydrated: ", isHydrated);
     return null; // or a loading spinner
   }
 
@@ -27,7 +26,7 @@ const OnboardingLayout = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
 
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background.primary }}>
         <ScreenTracker />
         <View style={styles.accentArt1} />
         <View style={styles.accentArt2} />
@@ -58,6 +57,18 @@ const OnboardingLayout = () => {
           />
           <Stack.Screen
             name="weeklyStandard"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="avatar"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="homeTimezone"
             options={{
               headerShown: false,
             }}

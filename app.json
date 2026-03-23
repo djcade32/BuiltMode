@@ -10,7 +10,13 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.djcade32.BuiltMode"
+      "bundleIdentifier": "com.djcade32.BuiltMode",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to capture workout photos and videos.",
+        "NSPhotoLibraryUsageDescription": "Allow access to save workout photos.",
+        "NSPhotoLibraryAddUsageDescription": "Allow saving workout progress photos.",
+        "NSMicrophoneUsageDescription": "Allow recording audio during workout videos."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,6 +27,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
       "package": "com.djcade32.BuiltMode"
     },
     "web": {
@@ -41,7 +48,21 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow BuiltMode to access your camera",
+          "microphonePermission": "Allow BuiltMode to access your microphone",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BuiltMode accesses your photos to let you share them with your friends."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
