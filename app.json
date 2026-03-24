@@ -65,7 +65,8 @@
         {
           "photosPermission": "BuiltMode accesses your photos to let you share them with your friends."
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
