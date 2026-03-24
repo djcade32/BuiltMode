@@ -34,12 +34,16 @@ try {
   console.warn("initializeAuth failed, falling back to getAuth:", error);
   auth = getAuth(app);
 }
-
+const EMULATOR_HOST = "10.0.0.17";
 if (__DEV__) {
   console.warn("Running Dev mode. Connecting to Firebase Emulator.");
-  connectFunctionsEmulator(functions, "localhost", 5001);
-  connectAuthEmulator(auth, "http://127.0.0.1:9099");
-  connectFirestoreEmulator(db, "localhost", 8080);
+  connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`);
+  connectFirestoreEmulator(db, EMULATOR_HOST, 8080);
+  connectFunctionsEmulator(functions, EMULATOR_HOST, 5001);
+  // connectStorageEmulator(storage, EMULATOR_HOST, 9199);
+  // connectFunctionsEmulator(functions, "localhost", 5001);
+  // connectAuthEmulator(auth, "http://10.0.0.17:9099");
+  // connectFirestoreEmulator(db, "localhost", 8080);
 }
 
 export { auth, db, functions };

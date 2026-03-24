@@ -1,3 +1,4 @@
+import OnboardingView from '@/components/onboarding/OnboardingView'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import ThemedButton from '@/components/ui/ThemedButton'
@@ -33,56 +34,58 @@ const weeklyStandard = () => {
         router.replace("/(protected)/(onboarding)/avatar")
     }
     return (
-        <ThemedView style={styles.container}>
-            <View>
-                <View style={{
-                    marginBottom: 24
-                }}>
-                    <ThemedText type='subtitle'>SET YOUR{"\n"}WEEKLY STANDARD</ThemedText>
-                    <LinearGradient
-                        colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
-                        start={{ x: 1.0, y: 0.5 }}
-                        end={{ x: 0.0, y: 0.5 }}
-                        style={styles.titleUnderline}
+        <OnboardingView>
+            <ThemedView style={styles.container}>
+                <View>
+                    <View style={{
+                        marginBottom: 24
+                    }}>
+                        <ThemedText type='subtitle'>SET YOUR{"\n"}WEEKLY STANDARD</ThemedText>
+                        <LinearGradient
+                            colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
+                            start={{ x: 1.0, y: 0.5 }}
+                            end={{ x: 0.0, y: 0.5 }}
+                            style={styles.titleUnderline}
+                        />
+                    </View>
+                    <View style={{ gap: 15 }}>
+                        <ThemedText style={{ color: Colors.gray, fontSize: 14 }}>How many days per week will you train?</ThemedText>
+                        <ThemedText style={{ color: Colors.text.secondary, fontSize: 12 }}>This becomes your accountability target</ThemedText>
+                    </View>
+
+                </View>
+                <View style={{ paddingTop: 50 }}>
+                    <View>
+                        <ThemedText style={styles.selectedDayText}>{selected}</ThemedText>
+                        <ThemedText type='defaultSemiBold' style={{ color: Colors.gray, textAlign: "center" }}>DAYS / WEEK</ThemedText>
+                    </View>
+                    <View style={styles.numOfDaysContainer}>
+                        {
+                            Object.keys(NUM_OF_DAYS).map((day) =>
+                                <Pressable key={day} onPress={() => setSelected(Number(day) as Days)}>
+                                    <ThemedView style={[styles.numOfDay, { backgroundColor: Number(day) === selected ? Colors.accent.primary : Colors.background.secondary, outlineColor: Number(day) === selected ? Colors.accent.primary : Colors.inputBorder }]}>
+                                        <ThemedText style={[styles.numOfDayText, { color: Number(day) === selected ? Colors.background.primary : Colors.text.secondary }]}>{day}</ThemedText>
+                                    </ThemedView>
+                                </Pressable>
+                            )
+                        }
+                    </View>
+                    <View>
+                        <ThemedText style={styles.numOfDayDescriptionText}>{NUM_OF_DAYS[selected]}</ThemedText>
+                    </View>
+                </View>
+                <View style={styles.footerContainer}>
+                    <ThemedButton
+                        title='CONFIRM STANDARD'
+                        fontSize={Typography.size.sm}
+                        disabled={!selected}
+                        onPress={handleConfirmStandard}
                     />
-                </View>
-                <View style={{ gap: 15 }}>
-                    <ThemedText style={{ color: Colors.gray, fontSize: 14 }}>How many days per week will you train?</ThemedText>
-                    <ThemedText style={{ color: Colors.text.secondary, fontSize: 12 }}>This becomes your accountability target</ThemedText>
+
                 </View>
 
-            </View>
-            <View style={{ paddingTop: 50 }}>
-                <View>
-                    <ThemedText style={styles.selectedDayText}>{selected}</ThemedText>
-                    <ThemedText type='defaultSemiBold' style={{ color: Colors.gray, textAlign: "center" }}>DAYS / WEEK</ThemedText>
-                </View>
-                <View style={styles.numOfDaysContainer}>
-                    {
-                        Object.keys(NUM_OF_DAYS).map((day) =>
-                            <Pressable key={day} onPress={() => setSelected(Number(day) as Days)}>
-                                <ThemedView style={[styles.numOfDay, { backgroundColor: Number(day) === selected ? Colors.accent.primary : Colors.background.secondary, outlineColor: Number(day) === selected ? Colors.accent.primary : Colors.inputBorder }]}>
-                                    <ThemedText style={[styles.numOfDayText, { color: Number(day) === selected ? Colors.background.primary : Colors.text.secondary }]}>{day}</ThemedText>
-                                </ThemedView>
-                            </Pressable>
-                        )
-                    }
-                </View>
-                <View>
-                    <ThemedText style={styles.numOfDayDescriptionText}>{NUM_OF_DAYS[selected]}</ThemedText>
-                </View>
-            </View>
-            <View style={styles.footerContainer}>
-                <ThemedButton
-                    title='CONFIRM STANDARD'
-                    fontSize={Typography.size.sm}
-                    disabled={!selected}
-                    onPress={handleConfirmStandard}
-                />
-
-            </View>
-
-        </ThemedView>
+            </ThemedView>
+        </OnboardingView>
     )
 }
 

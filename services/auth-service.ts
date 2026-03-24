@@ -49,7 +49,10 @@ export const resetPassword = async (email: string) => {
 };
 
 const mapFirebaseAuthError = (error: any, action: "sign in" | "sign up"): string => {
+  console.log("error: ", error);
   switch (error?.code) {
+    case "auth/user-not-found":
+      return "Invalid email or password.";
     case "auth/invalid-credential":
       return "Invalid email or password.";
     case "auth/invalid-email":
@@ -58,6 +61,8 @@ const mapFirebaseAuthError = (error: any, action: "sign in" | "sign up"): string
       return "Email already in use.";
     case "auth/too-many-requests":
       return "Too many attempts. Try again later.";
+    case "auth/network-request-failed":
+      return "Network Failure. Try again later.";
     default:
       return `Unable to ${action} right now.`;
   }

@@ -6,8 +6,9 @@ import { mmkvStorage } from "./mmkv-storage-wrapper";
 type OnboardingStore = {
   username: string | undefined;
   goal: GoalType | undefined;
-  metrics: Metrics | undefined;
+  metrics: Metrics | null | undefined;
   weeklyStandard: number | undefined;
+  avatarUrl: string | null | undefined;
   homeTimezone: string | undefined;
   numOfScreens: number;
   currentScreen: number;
@@ -15,8 +16,9 @@ type OnboardingStore = {
   prevScreen: () => void;
   setUsername: (username: string) => void;
   setGoal: (goal: GoalType) => void;
-  setMetrics: (metric: Metrics) => void;
+  setMetrics: (metric: Metrics | null) => void;
   setWeeklyStandard: (weeklyStandard: number) => void;
+  setAvatarUrl: (url: string | null) => void;
   setHomeTimezone: (homeTimezone: string) => void;
 };
 
@@ -25,6 +27,7 @@ const initialValues = {
   goal: undefined,
   metrics: undefined,
   weeklyStandard: undefined,
+  avatarUrl: undefined,
   homeTimezone: undefined,
   numOfScreens: 7,
   currentScreen: 1,
@@ -58,7 +61,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
           goal,
         });
       },
-      setMetrics: (metrics: Metrics) => {
+      setMetrics: (metrics: Metrics | null) => {
         set({
           metrics,
         });
@@ -66,6 +69,11 @@ export const useOnboardingStore = create<OnboardingStore>()(
       setHomeTimezone: (homeTimezone: string) => {
         set({
           homeTimezone,
+        });
+      },
+      setAvatarUrl: (url: string | null) => {
+        set({
+          avatarUrl: url,
         });
       },
       setWeeklyStandard: (weeklyStandard: number) => {

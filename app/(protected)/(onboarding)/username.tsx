@@ -1,3 +1,4 @@
+import OnboardingView from '@/components/onboarding/OnboardingView'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import Input from '@/components/ui/Input'
@@ -77,54 +78,56 @@ const username = () => {
 
 
     return (
-        <ThemedView style={styles.container}>
-            <ScrollView
-                contentContainerStyle={{ flexGrow: 1, gap: 15 }}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-            >
-                <View>
-                    <View style={styles.titleContainer}>
-                        <ThemedText type='title' style={{ textAlign: "center" }}>
-                            Choose Your{"\n"}Username
-                        </ThemedText>
-                        <ThemedText style={styles.subtitle}>This is how your circle will see you.</ThemedText>
+        <OnboardingView>
+            <ThemedView style={styles.container}>
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1, gap: 15 }}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View>
+                        <View style={styles.titleContainer}>
+                            <ThemedText type='title' style={{ textAlign: "center" }}>
+                                Choose Your{"\n"}Username
+                            </ThemedText>
+                            <ThemedText style={styles.subtitle}>This is how your circle will see you.</ThemedText>
+                        </View>
+                        <View style={{ gap: 12, marginTop: 65 }}>
+                            <Input
+                                name="username"
+                                control={control}
+                                errors={errors.username}
+                                preIcon={{
+                                    familyIcon: Entypo,
+                                    name: "email",
+                                    color: Colors.gray
+                                }}
+                                postIcon={renderPostIcon()}
+                                placeholder="yourname"
+                                rules={{
+                                    pattern: /^[a-zA-Z0-9_]{3,20}$/,
+                                }}
+                                changePostIconColorOnFocus={false}
+                            />
+                            {!errors.username?.message && username && usernameAvailable && <ThemedText style={styles.usernameAvailableText}>Username is available</ThemedText>}
+                            <ThemedText style={styles.infoText}>3-20 characters. Lowercase letters, numbers, underscore.</ThemedText>
+                        </View>
+
                     </View>
-                    <View style={{ gap: 12, marginTop: 65 }}>
-                        <Input
-                            name="username"
-                            control={control}
-                            errors={errors.username}
-                            preIcon={{
-                                familyIcon: Entypo,
-                                name: "email",
-                                color: Colors.gray
-                            }}
-                            postIcon={renderPostIcon()}
-                            placeholder="yourname"
-                            rules={{
-                                pattern: /^[a-zA-Z0-9_]{3,20}$/,
-                            }}
-                            changePostIconColorOnFocus={false}
+
+
+                    <View style={styles.footerContainer} >
+                        <ThemedButton
+                            title='CONFIRM USERNAME'
+                            fontSize={Typography.size.sm}
+                            disabled={username?.trim().length === 0 || !isValidUsername(username?.trim() ?? "") || !usernameAvailable}
+                            onPress={handleSubmit(handleConfirmUsername)}
                         />
-                        {!errors.username?.message && username && usernameAvailable && <ThemedText style={styles.usernameAvailableText}>Username is available</ThemedText>}
-                        <ThemedText style={styles.infoText}>3-20 characters. Lowercase letters, numbers, underscore.</ThemedText>
+                        <ThemedText style={[styles.infoText, { textAlign: "center" }]}>You can't change this later.</ThemedText>
                     </View>
-
-                </View>
-
-
-                <View style={styles.footerContainer} >
-                    <ThemedButton
-                        title='CONFIRM USERNAME'
-                        fontSize={Typography.size.sm}
-                        disabled={username?.trim().length === 0 || !isValidUsername(username?.trim() ?? "") || !usernameAvailable}
-                        onPress={handleSubmit(handleConfirmUsername)}
-                    />
-                    <ThemedText style={[styles.infoText, { textAlign: "center" }]}>You can't change this later.</ThemedText>
-                </View>
-            </ScrollView>
-        </ThemedView>
+                </ScrollView>
+            </ThemedView>
+        </OnboardingView>
     )
 }
 
@@ -159,5 +162,25 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
         gap: 25,
         paddingBottom: 20
-    }
+    },
+    accentArt1: {
+        position: "absolute",
+        height: 64,
+        width: 4,
+        left: 0,
+        top: 300,
+        opacity: 0.2,
+        backgroundColor: Colors.accent.primary,
+        zIndex: 100
+    },
+    accentArt2: {
+        position: "absolute",
+        height: 48,
+        width: 4,
+        right: 0,
+        bottom: 240,
+        opacity: 0.2,
+        backgroundColor: Colors.accent.secondary,
+        zIndex: 100
+    },
 })

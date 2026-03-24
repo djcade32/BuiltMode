@@ -1,4 +1,5 @@
 import GoalItem from '@/components/onboarding/GoalItem'
+import OnboardingView from '@/components/onboarding/OnboardingView'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import ThemedButton from '@/components/ui/ThemedButton'
@@ -63,36 +64,38 @@ const goal = () => {
     }
 
     return (
-        <ThemedView style={styles.container}>
+        <OnboardingView>
+            <ThemedView style={styles.container}>
 
 
-            <View style={{
-                marginBottom: 24
-            }}>
-                <ThemedText type='subtitle'>WHAT ARE YOU{"\n"}BUILDING TOWARD?</ThemedText>
-                <LinearGradient
-                    colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
-                    start={{ x: 1.0, y: 0.5 }}
-                    end={{ x: 0.0, y: 0.5 }}
-                    style={styles.titleUnderline}
-                />
-            </View>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.goalsContainer}
-            >
-                {GOALS.map(({ title, description, key }) => <GoalItem key={key} title={title} description={description} onSelected={handleGoalSelected} selected={selected} />)}
-            </ScrollView>
-            <View style={{ marginTop: 25 }}>
-                <ThemedButton
-                    title='CONFIRM GOAL'
-                    fontSize={Typography.size.sm}
-                    disabled={!selected}
-                    onPress={handleContinuePressed}
-                />
-            </View>
+                <View style={{
+                    marginBottom: 24
+                }}>
+                    <ThemedText type='subtitle'>WHAT ARE YOU{"\n"}BUILDING TOWARD?</ThemedText>
+                    <LinearGradient
+                        colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
+                        start={{ x: 1.0, y: 0.5 }}
+                        end={{ x: 0.0, y: 0.5 }}
+                        style={styles.titleUnderline}
+                    />
+                </View>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.goalsContainer}
+                >
+                    {GOALS.map(({ title, description, key }) => <GoalItem key={key} title={title} description={description} onSelected={handleGoalSelected} selected={selected} />)}
+                </ScrollView>
+                <View style={{ marginTop: 25 }}>
+                    <ThemedButton
+                        title='CONFIRM GOAL'
+                        fontSize={Typography.size.sm}
+                        disabled={!selected}
+                        onPress={handleContinuePressed}
+                    />
+                </View>
 
-        </ThemedView>
+            </ThemedView>
+        </OnboardingView>
     )
 }
 

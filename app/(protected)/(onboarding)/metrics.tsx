@@ -1,3 +1,4 @@
+import OnboardingView from '@/components/onboarding/OnboardingView';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import Input from '@/components/ui/Input';
@@ -88,104 +89,111 @@ const metrics = () => {
         router.replace("/(protected)/(onboarding)/weeklyStandard")
     }
 
-    return (
-        <ThemedView style={styles.container}>
-            <View style={{
-                marginBottom: 24
-            }}>
-                <ThemedText type='subtitle'>SET YOUR{"\n"}STARTING POINT</ThemedText>
-                <LinearGradient
-                    colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
-                    start={{ x: 1.0, y: 0.5 }}
-                    end={{ x: 0.0, y: 0.5 }}
-                    style={styles.titleUnderline}
-                />
-            </View>
+    const handleSkipNowPressed = () => {
+        nextScreen()
+        setMetrics(null)
+    }
 
-            <ScrollView
-                contentContainerStyle={{ flexGrow: 1 }}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-            >
-                <View style={styles.inputsContainer}>
-                    <View>
-                        <ThemedText style={styles.inputLabel}>HEIGHT</ThemedText>
-                        <View style={{ flexDirection: "row", gap: 10, }}>
-                            <View style={{ flex: 1, }}>
-                                <Input
-                                    name="feetHeight"
-                                    control={control}
-                                    errors={errors.feetHeight}
-                                    placeholder="0"
-                                    postText='FT'
-                                    keyboardType='number-pad'
-                                />
+    return (
+        <OnboardingView>
+            <ThemedView style={styles.container}>
+                <View style={{
+                    marginBottom: 24
+                }}>
+                    <ThemedText type='subtitle'>SET YOUR{"\n"}STARTING POINT</ThemedText>
+                    <LinearGradient
+                        colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
+                        start={{ x: 1.0, y: 0.5 }}
+                        end={{ x: 0.0, y: 0.5 }}
+                        style={styles.titleUnderline}
+                    />
+                </View>
+
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.inputsContainer}>
+                        <View>
+                            <ThemedText style={styles.inputLabel}>HEIGHT</ThemedText>
+                            <View style={{ flexDirection: "row", gap: 10, }}>
+                                <View style={{ flex: 1, }}>
+                                    <Input
+                                        name="feetHeight"
+                                        control={control}
+                                        errors={errors.feetHeight}
+                                        placeholder="0"
+                                        postText='FT'
+                                        keyboardType='number-pad'
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Input
+                                        name="inchHeight"
+                                        control={control}
+                                        errors={errors.inchHeight}
+                                        placeholder="0"
+                                        postText='IN'
+                                        keyboardType='number-pad'
+                                    />
+                                </View>
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <Input
-                                    name="inchHeight"
-                                    control={control}
-                                    errors={errors.inchHeight}
-                                    placeholder="0"
-                                    postText='IN'
-                                    keyboardType='number-pad'
-                                />
-                            </View>
+
+                        </View>
+                        <View>
+                            <ThemedText style={styles.inputLabel}>BODY WEIGHT</ThemedText>
+                            <Input
+                                name="weight"
+                                control={control}
+                                errors={errors.weight}
+                                placeholder="0.0"
+                                postText='LBS'
+                                keyboardType='numeric'
+                            />
+                        </View>
+                        <View>
+                            <ThemedText style={styles.inputLabel}>BODY FAT PERCENTAGE</ThemedText>
+                            <Input
+                                name="bodyFatPercentage"
+                                control={control}
+                                errors={errors.bodyFatPercentage}
+                                placeholder="0.0"
+                                postText='%'
+                                keyboardType='numeric'
+                            />
                         </View>
 
                     </View>
-                    <View>
-                        <ThemedText style={styles.inputLabel}>BODY WEIGHT</ThemedText>
-                        <Input
-                            name="weight"
-                            control={control}
-                            errors={errors.weight}
-                            placeholder="0.0"
-                            postText='LBS'
-                            keyboardType='numeric'
-                        />
+                    <View style={styles.infoContainer}>
+                        <FontAwesome5 name="info-circle" size={14} color={Colors.accent.secondary} />
+                        <ThemedText style={styles.infoText}>You can update this anytime in your profile settings.</ThemedText>
                     </View>
-                    <View>
-                        <ThemedText style={styles.inputLabel}>BODY FAT PERCENTAGE</ThemedText>
-                        <Input
-                            name="bodyFatPercentage"
-                            control={control}
-                            errors={errors.bodyFatPercentage}
-                            placeholder="0.0"
-                            postText='%'
-                            keyboardType='numeric'
+                    <View style={styles.footerContainer}>
+                        <ThemedButton
+                            title='CONFIRM METRICS'
+                            fontSize={Typography.size.sm}
+                            disabled={!isFormValid}
+                            onPress={handleSubmit(handleConfirmMetricsPressed)}
+                            style={{ width: "100%" }}
                         />
+                        <Link href="/(protected)/(onboarding)/weeklyStandard" asChild onPress={handleSkipNowPressed}>
+                            <TouchableOpacity>
+                                <ThemedText
+                                    style={{
+                                        color: Colors.icon,
+                                        fontFamily: Typography.family.primary.medium,
+                                        fontSize: 14
+                                    }}
+                                >
+                                    SKIP FOR NOW
+                                </ThemedText>
+                            </TouchableOpacity>
+                        </Link>
                     </View>
-
-                </View>
-                <View style={styles.infoContainer}>
-                    <FontAwesome5 name="info-circle" size={14} color={Colors.accent.secondary} />
-                    <ThemedText style={styles.infoText}>You can update this anytime in your profile settings.</ThemedText>
-                </View>
-                <View style={styles.footerContainer}>
-                    <ThemedButton
-                        title='CONFIRM METRICS'
-                        fontSize={Typography.size.sm}
-                        disabled={!isFormValid}
-                        onPress={handleSubmit(handleConfirmMetricsPressed)}
-                        style={{ width: "100%" }}
-                    />
-                    <Link href="/(protected)/(onboarding)/weeklyStandard" asChild onPress={() => nextScreen()}>
-                        <TouchableOpacity>
-                            <ThemedText
-                                style={{
-                                    color: Colors.icon,
-                                    fontFamily: Typography.family.primary.medium,
-                                    fontSize: 14
-                                }}
-                            >
-                                SKIP FOR NOW
-                            </ThemedText>
-                        </TouchableOpacity>
-                    </Link>
-                </View>
-            </ScrollView>
-        </ThemedView>
+                </ScrollView>
+            </ThemedView>
+        </OnboardingView>
     )
 }
 
