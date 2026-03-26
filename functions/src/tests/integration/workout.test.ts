@@ -4,14 +4,21 @@ import { handleCreateUserProfile } from "../../functions/user.js";
 import { handleCompleteWorkout } from "../../functions/workout.js";
 import { db } from "../../lib/firebaseAdmin.js";
 import { Workout } from "../../types/workout.js";
-import { clearFirestore } from "../utils/clearFirestore.js";
+import { clearAuth, clearFirestore } from "../utils/clearEmulators.js";
 
 describe("handleCompleteWorkout", () => {
   const uid = "test-user-123";
 
   const user: CreateUserProfileRequest = {
-    username: "djcade32",
+    username: "djcade",
     displayName: "Norman",
+    goal: "BUILD MUSCLE",
+    metrics: {
+      height: 70,
+      weight: 204,
+      bodyFatPercentage: 16,
+      system: "IMPERIAL",
+    },
     homeTimezone: "America/New_York",
     weeklyTargetDays: 4,
   };
@@ -214,6 +221,7 @@ describe("handleCompleteWorkout", () => {
 
   beforeEach(async () => {
     await clearFirestore();
+    await clearAuth();
     await handleCreateUserProfile(uid, user);
   });
 

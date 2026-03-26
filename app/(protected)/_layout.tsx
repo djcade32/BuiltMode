@@ -16,6 +16,10 @@ const ProtectedLayout = () => {
     return <Redirect href={"/(auth)/signin"} />;
   }
 
+  if (activeWorkoutDraft) {
+    return <Redirect href={"/(protected)/modal"} />;
+  }
+
   return (
     <Stack>
       <Stack.Screen

@@ -1,7 +1,7 @@
 import type { CreateUserProfileRequest } from "@builtmode/shared/types/user";
 import { handleCreateUserProfile } from "../../functions/user.js";
 import { db } from "../../lib/firebaseAdmin.js";
-import { clearFirestore } from "../utils/clearFirestore.js";
+import { clearAuth, clearFirestore } from "../utils/clearEmulators.js";
 
 describe("handleCreateUserProfile", () => {
   const uid = "test-user-123";
@@ -11,12 +11,20 @@ describe("handleCreateUserProfile", () => {
   const input: CreateUserProfileRequest = {
     username: "djcade32",
     displayName: "Norman",
+    goal: "BUILD MUSCLE",
+    metrics: {
+      height: 70,
+      weight: 204,
+      bodyFatPercentage: 16,
+      system: "IMPERIAL",
+    },
     homeTimezone: "America/New_York",
     weeklyTargetDays: 4,
   };
 
   beforeEach(async () => {
     await clearFirestore();
+    await clearAuth();
   });
 
   test("creates user doc, username index, and leaderboard entry", async () => {
@@ -36,6 +44,8 @@ describe("handleCreateUserProfile", () => {
       uid,
       username: input.username,
       usernameLower,
+      goal: input.goal,
+      metrics: input.metrics,
       displayName: input.displayName,
       homeTimezone: input.homeTimezone,
       weeklyTargetDays: input.weeklyTargetDays,
@@ -58,7 +68,10 @@ describe("handleCreateUserProfile", () => {
   test("throws if user profile already exists", async () => {
     await handleCreateUserProfile(uid, input);
 
-    await expect(handleCreateUserProfile(uid, input)).rejects.toThrow();
+    await expect(handleCreateUserProfile(uid, input)).rejects.toMatchObject({
+      code: "already-exists",
+      message: "Profile already exists.",
+    });
 
     const [userSnap, leaderboardSnap, usernameSnap] = await Promise.all([
       db.doc(`users/${uid}`).get(),

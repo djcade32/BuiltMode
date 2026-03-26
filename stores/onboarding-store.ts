@@ -1,25 +1,37 @@
-import { GoalType, Metrics } from "@/packages/shared/src/types/onboarding";
+import { uploadImageAsync } from "@/lib/firestorage";
+import {
+  CreateUserProfileRequest,
+  CreateUserProfileResponse,
+  Goal,
+  Metrics,
+  WeeklyTargetDays,
+} from "@/packages/shared/src";
+import { createUserProfile } from "@/services/user-service";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { useAuthStore } from "./auth-store";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
 
 type OnboardingStore = {
   username: string | undefined;
-  goal: GoalType | undefined;
+  goal: Goal | undefined;
   metrics: Metrics | null | undefined;
-  weeklyStandard: number | undefined;
+  weeklyStandard: WeeklyTargetDays | undefined;
   avatarUrl: string | null | undefined;
   homeTimezone: string | undefined;
   numOfScreens: number;
   currentScreen: number;
+  isCreatingUser: boolean;
   nextScreen: () => void;
   prevScreen: () => void;
   setUsername: (username: string) => void;
-  setGoal: (goal: GoalType) => void;
+  setGoal: (goal: Goal) => void;
   setMetrics: (metric: Metrics | null) => void;
-  setWeeklyStandard: (weeklyStandard: number) => void;
+  setWeeklyStandard: (weeklyStandard: WeeklyTargetDays) => void;
   setAvatarUrl: (url: string | null) => void;
   setHomeTimezone: (homeTimezone: string) => void;
+  createUserProfile: () => Promise<CreateUserProfileResponse | undefined>;
+  resetState: () => void;
 };
 
 const initialValues = {
@@ -31,6 +43,7 @@ const initialValues = {
   homeTimezone: undefined,
   numOfScreens: 7,
   currentScreen: 1,
+  isCreatingUser: false,
 };
 
 export const useOnboardingStore = create<OnboardingStore>()(
@@ -56,7 +69,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
           username,
         });
       },
-      setGoal: (goal: GoalType) => {
+      setGoal: (goal: Goal) => {
         set({
           goal,
         });
@@ -76,9 +89,55 @@ export const useOnboardingStore = create<OnboardingStore>()(
           avatarUrl: url,
         });
       },
-      setWeeklyStandard: (weeklyStandard: number) => {
+      setWeeklyStandard: (weeklyStandard: WeeklyTargetDays) => {
         set({
           weeklyStandard,
+        });
+      },
+      createUserProfile: async () => {
+        try {
+          set({
+            isCreatingUser: true,
+          });
+          const { avatarUrl, username, goal, metrics, weeklyStandard, homeTimezone, resetState } =
+            get();
+          if (!username || !goal || !weeklyStandard || !homeTimezone) return;
+          const displayName = useAuthStore.getState().user?.name;
+          let convertedUrl = undefined;
+          if (avatarUrl) {
+            const uid = useAuthStore.getState().user?.uid;
+            if (!uid) {
+              console.warn("No User uid, could not upload avatar");
+              return;
+            }
+            convertedUrl = (await uploadImageAsync(avatarUrl, `user-avatars/${uid}`)) ?? "";
+          }
+
+          const user: CreateUserProfileRequest = {
+            avatarUrl: convertedUrl,
+            username,
+            displayName: displayName ?? "",
+            goal,
+            metrics: metrics ?? undefined,
+            weeklyTargetDays: weeklyStandard,
+            homeTimezone,
+          };
+          console.log("createdUser: ", user);
+
+          const response = await createUserProfile(user);
+          resetState();
+          return response;
+        } catch (error) {
+          throw error;
+        } finally {
+          set({
+            isCreatingUser: false,
+          });
+        }
+      },
+      resetState: () => {
+        set({
+          ...initialValues,
         });
       },
     }),

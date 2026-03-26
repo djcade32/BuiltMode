@@ -1,11 +1,11 @@
-import { User } from "@/packages/shared/src";
+import { CreateUserProfileResponse } from "@/packages/shared/src";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
 
 type UserStore = {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: CreateUserProfileResponse | null;
+  setUser: (user: CreateUserProfileResponse | null) => void;
 };
 
 export const useUserStore = create<UserStore>()(
@@ -21,6 +21,9 @@ export const useUserStore = create<UserStore>()(
     {
       name: "user-storage",
       storage: createJSONStorage(() => mmkvStorage),
+      partialize: (state) => ({
+        user: state.user,
+      }),
     },
   ),
 );

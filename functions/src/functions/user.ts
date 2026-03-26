@@ -28,7 +28,7 @@ export async function handleCreateUserProfile(
   uid: string,
   user: CreateUserProfileRequest,
 ): Promise<CreateUserProfileResponse> {
-  const { homeTimezone, username, displayName, avatarUrl, weeklyTargetDays } = user;
+  const { homeTimezone, username, displayName, avatarUrl, weeklyTargetDays, goal, metrics } = user;
   const usernameLower = user.username.trim().toLowerCase();
   const now = Timestamp.now();
   const currentWeekId = handleGetWeekId(now.toDate(), homeTimezone);
@@ -52,6 +52,8 @@ export async function handleCreateUserProfile(
       username: username.trim(),
       usernameLower,
       displayName: displayName.trim(),
+      goal,
+      metrics: metrics ?? undefined,
       avatarUrl: avatarUrl ?? "",
       homeTimezone: homeTimezone,
       officialStartWeekId,
@@ -83,6 +85,8 @@ export async function handleCreateUserProfile(
     username: username.trim(),
     displayName: displayName.trim(),
     avatarUrl: avatarUrl ?? "",
+    goal,
+    metrics: metrics ?? undefined,
     homeTimezone: homeTimezone,
     officialStartWeekId,
     weeklyTargetDays: weeklyTargetDays,

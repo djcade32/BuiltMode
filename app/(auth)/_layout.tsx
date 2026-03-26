@@ -1,7 +1,6 @@
 import { useAuthStore } from "@/stores/auth-store";
 import { useUserStore } from "@/stores/user-store";
 import { Redirect, Stack } from "expo-router";
-import "react-native-reanimated";
 
 export default function AuthLayout() {
   const { isAuthenticated, isHydrated } = useAuthStore();

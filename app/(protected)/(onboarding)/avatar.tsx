@@ -50,7 +50,6 @@ const avatar = () => {
       allowsEditing: true,
       aspect: [1, 1],
     });
-    console.log(result);
     if (!result.assets) return;
     setSavedPhoto(result.assets[0].uri);
   };
@@ -265,7 +264,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   subText: {
-    color: Colors.gray,
+    color: Colors.icon,
     fontSize: 14,
     lineHeight: 22,
   },

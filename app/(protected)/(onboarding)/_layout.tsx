@@ -1,11 +1,10 @@
 import { useAuthStore } from "@/stores/auth-store";
-import { useOnboardingStore } from "@/stores/onboarding-store";
 import { Redirect, Stack } from "expo-router";
 import React from "react";
 
 const OnboardingLayout = () => {
-  useOnboardingStore.persist.clearStorage();
-  // useAuthStore.persist.clearStorage()
+  // useOnboardingStore.persist.clearStorage();
+  // useAuthStore.persist.clearStorage();
   const { isAuthenticated, isHydrated } = useAuthStore();
 
   if (!isHydrated) {
@@ -25,6 +24,7 @@ const OnboardingLayout = () => {
       <Stack.Screen name="weeklyStandard" />
       <Stack.Screen name="avatar" />
       <Stack.Screen name="homeTimezone" />
+      <Stack.Screen name="modeScore" />
     </Stack>
   );
 };

@@ -8,6 +8,7 @@ import { TIMEZONE_OPTIONS, TimezoneOption } from "@/constants/timezones";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { getCalendars } from "expo-localization";
+import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
@@ -16,6 +17,7 @@ const PRIMARY_GRADIENT_COLOR = Colors.accent.primary;
 const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 
 const HomeTimezone = () => {
+  const router = useRouter();
   const { setHomeTimezone } = useOnboardingStore();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -36,7 +38,7 @@ const HomeTimezone = () => {
 
   const handleConfirm = () => {
     setHomeTimezone(selectedTimezone);
-    // router.push("/next-screen");
+    router.push("/(protected)/(onboarding)/modeScore");
   };
 
   return (
@@ -126,7 +128,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   subText: {
-    color: Colors.gray,
+    color: Colors.icon,
     fontSize: 14,
     lineHeight: 22,
   },

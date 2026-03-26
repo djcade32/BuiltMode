@@ -5,6 +5,7 @@ import Input from "@/components/ui/Input";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
+import { useUserStore } from "@/stores/user-store";
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import React, { useEffect } from "react";
@@ -40,6 +41,7 @@ const Signin = () => {
   });
   const { email, password } = useWatch({ control });
   const { signin, isSigningIn, error } = useAuthStore();
+  const { setUser } = useUserStore();
 
   useEffect(() => {
     error && useAuthStore.setState({ error: null });
@@ -49,7 +51,8 @@ const Signin = () => {
     const { email, password } = data;
     if (!email || !password) return;
     try {
-      await signin(email, password);
+      const user = await signin(email, password);
+      // if (user) setUser(user);
     } catch (error) {
       console.error("Error Signing in: ", error);
     }

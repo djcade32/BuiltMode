@@ -3,6 +3,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Border, Colors, Typography } from "@/constants/theme";
+import { WeeklyTargetDays } from "@/packages/shared/src";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -12,9 +13,7 @@ import LinearGradient from "react-native-linear-gradient";
 const PRIMARY_GRADIENT_COLOR = Colors.accent.primary;
 const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 
-type Days = 2 | 3 | 4 | 5 | 6 | 7;
-
-const NUM_OF_DAYS: Record<Days, string> = {
+const NUM_OF_DAYS: Record<WeeklyTargetDays, string> = {
   2: "Starting point.",
   3: "Building consistency.",
   4: "Standard.",
@@ -26,7 +25,7 @@ const NUM_OF_DAYS: Record<Days, string> = {
 const weeklyStandard = () => {
   const router = useRouter();
   const { setWeeklyStandard, nextScreen } = useOnboardingStore();
-  const [selected, setSelected] = useState<Days>(5);
+  const [selected, setSelected] = useState<WeeklyTargetDays>(5);
 
   const handleConfirmStandard = () => {
     setWeeklyStandard(selected);
@@ -68,7 +67,7 @@ const weeklyStandard = () => {
           </View>
           <View style={styles.numOfDaysContainer}>
             {Object.keys(NUM_OF_DAYS).map((day) => (
-              <Pressable key={day} onPress={() => setSelected(Number(day) as Days)}>
+              <Pressable key={day} onPress={() => setSelected(Number(day) as WeeklyTargetDays)}>
                 <ThemedView
                   style={[
                     styles.numOfDay,

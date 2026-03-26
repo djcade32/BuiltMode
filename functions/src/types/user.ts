@@ -1,3 +1,4 @@
+import { Goal, Metrics } from "@builtmode/shared/types/user";
 import { Timestamp } from "firebase-admin/firestore";
 
 export type WeeklyTargetDays = 2 | 3 | 4 | 5 | 6 | 7;
@@ -10,6 +11,8 @@ export type UserDoc = {
   usernameLower: string;
   displayName: string;
   avatarUrl?: string;
+  goal: Goal;
+  metrics?: Metrics;
 
   // Time & eligibility
   homeTimezone: string;

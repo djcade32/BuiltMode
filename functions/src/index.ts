@@ -9,8 +9,9 @@
 
 import { createUserProfileRequestSchema } from "@builtmode/shared/schemas/user";
 import { completeWorkoutRequestSchema } from "@builtmode/shared/schemas/workout";
+import { CreateUserProfileRequest } from "@builtmode/shared/types/user";
 import { setGlobalOptions } from "firebase-functions/v2";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
 import { handleCreateUserProfile } from "./functions/user.js";
 import { handleCompleteWorkout } from "./functions/workout.js";
 import { assertValidTimezone } from "./utils/time.js";
@@ -32,7 +33,7 @@ import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekI
 setGlobalOptions({ maxInstances: 10 });
 
 export const createUserProfile = onCall(
-  async (request: { auth?: { uid?: string } | null; data: unknown }) => {
+  async (request: CallableRequest<CreateUserProfileRequest>) => {
     if (!request.auth?.uid) {
       throw new HttpsError("unauthenticated", "User must be signed in.");
     }
@@ -42,6 +43,7 @@ export const createUserProfile = onCall(
     if (!parsed.success) {
       throw new HttpsError("invalid-argument", "Invalid profile payload.");
     }
+
     assertValidTimezone(parsed.data.homeTimezone);
 
     return await handleCreateUserProfile(request.auth.uid, parsed.data);
