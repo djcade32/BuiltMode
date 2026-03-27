@@ -9,6 +9,7 @@ let mockAuthState = {
 
 let mockUserState = {
   user: null as any,
+  isUserHydrated: true,
 };
 
 jest.mock("expo-router", () => {
@@ -47,6 +48,7 @@ describe("auth layout routing", () => {
 
     mockUserState = {
       user: null,
+      isUserHydrated: true,
     };
   });
 
@@ -67,6 +69,7 @@ describe("auth layout routing", () => {
 
     mockUserState = {
       user: null,
+      isUserHydrated: true,
     };
 
     render(<AuthLayout />);
@@ -86,6 +89,7 @@ describe("auth layout routing", () => {
         uid: "user-123",
         username: "norman",
       },
+      isUserHydrated: true,
     };
 
     render(<AuthLayout />);

@@ -51,10 +51,10 @@ export const useOnboardingStore = create<OnboardingStore>()(
     (set, get) => ({
       ...initialValues,
       nextScreen: () => {
-        const screenNum = get().currentScreen;
+        const screenNum = get().currentScreen + 1;
         if (screenNum > get().numOfScreens) return;
         set({
-          currentScreen: get().currentScreen + 1,
+          currentScreen: screenNum,
         });
       },
       prevScreen: () => {

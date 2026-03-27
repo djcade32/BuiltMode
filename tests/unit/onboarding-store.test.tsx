@@ -21,7 +21,7 @@ const initialOnboardingState = {
   weeklyStandard: undefined,
   avatarUrl: undefined,
   homeTimezone: undefined,
-  numOfScreens: 7,
+  numOfScreens: 8,
   currentScreen: 1,
   isCreatingUser: false,
 };
@@ -73,12 +73,12 @@ describe("onboarding store", () => {
   test("nextScreen does not exceed numOfScreens", () => {
     useOnboardingStore.setState({
       ...useOnboardingStore.getState(),
-      currentScreen: 7,
+      currentScreen: 8,
     });
 
     useOnboardingStore.getState().nextScreen();
 
-    expect(useOnboardingStore.getState().currentScreen).toBe(7);
+    expect(useOnboardingStore.getState().currentScreen).toBe(8);
   });
 
   test("prevScreen decrements currentScreen", () => {
