@@ -9,8 +9,5 @@
  * feet and optional inches input.
  */
 export const fromFeetToInches = (feet: number, inches?: number) => {
-  let conversion = 12 * feet;
-  if (inches) conversion = conversion + inches;
-
-  return conversion;
+  return 12 * feet + (inches ?? 0);
 };

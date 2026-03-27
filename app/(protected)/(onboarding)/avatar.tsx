@@ -8,7 +8,7 @@ import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { Link, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Alert, Image, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 
@@ -27,13 +27,10 @@ const avatar = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
-  useEffect(() => {
-    askForCameraPermissions();
-  }, [permission]);
-
   const askForCameraPermissions = async () => {
+    if (!permission) return;
     if (permission && !permission.granted && permission.canAskAgain) {
-      requestPermission();
+      await requestPermission();
     }
   };
 
@@ -59,10 +56,14 @@ const avatar = () => {
   };
 
   const takePhoto = async () => {
-    const photo = await cameraRef.current?.takePictureAsync();
-    if (photo?.uri) {
-      const uri = photo.uri;
-      setSelectedPhoto(uri);
+    try {
+      const photo = await cameraRef.current?.takePictureAsync();
+      if (photo?.uri) {
+        setSelectedPhoto(photo.uri);
+      }
+    } catch (error) {
+      console.error("Failed to capture photo:", error);
+      Alert.alert("Error", "Failed to capture photo. Please try again.");
     }
   };
 

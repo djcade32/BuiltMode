@@ -7,7 +7,7 @@ import { ThemedText } from "../themed-text";
 type props = {
   title: Goal;
   description: string;
-  selected: string | undefined;
+  selected: Goal | undefined;
   onSelected: (goal: Goal) => void;
 };
 const GoalItem = ({ title, description, selected, onSelected }: props) => {

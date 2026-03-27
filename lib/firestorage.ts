@@ -6,7 +6,7 @@ export async function uploadImageAsync(uri: string, storageUrl: string) {
     if (!uri || app == null) return;
     // Why are we using XMLHttpRequest? See:
     // https://github.com/expo/expo/issues/2402#issuecomment-443726662
-    const blob = await new Promise((resolve, reject) => {
+    const blob: Blob = await new Promise<Blob>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.onload = function () {
         resolve(xhr.response);
@@ -21,17 +21,14 @@ export async function uploadImageAsync(uri: string, storageUrl: string) {
     });
 
     const fileRef = ref(getStorage(), storageUrl);
-    const result = await uploadBytes(fileRef, blob as Blob);
+    await uploadBytes(fileRef, blob as Blob);
 
     // We're done with the blob, close and release it
     //@ts-ignore
     blob.close();
-    return await getDownloadURL(fileRef).then((url) => {
-      if (url) {
-        console.log("Image uploaded: ", url);
-        return url;
-      }
-    });
+    const url = await getDownloadURL(fileRef);
+    console.log("Image uploaded: ", url);
+    return url;
   } catch (error) {
     throw Error(`ERROR: There was a problem uploading the image: ${error}`);
   }

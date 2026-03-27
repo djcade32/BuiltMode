@@ -121,7 +121,7 @@ const username = () => {
                 <ThemedText style={styles.usernameAvailableText}>Username is available</ThemedText>
               )}
               <ThemedText style={styles.infoText}>
-                3-20 characters. Lowercase letters, numbers, underscore.
+                3-20 characters. Lowercase letters, numbers, periods, underscore.
               </ThemedText>
             </View>
           </View>

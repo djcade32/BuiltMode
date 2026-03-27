@@ -58,7 +58,8 @@ const Signup = () => {
 
   const handleSignup = async (data: FormInput) => {
     if (!isValidForm(data)) return;
-    const { name, email, password } = data;
+    const name = data.name.trim();
+    const { email, password } = data;
     try {
       await signup(name, email, password);
     } catch (error) {
@@ -67,23 +68,15 @@ const Signup = () => {
   };
 
   const isValidForm = (data: FormInput) => {
-    const { name, email, password, confirmPassword } = data;
-    clearErrors(["password", "confirmPassword"]);
-    if (!name || !email || !password || !confirmPassword) return false;
-    if (!isValidPassword) {
-      setError("password", {
-        message:
-          "Password must be at least 8 characters; contain at least one uppercase character and one digit.",
-      });
+    const name = data.name.trim();
+    const { email, password, confirmPassword } = data;
+    clearErrors(["name", "password", "confirmPassword"]);
+    if (!name || !email || !password || !confirmPassword) {
+      if (!name) {
+        setError("name", { message: "Name is required." });
+      }
       return false;
     }
-    if (password !== confirmPassword) {
-      setError("confirmPassword", {
-        message: "Passwords don't match.",
-      });
-      return false;
-    }
-    return true;
   };
 
   return (
@@ -160,6 +153,7 @@ const Signup = () => {
 
               <ThemedButton
                 disabled={
+                  name?.trim().length === 0 ||
                   email?.trim().length === 0 ||
                   password?.trim().length === 0 ||
                   confirmPassword?.trim().length === 0 ||

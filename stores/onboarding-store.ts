@@ -103,6 +103,10 @@ export const useOnboardingStore = create<OnboardingStore>()(
             get();
           if (!username || !goal || !weeklyStandard || !homeTimezone) return;
           const displayName = useAuthStore.getState().user?.name;
+          if (!displayName) {
+            console.warn("No display name available for user profile");
+            return;
+          }
           let convertedUrl = undefined;
           if (avatarUrl) {
             const uid = useAuthStore.getState().user?.uid;

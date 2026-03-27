@@ -106,7 +106,6 @@ const weeklyStandard = () => {
           <ThemedButton
             title="CONFIRM STANDARD"
             fontSize={Typography.size.sm}
-            disabled={!selected}
             onPress={handleConfirmStandard}
           />
         </View>

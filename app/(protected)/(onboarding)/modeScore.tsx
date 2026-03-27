@@ -18,44 +18,44 @@ const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 const BUILTMODE_REWARDS_POINTS = ["Consistency", "Structure", "Recovery", "Follow-through"];
 const IT_DOES_NOT_REWARD_POINTS = ["Overtraining", "Volume Inflation", "Intensity exaggeration"];
 
+const SectionTitle = ({ title }: { title: string }) => {
+  return (
+    <View style={styles.subtitleContainer}>
+      <View style={styles.subtitleAccent} />
+      <ThemedText style={styles.subtitle}>{title}</ThemedText>
+    </View>
+  );
+};
+
+const BulletPoint = ({ text }: { text: string }) => {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <View
+        style={{
+          backgroundColor: Colors.accent.primary,
+          width: 5,
+          height: 5,
+          borderRadius: 5 / 2,
+        }}
+      />
+      <ThemedText style={{ fontSize: 14, color: Colors.gray }}>{text}</ThemedText>
+    </View>
+  );
+};
+
 const ModeScore = () => {
   const router = useRouter();
   const { createUserProfile, isCreatingUser } = useOnboardingStore();
   const { signout } = useAuthStore();
   const { setUser } = useUserStore();
 
-  const SectionTitle = ({ title }: { title: string }) => {
-    return (
-      <View style={styles.subtitleContainer}>
-        <View style={styles.subtitleAccent} />
-        <ThemedText style={styles.subtitle}>{title}</ThemedText>
-      </View>
-    );
-  };
-
-  const BulletPoint = ({ text }: { text: string }) => {
-    return (
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View
-          style={{
-            backgroundColor: Colors.accent.primary,
-            width: 5,
-            height: 5,
-            borderRadius: 5 / 2,
-          }}
-        />
-        <ThemedText style={{ fontSize: 14, color: Colors.gray }}>{text}</ThemedText>
-      </View>
-    );
-  };
-
   function ErrorAlert() {
     return Alert.alert("Oops", "There was an error onboarding you.", [
       { text: "Try again", onPress: handleEnterModePressed },
       {
         text: "Cancel",
-        onPress: () => {
-          signout();
+        onPress: async () => {
+          await signout();
           router.replace("/(auth)/signin");
         },
         style: "destructive",
@@ -79,7 +79,6 @@ const ModeScore = () => {
   };
 
   return (
-    // <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background.primary }} edges={["top"]}>
     <OnboardingView>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <ThemedView style={styles.container}>
@@ -390,7 +389,6 @@ const ModeScore = () => {
           </View>
         </ThemedView>
       </ScrollView>
-      {/* </SafeAreaView> */}
     </OnboardingView>
   );
 };
