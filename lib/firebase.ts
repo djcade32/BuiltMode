@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
+import { connectStorageEmulator, getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCQ8jRXtG4oiI8xPxTiX7yirskttvyEScM",
@@ -21,9 +22,10 @@ const firebaseConfig = {
   measurementId: "G-PK7Z4PVE11",
 };
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const functions = getFunctions(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 let auth: Auth;
 try {
@@ -34,12 +36,14 @@ try {
   console.warn("initializeAuth failed, falling back to getAuth:", error);
   auth = getAuth(app);
 }
+const EMULATOR_HOST = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST ?? "127.0.0.1";
 
 if (__DEV__) {
   console.warn("Running Dev mode. Connecting to Firebase Emulator.");
-  connectFunctionsEmulator(functions, "localhost", 5001);
-  connectAuthEmulator(auth, "http://127.0.0.1:9099");
-  connectFirestoreEmulator(db, "localhost", 8080);
+  connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`);
+  connectFirestoreEmulator(db, EMULATOR_HOST, 8080);
+  connectFunctionsEmulator(functions, EMULATOR_HOST, 5001);
+  connectStorageEmulator(storage, EMULATOR_HOST, 9199);
 }
 
 export { auth, db, functions };

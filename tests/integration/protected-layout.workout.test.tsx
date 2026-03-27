@@ -27,6 +27,7 @@ jest.mock("../../stores/auth-store", () => ({
     user: null,
     isAuthenticated: true,
     isSigningIn: false,
+    isHydrated: true,
     error: null,
     signin: jest.fn(),
     signup: jest.fn(),
@@ -46,8 +47,10 @@ describe("active workout guard", () => {
     render(<ProtectedLayout />);
 
     expect(screen.getByText("StackRendered")).toBeTruthy();
+    expect(screen.getByText("StackScreen:(onboarding)")).toBeTruthy();
     expect(screen.getByText("StackScreen:(tabs)")).toBeTruthy();
-    expect(screen.queryByText("Redirect:/modal")).toBeNull();
+    expect(screen.getByText("StackScreen:modal")).toBeTruthy();
+    expect(screen.queryByText("Redirect:/(protected)/modal")).toBeNull();
   });
 
   test("redirects to modal when active workout exists", () => {
@@ -64,7 +67,7 @@ describe("active workout guard", () => {
 
     render(<ProtectedLayout />);
 
-    expect(screen.getByText("Redirect:/modal")).toBeTruthy();
+    expect(screen.getByText("Redirect:/(protected)/modal")).toBeTruthy();
     expect(screen.queryByText("StackRendered")).toBeNull();
   });
 });

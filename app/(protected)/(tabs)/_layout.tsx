@@ -1,11 +1,21 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
-import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { useUserStore } from "@/stores/user-store";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
+  const { user, isUserHydrated } = useUserStore();
+
+  if (!isUserHydrated) {
+    return null;
+  }
+
+  if (!user) {
+    return <Redirect href={"/(protected)/(onboarding)/welcome"} />;
+  }
   return (
     <Tabs
       screenOptions={{
@@ -41,7 +51,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => <FontAwesome name="user" size={28} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={28} color={color} />,
         }}
       />
     </Tabs>

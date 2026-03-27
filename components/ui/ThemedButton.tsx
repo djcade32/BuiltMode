@@ -4,21 +4,22 @@ import { StyleSheet, Text, TouchableOpacity, TouchableOpacityProps } from "react
 
 type props = TouchableOpacityProps & {
   title: string;
-  preIcon?: { familyIcon: any; name: string };
-  postIcon?: { familyIcon: any; name: string };
+  preIcon?: { familyIcon: any; name: string, size?: number };
+  postIcon?: { familyIcon: any; name: string, size?: number };
+  fontSize?: number
 };
 
-const ThemedButton = ({ onPress, title, preIcon, postIcon, style, disabled, ...rest }: props) => {
-  const renderIcon = (familyIcon: any, name: string) => {
+const ThemedButton = ({ onPress, title, preIcon, postIcon, style, disabled, fontSize, ...rest }: props) => {
+  const renderIcon = (familyIcon: any, name: string, size: number = 16) => {
     return React.createElement(familyIcon, {
       name: name,
-      size: 16,
+      size: size,
       color: Colors.background.primary,
     });
   };
 
-  const preIconComponent = preIcon && renderIcon(preIcon.familyIcon, preIcon.name);
-  const postIconComponent = postIcon && renderIcon(postIcon.familyIcon, postIcon.name);
+  const preIconComponent = preIcon && renderIcon(preIcon.familyIcon, preIcon.name, preIcon.size);
+  const postIconComponent = postIcon && renderIcon(postIcon.familyIcon, postIcon.name, postIcon.size);
 
   return (
     <TouchableOpacity
@@ -28,7 +29,7 @@ const ThemedButton = ({ onPress, title, preIcon, postIcon, style, disabled, ...r
       {...rest}
     >
       {preIconComponent}
-      <Text style={styles.buttonText}>{title}</Text>
+      <Text style={[styles.buttonText, { fontSize: fontSize ?? Typography.size.md }]}>{title}</Text>
       {postIconComponent}
     </TouchableOpacity>
   );
@@ -49,7 +50,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: Typography.family.tertiary.regular,
-    fontSize: Typography.size.md,
     color: Colors.background.primary,
   },
 });

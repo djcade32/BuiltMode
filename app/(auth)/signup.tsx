@@ -3,7 +3,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import Input from "@/components/ui/Input";
 import ThemedButton from "@/components/ui/ThemedButton";
-import { Border, Colors, Typography } from "@/constants/theme";
+import { Colors, Typography } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { Link } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -19,12 +19,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type FormInput = {
+  name: string;
   email: string;
   password: string;
   confirmPassword: string;
 };
 
 const initialValues: FormInput = {
+  name: "",
   email: "",
   password: "",
   confirmPassword: "",
@@ -40,13 +42,13 @@ const Signup = () => {
   } = useForm<FormInput>({
     defaultValues: initialValues,
   });
-  const { email, password, confirmPassword } = useWatch({ control });
+  const { name, email, password, confirmPassword } = useWatch({ control });
   const [showPasswordRules, setShowPasswordRules] = useState(false);
   const { signup, isSigningIn, error } = useAuthStore();
 
   useEffect(() => {
     error && useAuthStore.setState({ error: null });
-  }, [email, password]);
+  }, [name, email, password]);
 
   const isValidPassword = useMemo(() => {
     if (!password) return false;
@@ -56,32 +58,25 @@ const Signup = () => {
 
   const handleSignup = async (data: FormInput) => {
     if (!isValidForm(data)) return;
+    const name = data.name.trim();
     const { email, password } = data;
     try {
-      await signup(email, password);
+      await signup(name, email, password);
     } catch (error) {
       console.error("Error Signing up: ", error);
     }
   };
 
   const isValidForm = (data: FormInput) => {
+    const name = data.name.trim();
     const { email, password, confirmPassword } = data;
-    clearErrors(["password", "confirmPassword"]);
-    if (!email || !password || !confirmPassword) return false;
-    if (!isValidPassword) {
-      setError("password", {
-        message:
-          "Password must be at least 8 characters; contain at least one uppercase character and one digit.",
-      });
+    clearErrors(["name", "password", "confirmPassword"]);
+    if (!name || !email || !password || !confirmPassword) {
+      if (!name) {
+        setError("name", { message: "Name is required." });
+      }
       return false;
     }
-    if (password !== confirmPassword) {
-      setError("confirmPassword", {
-        message: "Does not match password.",
-      });
-      return false;
-    }
-    return true;
   };
 
   return (
@@ -99,6 +94,17 @@ const Signup = () => {
             <AuthHeader />
 
             <ThemedView style={styles.formContainer}>
+              <Input
+                name="name"
+                control={control}
+                errors={errors.name}
+                label="NAME"
+                placeholder="John Doe"
+                maxLength={75}
+                rules={{
+                  required: true,
+                }}
+              />
               <Input
                 name="email"
                 control={control}
@@ -147,6 +153,7 @@ const Signup = () => {
 
               <ThemedButton
                 disabled={
+                  name?.trim().length === 0 ||
                   email?.trim().length === 0 ||
                   password?.trim().length === 0 ||
                   confirmPassword?.trim().length === 0 ||
@@ -157,7 +164,14 @@ const Signup = () => {
               />
             </ThemedView>
 
-            <ThemedView style={{ flexDirection: "row", justifyContent: "center", marginTop: 45 }}>
+            <ThemedView
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                marginTop: 30,
+                alignItems: "center",
+              }}
+            >
               <ThemedText
                 type="defaultSemiBold"
                 style={{
@@ -207,39 +221,6 @@ const Signup = () => {
 export default Signup;
 
 const styles = StyleSheet.create({
-  version: {
-    fontSize: 12,
-    fontFamily: Typography.family.secondary.regular,
-    color: Colors.accent.secondary,
-    position: "absolute",
-    top: -15,
-    right: 70,
-  },
-  logo: {
-    height: 40,
-    width: "100%",
-    objectFit: "contain",
-  },
-  subtitle: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
-    marginBottom: 32,
-  },
-  systemBadgeContainer: {
-    backgroundColor: Colors.background.secondary,
-    borderRadius: Border.radius.lg,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  systemBadgeText: {
-    fontFamily: Typography.family.secondary.regular,
-    fontSize: 12,
-    color: Colors.text.secondary,
-  },
   formContainer: {
     marginTop: 25,
     alignSelf: "center",
@@ -251,6 +232,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     flex: 1,
     justifyContent: "flex-end",
+    marginTop: 30,
   },
   footerText: {
     fontFamily: Typography.family.primary.regular,

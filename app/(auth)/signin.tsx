@@ -3,7 +3,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import Input from "@/components/ui/Input";
 import ThemedButton from "@/components/ui/ThemedButton";
-import { Border, Colors, Typography } from "@/constants/theme";
+import { Colors, Typography } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 import { Link } from "expo-router";
@@ -162,39 +162,6 @@ const Signin = () => {
 export default Signin;
 
 const styles = StyleSheet.create({
-  version: {
-    fontSize: 12,
-    fontFamily: Typography.family.secondary.regular,
-    color: Colors.accent.secondary,
-    position: "absolute",
-    top: -15,
-    right: 70,
-  },
-  logo: {
-    height: 40,
-    width: "100%",
-    objectFit: "contain",
-  },
-  subtitle: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
-    marginBottom: 32,
-  },
-  systemBadgeContainer: {
-    backgroundColor: Colors.background.secondary,
-    borderRadius: Border.radius.lg,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  systemBadgeText: {
-    fontFamily: Typography.family.secondary.regular,
-    fontSize: 12,
-    color: Colors.text.secondary,
-  },
   formContainer: {
     marginTop: 25,
     alignSelf: "center",

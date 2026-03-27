@@ -4,11 +4,11 @@ import { Redirect, Stack } from "expo-router";
 import React from "react";
 
 const ProtectedLayout = () => {
-  const { isAuthenticated, isHydrated, reset } = useAuthStore();
+  const { isAuthenticated, isHydrated } = useAuthStore();
+
   const { activeWorkoutDraft } = useWorkoutStore();
 
   if (!isHydrated) {
-    console.log("Checking if hydrated: ", isHydrated);
     return null; // or a loading spinner
   }
 
@@ -17,11 +17,17 @@ const ProtectedLayout = () => {
   }
 
   if (activeWorkoutDraft) {
-    return <Redirect href="/modal" />;
+    return <Redirect href={"/(protected)/modal"} />;
   }
 
   return (
     <Stack>
+      <Stack.Screen
+        name="(onboarding)"
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="(tabs)"
         options={{

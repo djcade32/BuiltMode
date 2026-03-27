@@ -4,9 +4,16 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
 } from "firebase/auth";
 
 export type SignInParams = {
+  email: string;
+  password: string;
+};
+
+export type SignUpParams = {
+  name: string;
   email: string;
   password: string;
 };
@@ -23,10 +30,10 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
   }
 };
 
-export const signUpWithEmail = async ({ email, password }: SignInParams) => {
+export const signUpWithEmail = async ({ name, email, password }: SignUpParams) => {
   try {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
-
+    await updateProfile(credential.user, { displayName: name });
     return {
       user: credential.user,
     };
@@ -50,6 +57,8 @@ export const resetPassword = async (email: string) => {
 
 const mapFirebaseAuthError = (error: any, action: "sign in" | "sign up"): string => {
   switch (error?.code) {
+    case "auth/user-not-found":
+      return "Invalid email or password.";
     case "auth/invalid-credential":
       return "Invalid email or password.";
     case "auth/invalid-email":
@@ -58,6 +67,8 @@ const mapFirebaseAuthError = (error: any, action: "sign in" | "sign up"): string
       return "Email already in use.";
     case "auth/too-many-requests":
       return "Too many attempts. Try again later.";
+    case "auth/network-request-failed":
+      return "Network Failure. Try again later.";
     default:
       return `Unable to ${action} right now.`;
   }

@@ -1,3 +1,17 @@
+export type Goal =
+  | "BUILD MUSCLE"
+  | "CUT BODY FAT"
+  | "INCREASE STRENGTH"
+  | "IMPROVE CONDITIONING"
+  | "GENERAL DISCIPLINE";
+
+export type Metrics = {
+  height: number; // in inches
+  weight: number;
+  bodyFatPercentage: number;
+  system: "IMPERIAL" | "METRIC";
+};
+
 export type HomeTimezone = string;
 
 export type WeeklyTargetDays = 2 | 3 | 4 | 5 | 6 | 7;
@@ -10,6 +24,8 @@ export type User = {
   usernameLower: string;
   displayName: string;
   avatarUrl?: string;
+  goal: Goal;
+  metrics?: Metrics;
 
   // Discipline / eligibility
   homeTimezone: HomeTimezone;
@@ -20,6 +36,7 @@ export type User = {
   createdAt: string;
   homeTimezoneSetAt: string;
   homeTimezoneUpdatedAt?: string;
+  updatedAt: string;
 };
 
 export type PublicUserProfile = {
@@ -31,15 +48,19 @@ export type PublicUserProfile = {
 
 export type CreateUserProfileRequest = {
   username: string;
-  displayName: string;
+  goal: Goal;
+  metrics?: Metrics;
+  weeklyTargetDays: WeeklyTargetDays;
   avatarUrl?: string;
   homeTimezone: HomeTimezone;
-  weeklyTargetDays: WeeklyTargetDays;
+  displayName: string;
 };
 
 export type CreateUserProfileResponse = {
   uid: string;
   username: string;
+  goal: Goal;
+  metrics?: Metrics;
   displayName: string;
   avatarUrl?: string;
   homeTimezone: HomeTimezone;

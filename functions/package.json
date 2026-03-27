@@ -9,9 +9,9 @@
     "start": "npm run shell",
     "deploy": "ESLINT_USE_FLAT_CONFIG=false firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest",
-    "test:integration": "npm run test -- --runInBand src/tests/integration",
-    "test:unit": "npm run test -- src/tests/unit"
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest src/tests/unit",
+    "test:integration": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand src/tests/integration"
   },
   "engines": {
     "node": "22"

@@ -24,6 +24,7 @@ jest.mock("../../stores/auth-store", () => ({
   useAuthStore: () => ({
     user: null,
     isAuthenticated: false,
+    isHydrated: true,
     isSigningIn: false,
     error: null,
     signin: jest.fn(),

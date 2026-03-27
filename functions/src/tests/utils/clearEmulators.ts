@@ -12,3 +12,15 @@ export async function clearFirestore() {
     );
   }
 }
+
+export async function clearAuth() {
+  const projectId = "demo-builtmode"; // MUST match emulator project
+
+  const response = await fetch(`http://localhost:9099/emulator/v1/projects/${projectId}/accounts`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to clear Auth emulator: ${response.status} ${response.statusText}`);
+  }
+}
