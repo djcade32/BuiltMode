@@ -44,6 +44,7 @@ export const useAuthStore = create<AuthStore>()(
 
       signin: async (email: string, password: string): Promise<void> => {
         set({ isSigningIn: true, error: null });
+        useUserStore.getState().setUser(null);
 
         try {
           const result = await signInWithEmail({ email, password });
@@ -95,6 +96,7 @@ export const useAuthStore = create<AuthStore>()(
 
       signup: async (name: string, email: string, password: string) => {
         set({ isSigningIn: true, error: null });
+        useUserStore.getState().setUser(null);
 
         try {
           const result = await signUpWithEmail({ name, email, password });

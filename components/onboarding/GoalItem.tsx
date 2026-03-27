@@ -33,8 +33,8 @@ const GoalItem = ({ title, description, selected, onSelected }: props) => {
           style={[
             styles.circle,
             {
-              backgroundColor: isSelected ? Colors.accent.primary : "",
-              outlineColor: isSelected ? Colors.accent.primary : Colors.inputBorder,
+              backgroundColor: isSelected ? Colors.accent.primary : "transparent",
+              borderColor: isSelected ? Colors.accent.primary : Colors.inputBorder,
             },
           ]}
         />
@@ -68,6 +68,6 @@ const styles = StyleSheet.create({
     height: 15,
     width: 15,
     borderRadius: 10,
-    outlineWidth: 2,
+    borderWidth: 2,
   },
 });

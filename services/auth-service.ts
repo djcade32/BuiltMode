@@ -33,9 +33,9 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
 export const signUpWithEmail = async ({ name, email, password }: SignUpParams) => {
   try {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
-    if (credential.user) updateProfile(credential.user, { displayName: name });
+    await updateProfile(credential.user, { displayName: name });
     return {
-      user: { ...credential.user, displayName: name },
+      user: credential.user,
     };
   } catch (error) {
     throw new Error(mapFirebaseAuthError(error, "sign up"));
@@ -56,7 +56,6 @@ export const resetPassword = async (email: string) => {
 };
 
 const mapFirebaseAuthError = (error: any, action: "sign in" | "sign up"): string => {
-  console.log("error: ", error);
   switch (error?.code) {
     case "auth/user-not-found":
       return "Invalid email or password.";

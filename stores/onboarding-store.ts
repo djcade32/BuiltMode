@@ -41,7 +41,7 @@ const initialValues = {
   weeklyStandard: undefined,
   avatarUrl: undefined,
   homeTimezone: undefined,
-  numOfScreens: 7,
+  numOfScreens: 8,
   currentScreen: 1,
   isCreatingUser: false,
 };
@@ -52,7 +52,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
       ...initialValues,
       nextScreen: () => {
         const screenNum = get().currentScreen;
-        if (screenNum === get().numOfScreens) return;
+        if (screenNum > get().numOfScreens) return;
         set({
           currentScreen: get().currentScreen + 1,
         });
@@ -144,6 +144,9 @@ export const useOnboardingStore = create<OnboardingStore>()(
     {
       name: "onboarding-storage",
       storage: createJSONStorage(() => mmkvStorage),
+      partialize: (state) => ({
+        ...initialValues,
+      }),
     },
   ),
 );

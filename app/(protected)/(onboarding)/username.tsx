@@ -17,8 +17,9 @@ const username = () => {
     control,
     handleSubmit,
     clearErrors,
+    setError,
     formState: { errors },
-  } = useForm({
+  } = useForm<{ username: string }>({
     defaultValues: { username: "" },
   });
   const router = useRouter();
@@ -28,23 +29,32 @@ const username = () => {
   const [timer, setTimer] = useState<number | null>(null);
 
   useEffect(() => {
-    clearErrors();
+    clearErrors("username");
+    if (!username || username.length < 3 || !isValidUsername(username)) {
+      setUsernameAvailable(false);
+      return;
+    }
+    let cancelled = false;
+    const candidate = username;
 
-    timer && clearTimeout(timer);
     const timeoutId = setTimeout(async () => {
-      if (!username || username.length < 3 || !isValidUsername(username)) {
-        setUsernameAvailable(false);
-        return;
+      try {
+        const isAvailable = await isUsernameAvailable(candidate);
+        if (cancelled) return;
+        setUsernameAvailable(isAvailable);
+        if (!isAvailable) {
+          setError("username", { message: "Username is taken" });
+        }
+      } catch {
+        if (!cancelled) setUsernameAvailable(false);
       }
-      const isAvailable = await isUsernameAvailable(username);
-      setUsernameAvailable(isAvailable);
-      !isAvailable &&
-        control.setError("username", {
-          message: "Username is taken",
-        });
     }, 300);
-    setTimer(timeoutId);
-  }, [username]);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [clearErrors, setError, username]);
 
   const renderPostIcon = () => {
     if (username && usernameAvailable) {

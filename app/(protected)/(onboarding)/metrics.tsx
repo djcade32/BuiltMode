@@ -48,14 +48,14 @@ const metrics = () => {
   useEffect(() => {
     if (feetHeight) {
       if (feetHeight.length > 2) {
-        setValue("feetHeight", feetHeight.slice(2).toString());
+        setValue("feetHeight", feetHeight.slice(0, 2));
       }
       if (Number(feetHeight) > 10) return setValue("feetHeight", "10");
     }
 
     if (inchHeight) {
       if (inchHeight.length > 2) {
-        setValue("inchHeight", inchHeight.slice(2).toString());
+        setValue("feetHeight", inchHeight.slice(0, 2));
       }
       if (Number(inchHeight) > 11) return setValue("inchHeight", "11");
     }

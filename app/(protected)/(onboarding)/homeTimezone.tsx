@@ -4,7 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { TIMEZONE_OPTIONS, TimezoneOption } from "@/constants/timezones";
+import { getTimezoneOptions, TimezoneOption } from "@/constants/timezones";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { getCalendars } from "expo-localization";
@@ -18,7 +18,7 @@ const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 
 const HomeTimezone = () => {
   const router = useRouter();
-  const { setHomeTimezone } = useOnboardingStore();
+  const { setHomeTimezone, nextScreen } = useOnboardingStore();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedTimezone, setSelectedTimezone] = useState<string>("");
@@ -29,7 +29,7 @@ const HomeTimezone = () => {
   }, []);
 
   const selectedTimezoneOption = useMemo<TimezoneOption | undefined>(() => {
-    return TIMEZONE_OPTIONS.find((tz) => tz.id === selectedTimezone);
+    return getTimezoneOptions().find((tz) => tz.id === selectedTimezone);
   }, [selectedTimezone]);
 
   const timezoneLabel = selectedTimezoneOption?.label ?? selectedTimezone.replaceAll("_", " ");
@@ -38,6 +38,7 @@ const HomeTimezone = () => {
 
   const handleConfirm = () => {
     setHomeTimezone(selectedTimezone);
+    nextScreen();
     router.push("/(protected)/(onboarding)/modeScore");
   };
 

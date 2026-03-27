@@ -4,9 +4,9 @@ import { Redirect, Stack } from "expo-router";
 
 export default function AuthLayout() {
   const { isAuthenticated, isHydrated } = useAuthStore();
-  const { user } = useUserStore();
+  const { user, isUserHydrated } = useUserStore();
 
-  if (!isHydrated) {
+  if (!isHydrated || !isUserHydrated) {
     return null; // or a loading spinner
   }
 

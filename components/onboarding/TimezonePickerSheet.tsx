@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { TIMEZONE_OPTIONS, TimezoneOption } from "@/constants/timezones";
+import { getTimezoneOptions, TimezoneOption } from "@/constants/timezones";
 import React, { useMemo, useState } from "react";
 import {
   FlatList,
@@ -22,19 +22,21 @@ type Props = {
 const TimezonePickerSheet = ({ visible, selectedTimezone, onClose, onSelect }: Props) => {
   const [query, setQuery] = useState("");
 
+  const timezoneOptions = useMemo(() => getTimezoneOptions(), []);
+
   const filteredTimezones = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
-    if (!normalized) return TIMEZONE_OPTIONS;
+    if (!normalized) return timezoneOptions;
 
-    return TIMEZONE_OPTIONS.filter((tz) => {
+    return timezoneOptions.filter((tz) => {
       return (
         tz.label.toLowerCase().includes(normalized) ||
         tz.subtitle.toLowerCase().includes(normalized) ||
         tz.id.toLowerCase().includes(normalized)
       );
     });
-  }, [query]);
+  }, [query, timezoneOptions]);
 
   const handleClose = () => {
     setQuery("");

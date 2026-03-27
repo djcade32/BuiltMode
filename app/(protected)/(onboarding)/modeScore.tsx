@@ -1,3 +1,4 @@
+import OnboardingView from "@/components/onboarding/OnboardingView";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import ThemedButton from "@/components/ui/ThemedButton";
@@ -10,7 +11,6 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const PRIMARY_GRADIENT_COLOR = Colors.accent.primary;
 const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
@@ -79,7 +79,8 @@ const ModeScore = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background.primary }} edges={["top"]}>
+    // <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background.primary }} edges={["top"]}>
+    <OnboardingView>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <ThemedView style={styles.container}>
           <View>
@@ -389,7 +390,8 @@ const ModeScore = () => {
           </View>
         </ThemedView>
       </ScrollView>
-    </SafeAreaView>
+      {/* </SafeAreaView> */}
+    </OnboardingView>
   );
 };
 

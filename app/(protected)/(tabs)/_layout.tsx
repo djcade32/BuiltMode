@@ -7,7 +7,12 @@ import { useUserStore } from "@/stores/user-store";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
-  const { user } = useUserStore();
+  const { user, isUserHydrated } = useUserStore();
+
+  if (!isUserHydrated) {
+    return null;
+  }
+
   if (!user) {
     return <Redirect href={"/(protected)/(onboarding)/welcome"} />;
   }
