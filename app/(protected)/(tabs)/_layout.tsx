@@ -23,35 +23,40 @@ export default function TabLayout() {
         tabBarInactiveTintColor: Colors.icon,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: {
+          paddingTop: 7,
+          backgroundColor: Colors.background.secondary,
+        },
+        animation: "none",
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <MaterialIcons name="home" size={28} color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="feed"
         options={{
           title: "Feed",
-          tabBarIcon: ({ color }) => <MaterialIcons name="rss-feed" size={28} color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons name="rss-feed" size={24} color={color} />,
         }}
       />
 
       <Tabs.Screen
-        name="log"
+        name="(workout)"
         options={{
           title: "Log",
-          tabBarIcon: ({ color }) => <MaterialIcons name="add-circle" size={28} color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons name="add-circle" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={28} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
         }}
       />
     </Tabs>

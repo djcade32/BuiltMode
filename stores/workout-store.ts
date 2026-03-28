@@ -5,9 +5,8 @@ import { mmkvStorage } from "./mmkv-storage-wrapper";
 
 export interface WorkoutState {
   activeWorkoutDraft: ActiveWorkoutDraft | null;
-
   startWorkout: (payload: { sessionId: string; uid: string }) => void;
-
+  updateWorkout: (payload: { sessionId: string; uid: string }) => void;
   clearWorkout: () => void;
 }
 
@@ -17,6 +16,18 @@ export const useWorkoutStore = create<WorkoutState>()(
       activeWorkoutDraft: null,
 
       startWorkout: ({ sessionId, uid }) =>
+        set({
+          activeWorkoutDraft: {
+            sessionId,
+            uid,
+            startedAtMs: Date.now(),
+            exercises: [],
+            status: "active",
+            lastEditedAtMs: Date.now(),
+          },
+        }),
+
+      updateWorkout: ({ sessionId, uid }) =>
         set({
           activeWorkoutDraft: {
             sessionId,
