@@ -1,16 +1,10 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { getTimezoneOptions, TimezoneOption } from "@/constants/timezones";
+import { MaterialIcons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
-import {
-  FlatList,
-  Modal,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FlatList, Modal, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import Input from "../ui/Input";
 
 type Props = {
   visible: boolean;
@@ -64,12 +58,17 @@ const TimezonePickerSheet = ({ visible, selectedTimezone, onClose, onSelect }: P
             </TouchableOpacity>
           </View>
 
-          <TextInput
+          <Input
             value={query}
             onChangeText={setQuery}
             placeholder="Search city or timezone"
-            placeholderTextColor={Colors.text.secondary}
-            style={styles.searchInput}
+            containerStyle={{
+              marginBottom: 16,
+            }}
+            preIcon={{
+              familyIcon: MaterialIcons,
+              name: "search",
+            }}
           />
 
           <FlatList
@@ -148,16 +147,6 @@ const styles = StyleSheet.create({
   closeText: {
     color: Colors.accent.primary,
     fontSize: Typography.size.xs,
-  },
-  searchInput: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: Colors.inputBorder,
-    borderRadius: Border.radius.md,
-    paddingHorizontal: 14,
-    color: Colors.text.primary,
-    marginBottom: 16,
-    backgroundColor: Colors.background.secondary,
   },
   listContent: {
     paddingBottom: 20,

@@ -1,7 +1,7 @@
 import OnboardingView from "@/components/onboarding/OnboardingView";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import Input from "@/components/ui/Input";
+import FormInput from "@/components/ui/FormInput";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { isUsernameAvailable } from "@/services/user-service";
@@ -101,7 +101,7 @@ const username = () => {
               <ThemedText style={styles.subtitle}>This is how your circle will see you.</ThemedText>
             </View>
             <View style={{ gap: 12, marginTop: 65 }}>
-              <Input
+              <FormInput
                 name="username"
                 control={control}
                 errors={errors.username}

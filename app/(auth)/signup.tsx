@@ -1,7 +1,7 @@
 import AuthHeader from "@/components/auth/AuthHeader";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import Input from "@/components/ui/Input";
+import FormInput from "@/components/ui/FormInput";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
@@ -18,14 +18,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type FormInput = {
+type FormInputProps = {
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
 };
 
-const initialValues: FormInput = {
+const initialValues: FormInputProps = {
   name: "",
   email: "",
   password: "",
@@ -39,7 +39,7 @@ const Signup = () => {
     setError,
     clearErrors,
     formState: { errors },
-  } = useForm<FormInput>({
+  } = useForm<FormInputProps>({
     defaultValues: initialValues,
   });
   const { name, email, password, confirmPassword } = useWatch({ control });
@@ -56,18 +56,7 @@ const Signup = () => {
     return regex.test(password);
   }, [password]);
 
-  const handleSignup = async (data: FormInput) => {
-    if (!isValidForm(data)) return;
-    const name = data.name.trim();
-    const { email, password } = data;
-    try {
-      await signup(name, email, password);
-    } catch (error) {
-      console.error("Error Signing up: ", error);
-    }
-  };
-
-  const isValidForm = (data: FormInput) => {
+  const isValidForm = (data: FormInputProps): boolean => {
     const name = data.name.trim();
     const { email, password, confirmPassword } = data;
     clearErrors(["name", "password", "confirmPassword"]);
@@ -76,6 +65,20 @@ const Signup = () => {
         setError("name", { message: "Name is required." });
       }
       return false;
+    }
+    return true;
+  };
+
+  const handleSignup = async (data: FormInputProps) => {
+    console.log("signing up: ", isValidForm(data));
+    if (!isValidForm(data)) return;
+    const name = data.name.trim();
+    const { email, password } = data;
+    try {
+      console.log("here");
+      await signup(name, email, password);
+    } catch (error) {
+      console.error("Error Signing up: ", error);
     }
   };
 
@@ -94,7 +97,7 @@ const Signup = () => {
             <AuthHeader />
 
             <ThemedView style={styles.formContainer}>
-              <Input
+              <FormInput
                 name="name"
                 control={control}
                 errors={errors.name}
@@ -105,7 +108,7 @@ const Signup = () => {
                   required: true,
                 }}
               />
-              <Input
+              <FormInput
                 name="email"
                 control={control}
                 errors={errors.email}
@@ -115,9 +118,11 @@ const Signup = () => {
                   pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
                   required: true,
                 }}
+                textContentType="emailAddress"
+                keyboardType="email-address"
               />
               <View>
-                <Input
+                <FormInput
                   name="password"
                   control={control}
                   errors={errors.password}
@@ -140,7 +145,7 @@ const Signup = () => {
                   </ThemedText>
                 )}
               </View>
-              <Input
+              <FormInput
                 name="confirmPassword"
                 control={control}
                 errors={errors.confirmPassword}

@@ -1,7 +1,7 @@
 import AuthHeader from "@/components/auth/AuthHeader";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import Input from "@/components/ui/Input";
+import FormInput from "@/components/ui/FormInput";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
@@ -20,11 +20,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type FormInput = {
+type FormInputProps = {
   email: string;
 };
 
-const initialValues: FormInput = {
+const initialValues: FormInputProps = {
   email: "",
 };
 
@@ -41,7 +41,7 @@ const Forgot = () => {
   const [sendButtonPressed, setSendButtonPressed] = useState(false);
   const [showEmailSent, setShowEmailSent] = useState(false);
 
-  const handleResetPassword = async (data: FormInput) => {
+  const handleResetPassword = async (data: FormInputProps) => {
     const { email } = data;
     if (!email) return;
     setSendButtonPressed(true);
@@ -96,7 +96,7 @@ const Forgot = () => {
                   </ThemedText>
                 </View>
 
-                <Input
+                <FormInput
                   name="email"
                   control={control}
                   errors={errors.email}

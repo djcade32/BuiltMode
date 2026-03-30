@@ -1,0 +1,324 @@
+import { Border, Colors, Typography } from "@/constants/theme";
+import { Exercise, ExerciseSet } from "@/packages/shared/src";
+import { Entypo, Feather, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
+import React, { useCallback } from "react";
+import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable as GesturePressable } from "react-native-gesture-handler";
+import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from "react-native-popup-menu";
+import { v4 as uuidv4 } from "uuid";
+import { ThemedText } from "../themed-text";
+import Input from "../ui/Input";
+
+type props = {
+  exercise: Exercise;
+  onAddSet: (id: string, set: ExerciseSet) => void;
+  onDeleteSet: (exerciseId: string, setId: string) => void;
+  onEditSet: (exerciseId: string, setId: string, set: ExerciseSet) => void;
+  onDragLongPress?: () => void;
+  onDeleteExercise?: (exercise: Exercise) => void;
+};
+
+const BuildExerciseItem = ({
+  exercise,
+  onDragLongPress,
+  onDeleteExercise,
+  onAddSet,
+  onDeleteSet,
+  onEditSet,
+}: props) => {
+  const { id, name, metricType, sets } = exercise;
+
+  const DropDown = useCallback(() => {
+    return (
+      <Menu renderer={renderers.ContextMenu} rendererProps={{ placement: "bottom" }}>
+        <MenuTrigger customStyles={{ TriggerTouchableComponent: TouchableOpacity }}>
+          <MaterialIcons name="more-horiz" size={22} color={Colors.icon} />
+        </MenuTrigger>
+        <MenuOptions
+          customStyles={{
+            optionsContainer: styles.dropdownOptionsContainer,
+          }}
+        >
+          <MenuOption
+            onSelect={() => onDeleteExercise && onDeleteExercise(exercise)}
+            customStyles={{
+              OptionTouchableComponent: TouchableOpacity,
+              optionWrapper: styles.dropdownOptionContainer,
+            }}
+          >
+            <FontAwesome6 name="trash" size={10} color={Colors.icon} />
+            <ThemedText style={styles.dropdownOptionText}>DELETE</ThemedText>
+          </MenuOption>
+        </MenuOptions>
+      </Menu>
+    );
+  }, [onDeleteExercise]);
+
+  const WeightAndRepsSetItem = useCallback(
+    ({ set, setIndex }: { set: ExerciseSet; setIndex: number }) => {
+      return (
+        <View style={styles.exerciseSetContainer}>
+          <ThemedText style={styles.exerciseSetSetText}>
+            SET{"\n"}
+            {setIndex}
+          </ThemedText>
+          <View style={styles.exerciseSetInputs}>
+            <Input
+              placeholder="0"
+              placeholderTextColor={Colors.icon}
+              value={set?.weight?.toString()}
+              onChangeText={(value) => onEditSet(id, set.id, { ...set, weight: Number(value) })}
+              postText="lbs"
+              postTextStyle={{ color: Colors.icon, fontSize: 12 }}
+              containerStyle={styles.setInput}
+              keyboardType="number-pad"
+            />
+            <ThemedText style={{ color: Colors.icon }}>×</ThemedText>
+            <Input
+              placeholder="0"
+              placeholderTextColor={Colors.icon}
+              value={set?.reps?.toString()}
+              onChangeText={(value) => onEditSet(id, set.id, { ...set, reps: Number(value) })}
+              postText="reps"
+              postTextStyle={{ color: Colors.icon, fontSize: 12 }}
+              containerStyle={styles.setInput}
+              keyboardType="number-pad"
+            />
+          </View>
+          <Pressable onPress={() => onDeleteSet(id, set.id)} hitSlop={15}>
+            <Feather name="x" size={16} color={Colors.icon} />
+          </Pressable>
+        </View>
+      );
+    },
+    [onDeleteSet, onEditSet],
+  );
+
+  const DistanceSetItem = useCallback(
+    ({ set, setIndex }: { set: ExerciseSet; setIndex: number }) => {
+      if (setIndex > 1) return;
+      return (
+        <View
+          style={{
+            backgroundColor: "#1f222888",
+            borderRadius: Border.radius.md,
+            padding: 10,
+          }}
+        >
+          <View>
+            <ThemedText style={{ color: Colors.icon, fontSize: 12, marginBottom: 5 }}>
+              Duration will be tracked during workout
+            </ThemedText>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+            <ThemedText style={styles.exerciseSetSetText}>DISTANCE</ThemedText>
+            <Input
+              placeholder="Optional"
+              placeholderTextColor={Colors.icon}
+              value={set?.distanceMeters?.toString()}
+              onChangeText={(value) =>
+                onEditSet(id, set.id, { ...set, distanceMeters: Number(value) })
+              }
+              postText="mi"
+              postTextStyle={{ color: Colors.icon, fontSize: 12 }}
+              containerStyle={{
+                backgroundColor: Colors.background.primary,
+                borderColor: Colors.inputBorder,
+                gap: 2,
+                paddingHorizontal: 8,
+                flex: 1,
+              }}
+              keyboardType="decimal-pad"
+            />
+            <Pressable onPress={() => onDeleteSet(id, set.id)} hitSlop={15}>
+              <Feather name="x" size={16} color={Colors.icon} />
+            </Pressable>
+          </View>
+        </View>
+      );
+    },
+    [onDeleteSet, onEditSet],
+  );
+
+  const RepsOnlySetItem = useCallback(
+    ({ set, setIndex }: { set: ExerciseSet; setIndex: number }) => {
+      return (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: "#1f222888",
+            borderRadius: Border.radius.md,
+            padding: 10,
+            gap: 10,
+          }}
+        >
+          <ThemedText style={styles.exerciseSetSetText}>
+            ROUND{"\n"}
+            {setIndex}
+          </ThemedText>
+          <Input
+            placeholder="0"
+            placeholderTextColor={Colors.icon}
+            value={set?.reps?.toString()}
+            onChangeText={(value) => onEditSet(id, set.id, { ...set, reps: Number(value) })}
+            postTextStyle={{ color: Colors.icon, fontSize: 12 }}
+            containerStyle={{ ...styles.setInput, flex: 1 }}
+            keyboardType="numeric"
+            postText="reps"
+          />
+          <Pressable onPress={() => onDeleteSet(id, set.id)} hitSlop={15}>
+            <Feather name="x" size={16} color={Colors.icon} />
+          </Pressable>
+        </View>
+      );
+    },
+    [onDeleteSet, onEditSet],
+  );
+
+  const handleAddSet = () => {
+    const setId = `${uuidv4()}-set`;
+    let set: ExerciseSet = {
+      id: setId,
+    };
+    onAddSet(id, set);
+  };
+
+  const setCallToActionText = () => {
+    switch (metricType) {
+      case "weight_reps":
+        return "ADD SET";
+      case "distance":
+        return "ADD EFFORT";
+      case "reps_only":
+        return "ADD ROUND";
+      default:
+        return "ADD SET";
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <GesturePressable onLongPress={onDragLongPress} style={{ position: "absolute", right: 5 }}>
+        <MaterialIcons name="drag-handle" size={24} color={Colors.inputBorder} />
+      </GesturePressable>
+      <View style={styles.headerContainer}>
+        <ThemedText style={styles.name}>{name}</ThemedText>
+        <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
+          <DropDown />
+        </View>
+      </View>
+      <View style={styles.exerciseSetsContainer}>
+        {exercise.sets.map((set, index) => {
+          if (metricType === "weight_reps") {
+            return <WeightAndRepsSetItem key={set.id} set={set} setIndex={index + 1} />;
+          } else if (metricType === "distance") {
+            return <DistanceSetItem key={set.id} set={set} setIndex={index + 1} />;
+          } else if (metricType === "reps_only") {
+            return <RepsOnlySetItem key={set.id} set={set} setIndex={index + 1} />;
+          }
+        })}
+      </View>
+      <TouchableOpacity
+        style={[
+          styles.addSetButtonContainer,
+          { opacity: sets.length && metricType === "distance" ? 0.25 : 1 },
+        ]}
+        onPress={handleAddSet}
+        disabled={sets.length > 1 && metricType === "distance"}
+      >
+        <Entypo name="plus" size={14} color={Colors.icon} />
+        <ThemedText style={styles.addSetButtonText}>{setCallToActionText()}</ThemedText>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default BuildExerciseItem;
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.background.secondary,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    borderRadius: Border.radius.md,
+    zIndex: 100,
+  },
+  dropdownOptionsContainer: {
+    backgroundColor: Colors.input,
+    borderRadius: Border.radius.md,
+    borderWidth: 1,
+    borderColor: Colors.inputBorder,
+    padding: 8,
+    width: 100,
+  },
+  dropdownOptionContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dropdownOptionText: {
+    fontSize: 12,
+    color: Colors.gray,
+  },
+
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    // marginBottom: 20,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  name: {
+    fontFamily: Typography.family.primary.bold,
+  },
+  addSetButtonContainer: {
+    flexDirection: "row",
+    gap: 5,
+    backgroundColor: Colors.input,
+    borderWidth: 1,
+    borderColor: Colors.inputBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: Border.radius.md,
+  },
+  addSetButtonText: {
+    color: Colors.icon,
+    fontFamily: Typography.family.primary.semibold,
+    fontSize: 12,
+  },
+  exerciseSetsContainer: {
+    gap: 8,
+    marginBottom: 12,
+  },
+
+  exerciseSetContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    backgroundColor: "#1f222888",
+    borderRadius: Border.radius.md,
+    padding: 10,
+  },
+  exerciseSetSetText: {
+    color: Colors.icon,
+    fontFamily: Typography.family.secondary.regular,
+    fontSize: 12,
+    letterSpacing: 0.6,
+    lineHeight: 16,
+  },
+  exerciseSetInputs: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+  },
+  setInput: {
+    backgroundColor: Colors.background.primary,
+    borderColor: Colors.inputBorder,
+    width: 75,
+    gap: 2,
+    paddingHorizontal: 8,
+  },
+});

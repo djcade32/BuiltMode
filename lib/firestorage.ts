@@ -1,5 +1,5 @@
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { app } from "./firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { app, storage } from "./firebase";
 
 export async function uploadImageAsync(uri: string, storageUrl: string) {
   try {
@@ -19,8 +19,8 @@ export async function uploadImageAsync(uri: string, storageUrl: string) {
       xhr.open("GET", uri, true);
       xhr.send(null);
     });
-
-    const fileRef = ref(getStorage(), storageUrl);
+    console.log("Trying to access storage");
+    const fileRef = ref(storage, storageUrl);
     await uploadBytes(fileRef, blob as Blob);
 
     // We're done with the blob, close and release it

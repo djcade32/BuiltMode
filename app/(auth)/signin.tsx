@@ -1,7 +1,7 @@
 import AuthHeader from "@/components/auth/AuthHeader";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import Input from "@/components/ui/Input";
+import FormInput from "@/components/ui/FormInput";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
@@ -20,12 +20,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type FormInput = {
+type FormInputProps = {
   email: string;
   password: string;
 };
 
-const initialValues: FormInput = {
+const initialValues: FormInputProps = {
   email: "",
   password: "",
 };
@@ -45,7 +45,7 @@ const Signin = () => {
     error && useAuthStore.setState({ error: null });
   }, [email, password]);
 
-  const handleSignin = async (data: FormInput) => {
+  const handleSignin = async (data: FormInputProps) => {
     const { email, password } = data;
     if (!email || !password) return;
     try {
@@ -70,7 +70,7 @@ const Signin = () => {
             <AuthHeader />
 
             <ThemedView style={styles.formContainer}>
-              <Input
+              <FormInput
                 name="email"
                 control={control}
                 errors={errors.email}
@@ -81,7 +81,7 @@ const Signin = () => {
                 }}
                 placeholder="Enter your email"
               />
-              <Input
+              <FormInput
                 name="password"
                 control={control}
                 errors={errors.password}
