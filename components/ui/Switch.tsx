@@ -10,7 +10,7 @@ type props = {
 };
 
 const Switch = ({ options, onChange, defaultIndex = 0 }: props) => {
-  const [selected, setSelected] = useState(options[defaultIndex]);
+  const [selected, setSelected] = useState(options[defaultIndex] ?? options[0]);
 
   const handleOnPress = (option: string) => {
     onChange(option);

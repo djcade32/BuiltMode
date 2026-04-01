@@ -222,10 +222,10 @@ const BuildExerciseItem = ({
       <TouchableOpacity
         style={[
           styles.addSetButtonContainer,
-          { opacity: sets.length && metricType === "distance" ? 0.25 : 1 },
+          { opacity: sets.length > 0 && metricType === "distance" ? 0.25 : 1 },
         ]}
         onPress={handleAddSet}
-        disabled={sets.length > 1 && metricType === "distance"}
+        disabled={sets.length > 0 && metricType === "distance"}
       >
         <Entypo name="plus" size={14} color={Colors.icon} />
         <ThemedText style={styles.addSetButtonText}>{setCallToActionText()}</ThemedText>

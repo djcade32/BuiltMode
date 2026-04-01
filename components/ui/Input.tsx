@@ -18,7 +18,17 @@ type props = TextInputProps & {
   postTextStyle?: TextStyle;
 };
 
-const Input = ({ containerStyle, preIcon, postIcon, postText, postTextStyle, ...rest }: props) => {
+const Input = ({
+  containerStyle,
+  preIcon,
+  postIcon,
+  postText,
+  postTextStyle,
+  style,
+  onBlur,
+  onFocus,
+  ...rest
+}: props) => {
   const [isFocused, setIsFocused] = useState<boolean>(false);
 
   const renderIcon = (familyIcon: any, name: string) => {
@@ -51,18 +61,18 @@ const Input = ({ containerStyle, preIcon, postIcon, postText, postTextStyle, ...
     >
       {preIconComponent}
       <TextInput
-        style={[styles.textInput, rest.style]}
+        {...rest}
+        style={[styles.textInput, style]}
         onBlur={(e) => {
           setIsFocused(false);
-          rest.onBlur && rest.onBlur(e);
+          onBlur?.(e);
         }}
         onFocus={(e) => {
           setIsFocused(true);
-          rest.onFocus && rest.onFocus(e);
+          onFocus?.(e);
         }}
         cursorColor={Colors.text.primary}
         selectionColor={Colors.text.primary}
-        {...rest}
       />
       {postIconComponent}
     </View>
