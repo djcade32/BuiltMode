@@ -1,5 +1,7 @@
 import { WeeklyTargetDays } from "./user.js";
 
+export type ExerciseType = "strength" | "conditioning" | "cardio";
+
 export type WorkoutType = "strength" | "conditioning" | "hybrid" | "skill" | "recovery" | "other";
 
 export type ExerciseMetricType =

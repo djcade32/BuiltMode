@@ -1,7 +1,7 @@
 import OnboardingView from "@/components/onboarding/OnboardingView";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import Input from "@/components/ui/Input";
+import FormInput from "@/components/ui/FormInput";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { fromFeetToInches } from "@/lib/utils/conversions";
@@ -16,7 +16,7 @@ import LinearGradient from "react-native-linear-gradient";
 const PRIMARY_GRADIENT_COLOR = Colors.accent.primary;
 const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 
-type FormInput = {
+type FormInputProps = {
   feetHeight: string | undefined;
   inchHeight: string | undefined;
   weight: string | undefined;
@@ -35,7 +35,7 @@ const metrics = () => {
       inchHeight: undefined,
       weight: undefined,
       bodyFatPercentage: undefined,
-    } as FormInput,
+    } as FormInputProps,
   });
   const { bodyFatPercentage, feetHeight, inchHeight, weight } = useWatch({ control });
   const router = useRouter();
@@ -76,7 +76,7 @@ const metrics = () => {
     }
   }, [bodyFatPercentage, inchHeight, feetHeight, weight]);
 
-  const handleConfirmMetricsPressed = (data: FormInput) => {
+  const handleConfirmMetricsPressed = (data: FormInputProps) => {
     const { feetHeight, inchHeight, weight, bodyFatPercentage } = data;
     if (!isFormValid) return;
     const heightConversion = fromFeetToInches(Number(feetHeight!), Number(inchHeight));
@@ -122,7 +122,7 @@ const metrics = () => {
               <ThemedText style={styles.inputLabel}>HEIGHT</ThemedText>
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <View style={{ flex: 1 }}>
-                  <Input
+                  <FormInput
                     name="feetHeight"
                     control={control}
                     errors={errors.feetHeight}
@@ -132,7 +132,7 @@ const metrics = () => {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Input
+                  <FormInput
                     name="inchHeight"
                     control={control}
                     errors={errors.inchHeight}
@@ -145,7 +145,7 @@ const metrics = () => {
             </View>
             <View>
               <ThemedText style={styles.inputLabel}>BODY WEIGHT</ThemedText>
-              <Input
+              <FormInput
                 name="weight"
                 control={control}
                 errors={errors.weight}
@@ -156,7 +156,7 @@ const metrics = () => {
             </View>
             <View>
               <ThemedText style={styles.inputLabel}>BODY FAT PERCENTAGE</ThemedText>
-              <Input
+              <FormInput
                 name="bodyFatPercentage"
                 control={control}
                 errors={errors.bodyFatPercentage}

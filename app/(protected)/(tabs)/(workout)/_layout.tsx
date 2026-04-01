@@ -1,11 +1,14 @@
 import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const WorkoutLayout = () => {
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
-      <Stack.Screen name="log" />
-      <Stack.Screen name="buildWorkout" />
-    </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
+        <Stack.Screen name="log" />
+        <Stack.Screen name="buildWorkout" />
+      </Stack>
+    </GestureHandlerRootView>
   );
 };
 

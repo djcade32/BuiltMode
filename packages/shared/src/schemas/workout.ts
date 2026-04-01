@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const exerciseTypeSchema = z.enum(["strength", "conditioning", "cardio"]);
+
 export const workoutTypeSchema = z.enum([
   "strength",
   "conditioning",
@@ -80,6 +82,7 @@ export const editWorkoutMetadataResponseSchema = z.object({
   lockedAt: z.string().min(1),
 });
 
+export type ExerciseType = z.infer<typeof exerciseTypeSchema>;
 export type WorkoutType = z.infer<typeof workoutTypeSchema>;
 export type ExerciseMetricType = z.infer<typeof exerciseMetricTypeSchema>;
 export type ExerciseSet = z.infer<typeof exerciseSetSchema>;

@@ -2,6 +2,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, Stack } from "expo-router";
 import React from "react";
+import { MenuProvider } from "react-native-popup-menu";
 
 const ProtectedLayout = () => {
   const { isAuthenticated, isHydrated } = useAuthStore();
@@ -21,21 +22,23 @@ const ProtectedLayout = () => {
   }
 
   return (
-    <Stack>
-      <Stack.Screen
-        name="(onboarding)"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
-    </Stack>
+    <MenuProvider>
+      <Stack>
+        <Stack.Screen
+          name="(onboarding)"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
+      </Stack>
+    </MenuProvider>
   );
 };
 

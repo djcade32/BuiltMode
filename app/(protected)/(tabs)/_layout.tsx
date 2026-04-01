@@ -26,6 +26,7 @@ export default function TabLayout() {
         tabBarStyle: {
           paddingTop: 7,
           backgroundColor: Colors.background.secondary,
+          height: 70,
         },
         animation: "none",
       }}
