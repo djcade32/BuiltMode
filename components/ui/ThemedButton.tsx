@@ -1,12 +1,20 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, TouchableOpacityProps } from "react-native";
+import {
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from "react-native";
 
 type props = TouchableOpacityProps & {
   title: string;
   preIcon?: { familyIcon: any; name: string; size?: number };
   postIcon?: { familyIcon: any; name: string; size?: number };
   fontSize?: number;
+  textStyle?: StyleProp<TextStyle>;
 };
 
 const ThemedButton = ({
@@ -17,6 +25,7 @@ const ThemedButton = ({
   style,
   disabled,
   fontSize,
+  textStyle,
   ...rest
 }: props) => {
   const renderIcon = (familyIcon: any, name: string, size: number = 16) => {
@@ -39,7 +48,9 @@ const ThemedButton = ({
       {...rest}
     >
       {preIconComponent}
-      <Text style={[styles.buttonText, { fontSize: fontSize ?? Typography.size.md }]}>{title}</Text>
+      <Text style={[styles.buttonText, { fontSize: fontSize ?? Typography.size.sm }, textStyle]}>
+        {title}
+      </Text>
       {postIconComponent}
     </TouchableOpacity>
   );

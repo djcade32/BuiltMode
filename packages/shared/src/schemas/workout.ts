@@ -5,9 +5,10 @@ export const exerciseTypeSchema = z.enum(["strength", "conditioning", "cardio"])
 export const workoutTypeSchema = z.enum([
   "strength",
   "conditioning",
-  "hybrid",
+  "mixed",
   "skill",
   "recovery",
+  "cardio",
   "other",
 ]);
 

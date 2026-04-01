@@ -56,30 +56,34 @@ const Signup = () => {
     return regex.test(password);
   }, [password]);
 
-  const isValidForm = (data: FormInputProps): boolean => {
-    const name = data.name.trim();
-    const { email, password, confirmPassword } = data;
-    clearErrors(["name", "password", "confirmPassword"]);
-    if (!name || !email || !password || !confirmPassword) {
-      if (!name) {
-        setError("name", { message: "Name is required." });
-      }
-      return false;
-    }
-    return true;
-  };
-
   const handleSignup = async (data: FormInputProps) => {
-    console.log("signing up: ", isValidForm(data));
     if (!isValidForm(data)) return;
-    const name = data.name.trim();
-    const { email, password } = data;
+    const { name, email, password } = data;
     try {
-      console.log("here");
       await signup(name, email, password);
     } catch (error) {
       console.error("Error Signing up: ", error);
     }
+  };
+
+  const isValidForm = (data: FormInputProps) => {
+    const { name, email, password, confirmPassword } = data;
+    clearErrors(["password", "confirmPassword"]);
+    if (!name || !email || !password || !confirmPassword) return false;
+    if (!isValidPassword) {
+      setError("password", {
+        message:
+          "Password must be at least 8 characters; contain at least one uppercase character and one digit.",
+      });
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setError("confirmPassword", {
+        message: "Does not match password.",
+      });
+      return false;
+    }
+    return true;
   };
 
   return (

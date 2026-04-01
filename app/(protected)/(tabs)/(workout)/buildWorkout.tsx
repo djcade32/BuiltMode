@@ -4,7 +4,8 @@ import ThemedButton from "@/components/ui/ThemedButton";
 import AddExerciseSheet from "@/components/workout/AddExerciseSheet";
 import BuildExerciseItem from "@/components/workout/BuildExerciseItem";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { Exercise, ExerciseSet } from "@/packages/shared/src";
+import { Exercise, ExerciseSet, WorkoutType } from "@/packages/shared/src";
+import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
@@ -22,11 +23,13 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const OPTIONS = ["STRENGTH", "CONDITIONING", "CARDIO", "MIXED"];
+const OPTIONS: WorkoutType[] = ["strength", "conditioning", "cardio", "mixed"];
 
 const BuildWorkout = () => {
   const router = useRouter();
   const listRef = useRef<any>(null);
+
+  const { setInitialWorkout } = useWorkoutStore();
 
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [workoutType, setWorkoutType] = useState(OPTIONS[0]);
@@ -99,8 +102,10 @@ const BuildWorkout = () => {
     );
   };
 
-  const handleStartWorkout = () => {
+  const handleCompleteBuild = () => {
     console.log("Build Workout: ", exercises);
+    setInitialWorkout({ workoutType, exercises });
+    router.push("/(protected)/(tabs)/(workout)/ready");
   };
 
   const handleEditSet = (exerciseId: string, setId: string, updatedSet: ExerciseSet) => {
@@ -132,7 +137,11 @@ const BuildWorkout = () => {
 
         <View style={{ marginTop: 24, gap: 5 }}>
           <ThemedText style={styles.workoutTypeLabel}>WORKOUT TYPE</ThemedText>
-          <Switch options={OPTIONS} onChange={setWorkoutType} defaultIndex={0} />
+          <Switch
+            options={OPTIONS.map((option) => option.toLocaleUpperCase())}
+            onChange={(value) => setWorkoutType(value.toLocaleLowerCase() as WorkoutType)}
+            defaultIndex={0}
+          />
         </View>
 
         <View style={{ flex: 1, marginTop: 15, marginBottom: 10 }}>
@@ -162,9 +171,9 @@ const BuildWorkout = () => {
             <ThemedText style={styles.addExerciseButtonText}>ADD EXERCISE</ThemedText>
           </TouchableOpacity>
           <ThemedButton
-            title="START WORKOUT"
+            title="COMPLETE BUILD"
             fontSize={Typography.size.sm}
-            onPress={handleStartWorkout}
+            onPress={handleCompleteBuild}
             disabled={!exercises.length}
           />
         </View>

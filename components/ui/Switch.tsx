@@ -5,7 +5,7 @@ import { ThemedText } from "../themed-text";
 
 type props = {
   options: string[];
-  onChange: React.Dispatch<React.SetStateAction<any>>;
+  onChange: (value: string) => void;
   defaultIndex?: number;
 };
 
