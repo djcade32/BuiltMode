@@ -6,7 +6,7 @@ import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -22,13 +22,22 @@ const ExerciseListRow = ({ exercise, index }: { exercise: Exercise; index: numbe
       case "distance":
         return "mi";
 
+      case "duration":
+      case "time":
+        return "min";
+      case "calories":
+        return "cal";
+      case "other":
+
       default:
-        break;
+        return "sets";
     }
   };
 
   const setValue =
-    exercise.metricType === "distance" ? exercise.sets[0].distanceMeters : exercise.sets.length;
+    exercise.metricType === "distance"
+      ? (exercise.sets[0]?.distanceMeters ?? 0)
+      : exercise.sets.length;
   return (
     <View key={exercise.id} style={styles.exerciseListRowContainer}>
       <View style={styles.listNumberContainer}>
@@ -42,11 +51,18 @@ const ExerciseListRow = ({ exercise, index }: { exercise: Exercise; index: numbe
   );
 };
 
-const ready = () => {
+const Ready = () => {
   const router = useRouter();
 
   const { initialWorkout } = useWorkoutStore();
-  if (!initialWorkout) return router.replace("/(protected)/(tabs)/(workout)/buildWorkout");
+
+  useEffect(() => {
+    if (!initialWorkout) {
+      router.replace("/(protected)/(tabs)/(workout)/buildWorkout");
+    }
+  }, [initialWorkout, router]);
+
+  if (!initialWorkout) return null;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -74,7 +90,7 @@ const ready = () => {
               <ThemedText style={styles.exerciseListTitle}>EXERCISE LIST</ThemedText>
               <View style={{ gap: 12, paddingTop: 15 }}>
                 {initialWorkout.exercises.map((exercise, index) => (
-                  <ExerciseListRow exercise={exercise} index={index + 1} />
+                  <ExerciseListRow key={exercise.id} exercise={exercise} index={index + 1} />
                 ))}
               </View>
             </View>
@@ -111,7 +127,7 @@ const ready = () => {
   );
 };
 
-export default ready;
+export default Ready;
 
 const styles = StyleSheet.create({
   container: {

@@ -58,7 +58,8 @@ const Signup = () => {
 
   const handleSignup = async (data: FormInputProps) => {
     if (!isValidForm(data)) return;
-    const { name, email, password } = data;
+    const { email, password } = data;
+    const name = data.name.trim();
     try {
       await signup(name, email, password);
     } catch (error) {
