@@ -40,6 +40,9 @@ const FormInput = ({
   rules,
   onFocus,
   onBlur,
+  onChangeText: inputOnChangeText,
+  value: _value,
+  defaultValue: _defaultValue,
   changePostIconColorOnFocus = true,
   changePreIconColorOnFocus = true,
   ...rest
@@ -105,6 +108,7 @@ const FormInput = ({
               {preIconComponent}
 
               <TextInput
+                {...rest}
                 testID={label}
                 accessibilityLabel={label}
                 placeholder={placeholder}
@@ -113,18 +117,20 @@ const FormInput = ({
                   fieldOnBlur();
                   onBlur && onBlur(e);
                 }}
-                onChangeText={onChange}
+                onChangeText={(text) => {
+                  onChange(text);
+                  inputOnChangeText?.(text);
+                }}
                 onFocus={(e) => {
                   setIsFocused(true);
                   onFocus && onFocus(e);
                 }}
-                value={value}
+                value={value ?? ""}
                 placeholderTextColor={Colors.text.secondary}
                 style={[styles.textInput, style]}
                 cursorColor={Colors.text.primary}
                 selectionColor={Colors.text.primary}
                 secureTextEntry={password && !showPassword}
-                {...rest}
               />
               {password ? (
                 <Pressable

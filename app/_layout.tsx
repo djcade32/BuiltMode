@@ -20,6 +20,7 @@ import {
 } from "@expo-google-fonts/jetbrains-mono";
 
 import { ArchivoBlack_400Regular } from "@expo-google-fonts/archivo-black";
+import "react-native-get-random-values";
 
 export const unstable_settings = {
   anchor: "(protected)",

@@ -27,7 +27,6 @@ export async function uploadImageAsync(uri: string, storageUrl: string) {
     //@ts-ignore
     blob.close();
     const url = await getDownloadURL(fileRef);
-    console.log("Image uploaded: ", url);
     return url;
   } catch (error) {
     throw Error(`ERROR: There was a problem uploading the image: ${error}`);
