@@ -105,7 +105,7 @@ const BuildWorkout = () => {
   const handleCompleteBuild = () => {
     console.log("Build Workout: ", exercises);
     setInitialWorkout({ workoutType, exercises });
-    router.push("/(protected)/(tabs)/(workout)/ready");
+    router.push("/(protected)/(tabs)/(workout)/confirmWorkout");
   };
 
   const handleEditSet = (exerciseId: string, setId: string, updatedSet: ExerciseSet) => {

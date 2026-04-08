@@ -16,6 +16,7 @@ export default function TabLayout() {
   if (!user) {
     return <Redirect href={"/(protected)/(onboarding)/welcome"} />;
   }
+
   return (
     <Tabs
       screenOptions={{

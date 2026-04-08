@@ -50,7 +50,7 @@ describe("active workout guard", () => {
     expect(screen.getByText("StackScreen:(onboarding)")).toBeTruthy();
     expect(screen.getByText("StackScreen:(tabs)")).toBeTruthy();
     expect(screen.getByText("StackScreen:modal")).toBeTruthy();
-    expect(screen.queryByText("Redirect:/(protected)/modal")).toBeNull();
+    expect(screen.queryByText("Redirect:/(protected)/activeWorkout")).toBeNull();
   });
 
   test("redirects to modal when active workout exists", () => {
@@ -67,7 +67,7 @@ describe("active workout guard", () => {
 
     render(<ProtectedLayout />);
 
-    expect(screen.getByText("Redirect:/(protected)/modal")).toBeTruthy();
+    expect(screen.getByText("Redirect:/(protected)/activeWorkout")).toBeTruthy();
     expect(screen.queryByText("StackRendered")).toBeNull();
   });
 });

@@ -10,6 +10,7 @@ import {
   createDayMarker,
   createUserWeekAggregate,
   getDayMarker,
+  getUserLeaderboardEntry,
   getUserWeekAggregate,
   getWorkoutsWithinLast30Days,
 } from "../firestore/workout.js";
@@ -35,7 +36,7 @@ export async function handleCompleteWorkout(
   uid: string,
   workout: CompleteWorkoutRequest,
 ): Promise<CompleteWorkoutResponse> {
-  const { sessionId, workoutType, notes, exercises, name } = workout;
+  const { sessionId, workoutType, notes, exercises, name, duration } = workout;
 
   const now = Timestamp.now();
   const lockedAt = now.toDate();
@@ -55,7 +56,8 @@ export async function handleCompleteWorkout(
     const weekId = handleGetWeekId(now.toDate(), homeTimezone);
     const localDateKey = handleGetLocalDateKey(now.toDate(), homeTimezone);
 
-    const isOfficialWeek = officialStartWeekId < weekId;
+    const isOfficialWeek =
+      dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
 
     const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
     const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(
@@ -78,16 +80,25 @@ export async function handleCompleteWorkout(
     const metTargetThisWeek = weekAggregateExists ? activeDaysThisWeek >= weeklyTargetDays : false;
     const isDeloadWeek = weekAggregateExists ? weekAggregate.get("isDeloadWeek") : false;
     const streakWeeks = weekAggregateExists ? weekAggregate.get("streakWeeks") : 0;
-    const modeScore =
-      weekAggregateExists && isOfficialWeek
-        ? calculateModeScore({
-            weeklyTarget: weeklyTargetDays,
-            completedWorkoutsLast30Days,
-            weeklyAdherenceStreak: streakWeeks,
-            completedWorkoutsThisWeek: activeDaysThisWeek,
-          }).modeScore
-        : null;
+    const modeScore = isOfficialWeek
+      ? calculateModeScore({
+          weeklyTarget: weeklyTargetDays,
+          completedWorkoutsLast30Days,
+          weeklyAdherenceStreak: streakWeeks,
+          completedWorkoutsThisWeek: activeDaysThisWeek,
+        }).modeScore
+      : null;
+
     const streakStatus = weekAggregateExists ? weekAggregate.get("streakStatus") : false;
+    let modeScoreDifference = 0;
+    if (weekAggregateExists && modeScore) {
+      modeScoreDifference = modeScore - weekAggregate.data()?.modeScore;
+    } else if (modeScore) {
+      const leaderboardEntry = await getUserLeaderboardEntry(tx, uid);
+      if (leaderboardEntry.exists) {
+        modeScoreDifference = modeScore - leaderboardEntry.data()?.modeScore;
+      }
+    }
 
     const workoutDoc: Workout = {
       sessionId,
@@ -102,8 +113,9 @@ export async function handleCompleteWorkout(
       uid,
       updatedAt: now,
       weekId,
-      name,
+      name: name ?? "",
       voidedAt: null,
+      duration,
     };
 
     const dayMarkerDoc: DayMarker = {
@@ -134,6 +146,7 @@ export async function handleCompleteWorkout(
       streakWeeks,
       updatedAt: now,
       weekId,
+      isRanked: isOfficialWeek,
     };
 
     createCompleteWorkout(tx, workoutDoc);
@@ -148,6 +161,7 @@ export async function handleCompleteWorkout(
       streakWeeks,
       weekId,
       weeklyTargetDays,
+      modeScoreDifference,
       lockedAt: dayjs(lockedAtTimestamp.toDate()).tz(homeTimezone).toString(),
     } as CompleteWorkoutResponse;
   });

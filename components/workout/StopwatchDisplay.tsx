@@ -1,0 +1,29 @@
+import { Typography } from "@/constants/theme";
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import { ThemedText } from "../themed-text";
+
+type Props = {
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+export const StopwatchDisplay = ({ hours, minutes, seconds }: Props) => {
+  return (
+    <View>
+      <ThemedText style={styles.timer}>
+        {`${hours < 10 ? "0" : ""}${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`}
+      </ThemedText>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  timer: {
+    fontFamily: Typography.family.secondary.semibold,
+    fontSize: 60,
+    letterSpacing: -1.5,
+    textAlign: "center",
+  },
+});

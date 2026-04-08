@@ -3,12 +3,14 @@ import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
+import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { v4 as uuidv4 } from "uuid";
 
 const ExerciseListRow = ({ exercise, index }: { exercise: Exercise; index: number }) => {
   const setText = (metricType: ExerciseMetricType) => {
@@ -54,7 +56,8 @@ const ExerciseListRow = ({ exercise, index }: { exercise: Exercise; index: numbe
 const Ready = () => {
   const router = useRouter();
 
-  const { initialWorkout } = useWorkoutStore();
+  const { initialWorkout, startWorkout } = useWorkoutStore();
+  const { user } = useUserStore();
 
   useEffect(() => {
     if (!initialWorkout) {
@@ -63,6 +66,17 @@ const Ready = () => {
   }, [initialWorkout, router]);
 
   if (!initialWorkout) return null;
+
+  const handleStartWorkout = () => {
+    if (!user) return;
+    const id = uuidv4();
+    startWorkout({
+      sessionId: id,
+      uid: user?.uid,
+      exercises: initialWorkout.exercises,
+      workoutType: initialWorkout.workoutType,
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -111,7 +125,7 @@ const Ready = () => {
             }}
             title="START WORKOUT"
             fontSize={Typography.size.sm}
-            onPress={() => {}}
+            onPress={handleStartWorkout}
             style={{ marginTop: 32 }}
           />
           <ThemedButton

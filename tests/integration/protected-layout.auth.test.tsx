@@ -45,6 +45,6 @@ describe("protected layout auth guard", () => {
 
     expect(screen.getByText("Redirect:/(auth)/signin")).toBeTruthy();
     expect(screen.queryByText("StackRendered")).toBeNull();
-    expect(screen.queryByText("Redirect:/modal")).toBeNull();
+    expect(screen.queryByText("Redirect:/activeWorkout")).toBeNull();
   });
 });

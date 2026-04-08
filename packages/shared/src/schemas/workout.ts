@@ -58,6 +58,7 @@ export const completeWorkoutRequestSchema = z.object({
   notes: z.string().trim().max(1000).optional(),
   exercises: z.array(exerciseSchema),
   name: z.string().trim().max(100).optional(),
+  duration: z.number(),
 });
 
 export const completeWorkoutResponseSchema = z.object({
@@ -67,6 +68,7 @@ export const completeWorkoutResponseSchema = z.object({
   weeklyTargetDays: z.number().int().min(2).max(7),
   streakWeeks: z.number().int().nonnegative(),
   modeScore: z.number().min(0).max(100).nullable(),
+  modeScoreDifference: z.number().min(0).max(100),
   lockedAt: z.string().min(1),
 });
 

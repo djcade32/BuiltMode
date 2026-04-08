@@ -57,6 +57,7 @@ export type CompleteWorkoutRequest = {
   notes?: string;
   exercises: Exercise[];
   name?: string;
+  duration: number; // seconds
 };
 
 export type CompleteWorkoutResponse = {
@@ -66,6 +67,7 @@ export type CompleteWorkoutResponse = {
   weeklyTargetDays: WeeklyTargetDays;
   streakWeeks: number;
   modeScore: number | null;
+  modeScoreDifference: number;
   lockedAt: string;
 };
 

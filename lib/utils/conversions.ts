@@ -11,3 +11,27 @@
 export const fromFeetToInches = (feet: number, inches?: number) => {
   return 12 * feet + (inches ?? 0);
 };
+
+type TimeBreakdown = {
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+/**
+ * The function `breakdownSeconds` takes a total number of seconds and returns the breakdown of hours,
+ * minutes, and seconds.
+ * @param {number} totalSeconds - The `totalSeconds` parameter represents the total number of seconds
+ * that you want to break down into hours, minutes, and seconds. The `breakdownSeconds` function takes
+ * this total number of seconds as input and calculates the equivalent hours, minutes, and remaining
+ * seconds.
+ * @returns The function `breakdownSeconds` returns an object with properties `hours`, `minutes`, and
+ * `seconds`, which represent the breakdown of the total number of seconds provided as input.
+ */
+export function breakdownSeconds(totalSeconds: number): TimeBreakdown {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return { hours, minutes, seconds };
+}
