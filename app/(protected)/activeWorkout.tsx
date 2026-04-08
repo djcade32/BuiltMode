@@ -11,6 +11,7 @@ import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -19,6 +20,13 @@ import {
   View,
 } from "react-native";
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from "react-native-popup-menu";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { useStopwatch } from "react-timer-hook";
 
 const ActiveWorkout = () => {
@@ -34,6 +42,30 @@ const ActiveWorkout = () => {
     isLoggingWorkout,
     logWorkout,
   } = useWorkoutStore();
+
+  const opacity = useSharedValue(0.4);
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(withTiming(1, { duration: 600 }), withTiming(0.4, { duration: 600 })),
+      -1,
+      true,
+    );
+
+    scale.value = withRepeat(
+      withSequence(withTiming(1.4, { duration: 600 }), withTiming(1, { duration: 600 })),
+      -1,
+      true,
+    );
+  }, []);
 
   useEffect(() => {
     if (!activeWorkoutDraft) {
@@ -78,7 +110,7 @@ const ActiveWorkout = () => {
             </ThemedText>
           </MenuOption>
           <MenuOption
-            onSelect={() => clearWorkout()}
+            onSelect={handleExit}
             customStyles={{
               OptionTouchableComponent: TouchableOpacity,
               optionWrapper: styles.dropdownOptionContainer,
@@ -126,6 +158,13 @@ const ActiveWorkout = () => {
     }
   };
 
+  const handleExit = () => {
+    return Alert.alert("Are You Sure?", "All workout progress will be lost.", [
+      { text: "Continue", onPress: () => clearWorkout(), style: "destructive" },
+      { text: "Cancel" },
+    ]);
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: Colors.background.primary, position: "relative" }}
@@ -157,7 +196,7 @@ const ActiveWorkout = () => {
         >
           <View style={styles.headerContainer}>
             <View style={{ gap: 5, flexDirection: "row", alignItems: "center" }}>
-              <View style={styles.lockedInCircle} />
+              <Animated.View style={[styles.lockedInCircle, animatedStyle]} />
               <ThemedText style={styles.lockedInText}>ACTIVE MODE</ThemedText>
             </View>
             <TouchableOpacity style={styles.moreButtonContainer}>

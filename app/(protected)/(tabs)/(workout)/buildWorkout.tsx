@@ -181,7 +181,7 @@ const BuildWorkout = () => {
             title="COMPLETE BUILD"
             fontSize={Typography.size.sm}
             onPress={handleCompleteBuild}
-            disabled={!exercises.length}
+            disabled={!exercises[0]?.sets.length}
           />
         </View>
 
