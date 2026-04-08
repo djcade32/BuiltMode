@@ -32,6 +32,7 @@ const BuildWorkout = () => {
   const { setInitialWorkout } = useWorkoutStore();
 
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [addedExercise, setAddedExercise] = useState<boolean>(false);
   const [workoutType, setWorkoutType] = useState(OPTIONS[0]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -71,7 +72,13 @@ const BuildWorkout = () => {
 
   const handleDelete = (exercise: Exercise) => {
     const { id } = exercise;
+    setAddedExercise(false);
     return setExercises((prev) => prev.filter((exercise) => exercise.id !== id));
+  };
+
+  const handleAddExercise = (exercise: Exercise) => {
+    setAddedExercise(true);
+    setExercises((prev) => [...prev, exercise]);
   };
 
   const handleAddSet = (id: string, addedSet: ExerciseSet) => {
@@ -156,7 +163,7 @@ const BuildWorkout = () => {
               showsVerticalScrollIndicator={false}
               containerStyle={{ flex: 1 }}
               onContentSizeChange={() => {
-                listRef.current?.scrollToEnd({ animated: true });
+                addedExercise && listRef.current?.scrollToEnd({ animated: true });
               }}
               keyboardShouldPersistTaps="handled"
             />
@@ -181,7 +188,7 @@ const BuildWorkout = () => {
         <AddExerciseSheet
           visible={isSheetOpen}
           onClose={() => setIsSheetOpen(false)}
-          onSelect={(exercise) => setExercises((prev) => [...prev, exercise])}
+          onSelect={handleAddExercise}
         />
       </SafeAreaView>
     </KeyboardAvoidingView>
