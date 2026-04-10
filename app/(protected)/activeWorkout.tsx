@@ -222,6 +222,7 @@ const ActiveWorkout = () => {
             ListFooterComponent={
               <View style={styles.footerContainer}>
                 <ThemedButton
+                  testID="complete-workout-button"
                   title="COMPLETE WORKOUT"
                   onPress={handleCompleteWorkout}
                   disabled={!isWorkoutComplete || isLoggingWorkout}

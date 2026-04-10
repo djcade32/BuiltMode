@@ -6,7 +6,7 @@ import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -61,7 +61,7 @@ const Ready = () => {
 
   useEffect(() => {
     if (!initialWorkout) {
-      router.replace("/(protected)/(tabs)/(workout)/buildWorkout");
+      <Redirect href={"/(protected)/(tabs)/(workout)/buildWorkout"} />;
     }
   }, [initialWorkout, router]);
 

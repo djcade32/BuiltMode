@@ -86,8 +86,9 @@ export const useWorkoutStore = create<WorkoutState>()(
         }),
 
       updateWorkoutProgress: ({ exerciseId, sets, completed = false }) => {
+        const workoutProgress = get().workoutProgress;
         const updatedWorkoutProgress = {
-          ...get().workoutProgress,
+          ...workoutProgress,
           [exerciseId]: {
             sets: sets,
             completed: completed,

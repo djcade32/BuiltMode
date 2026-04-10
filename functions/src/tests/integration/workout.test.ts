@@ -119,6 +119,7 @@ describe("handleCompleteWorkout", () => {
         ],
       },
     ],
+    duration: 700,
   };
 
   const workout2: CompleteWorkoutRequest = {
@@ -217,6 +218,7 @@ describe("handleCompleteWorkout", () => {
         ],
       },
     ],
+    duration: 700,
   };
 
   beforeEach(async () => {

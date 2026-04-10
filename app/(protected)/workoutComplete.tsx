@@ -5,7 +5,7 @@ import { Colors, Typography } from "@/constants/theme";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { ExerciseMetricType } from "@/packages/shared/src";
 import { useWorkoutStore } from "@/stores/workout-store";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
@@ -39,7 +39,7 @@ const workoutComplete = () => {
     router.replace("/(protected)/(tabs)/(workout)/log");
   };
 
-  if (!completeWorkoutResponse) return router.replace("/(protected)/(tabs)/(workout)/log");
+  if (!completeWorkoutResponse) return <Redirect href={"/(protected)/(tabs)/(workout)/log"} />;
 
   return (
     <ScrollView
@@ -77,7 +77,7 @@ const workoutComplete = () => {
               <ThemedText style={styles.modeScoreText}>
                 {completeWorkoutResponse.modeScore ?? 0}
               </ThemedText>
-              {completeWorkoutResponse.modeScoreDifference && (
+              {completeWorkoutResponse.modeScoreDifference ? (
                 <ThemedText
                   style={{
                     fontFamily: Typography.family.secondary.semibold,
@@ -88,6 +88,8 @@ const workoutComplete = () => {
                   {completeWorkoutResponse.modeScoreDifference >= 1 ? "+" : "-"}
                   {completeWorkoutResponse.modeScoreDifference} today
                 </ThemedText>
+              ) : (
+                <></>
               )}
             </View>
 
