@@ -1,13 +1,15 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Exercise, ExerciseSet } from "@/packages/shared/src";
-import { Entypo, Feather, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
+import { Entypo, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import React, { useCallback } from "react";
-import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from "react-native-popup-menu";
 import { v4 as uuidv4 } from "uuid";
 import { ThemedText } from "../themed-text";
-import Input from "../ui/Input";
+import DistanceSetItem from "./ExerciseSetItems/DistanceSetItem";
+import RepsOnlySetItem from "./ExerciseSetItems/RepsOnlySetItem";
+import WeightAndRepsSetItem from "./ExerciseSetItems/WeightAndRepsSetItem";
 
 type props = {
   exercise: Exercise;
@@ -54,128 +56,6 @@ const BuildExerciseItem = ({
     );
   }, [onDeleteExercise]);
 
-  const WeightAndRepsSetItem = useCallback(
-    ({ set, setIndex }: { set: ExerciseSet; setIndex: number }) => {
-      return (
-        <View style={styles.exerciseSetContainer}>
-          <ThemedText style={styles.exerciseSetSetText}>
-            SET{"\n"}
-            {setIndex}
-          </ThemedText>
-          <View style={styles.exerciseSetInputs}>
-            <Input
-              placeholder="0"
-              placeholderTextColor={Colors.icon}
-              value={set?.weight?.toString()}
-              onChangeText={(value) => onEditSet(id, set.id, { ...set, weight: Number(value) })}
-              postText="lbs"
-              postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-              containerStyle={styles.setInput}
-              keyboardType="number-pad"
-            />
-            <ThemedText style={{ color: Colors.icon }}>×</ThemedText>
-            <Input
-              placeholder="0"
-              placeholderTextColor={Colors.icon}
-              value={set?.reps?.toString()}
-              onChangeText={(value) => onEditSet(id, set.id, { ...set, reps: Number(value) })}
-              postText="reps"
-              postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-              containerStyle={styles.setInput}
-              keyboardType="number-pad"
-            />
-          </View>
-          <Pressable onPress={() => onDeleteSet(id, set.id)} hitSlop={15}>
-            <Feather name="x" size={16} color={Colors.icon} />
-          </Pressable>
-        </View>
-      );
-    },
-    [onDeleteSet, onEditSet],
-  );
-
-  const DistanceSetItem = useCallback(
-    ({ set, setIndex }: { set: ExerciseSet; setIndex: number }) => {
-      if (setIndex > 1) return;
-      return (
-        <View
-          style={{
-            backgroundColor: "#1f222888",
-            borderRadius: Border.radius.md,
-            padding: 10,
-          }}
-        >
-          <View>
-            <ThemedText style={{ color: Colors.icon, fontSize: 12, marginBottom: 5 }}>
-              Duration will be tracked during workout
-            </ThemedText>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-            <ThemedText style={styles.exerciseSetSetText}>DISTANCE</ThemedText>
-            <Input
-              placeholder="Optional"
-              placeholderTextColor={Colors.icon}
-              value={set?.distanceMeters?.toString()}
-              onChangeText={(value) =>
-                onEditSet(id, set.id, { ...set, distanceMeters: Number(value) })
-              }
-              postText="mi"
-              postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-              containerStyle={{
-                backgroundColor: Colors.background.primary,
-                borderColor: Colors.inputBorder,
-                gap: 2,
-                paddingHorizontal: 8,
-                flex: 1,
-              }}
-              keyboardType="decimal-pad"
-            />
-            <Pressable onPress={() => onDeleteSet(id, set.id)} hitSlop={15}>
-              <Feather name="x" size={16} color={Colors.icon} />
-            </Pressable>
-          </View>
-        </View>
-      );
-    },
-    [onDeleteSet, onEditSet],
-  );
-
-  const RepsOnlySetItem = useCallback(
-    ({ set, setIndex }: { set: ExerciseSet; setIndex: number }) => {
-      return (
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: "#1f222888",
-            borderRadius: Border.radius.md,
-            padding: 10,
-            gap: 10,
-          }}
-        >
-          <ThemedText style={styles.exerciseSetSetText}>
-            ROUND{"\n"}
-            {setIndex}
-          </ThemedText>
-          <Input
-            placeholder="0"
-            placeholderTextColor={Colors.icon}
-            value={set?.reps?.toString()}
-            onChangeText={(value) => onEditSet(id, set.id, { ...set, reps: Number(value) })}
-            postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-            containerStyle={{ ...styles.setInput, flex: 1 }}
-            keyboardType="numeric"
-            postText="reps"
-          />
-          <Pressable onPress={() => onDeleteSet(id, set.id)} hitSlop={15}>
-            <Feather name="x" size={16} color={Colors.icon} />
-          </Pressable>
-        </View>
-      );
-    },
-    [onDeleteSet, onEditSet],
-  );
-
   const handleAddSet = () => {
     const setId = `${uuidv4()}-set`;
     let set: ExerciseSet = {
@@ -210,12 +90,40 @@ const BuildExerciseItem = ({
       </View>
       <View style={styles.exerciseSetsContainer}>
         {exercise.sets.map((set, index) => {
+          const idx = index + 1;
           if (metricType === "weight_reps") {
-            return <WeightAndRepsSetItem key={set.id} set={set} setIndex={index + 1} />;
+            return (
+              <WeightAndRepsSetItem
+                key={set.id}
+                set={set}
+                exerciseId={id}
+                setIndex={idx}
+                onDeleteSet={onDeleteSet}
+                onEditSet={onEditSet}
+              />
+            );
           } else if (metricType === "distance") {
-            return <DistanceSetItem key={set.id} set={set} setIndex={index + 1} />;
+            return (
+              <DistanceSetItem
+                key={set.id}
+                set={set}
+                setIndex={idx}
+                onDeleteSet={onDeleteSet}
+                onEditSet={onEditSet}
+                exerciseId={id}
+              />
+            );
           } else if (metricType === "reps_only") {
-            return <RepsOnlySetItem key={set.id} set={set} setIndex={index + 1} />;
+            return (
+              <RepsOnlySetItem
+                key={set.id}
+                set={set}
+                setIndex={idx}
+                onDeleteSet={onDeleteSet}
+                onEditSet={onEditSet}
+                exerciseId={id}
+              />
+            );
           }
         })}
       </View>
@@ -261,6 +169,7 @@ const styles = StyleSheet.create({
   dropdownOptionText: {
     fontSize: 12,
     color: Colors.gray,
+    letterSpacing: 0.6,
   },
 
   headerContainer: {
@@ -292,33 +201,5 @@ const styles = StyleSheet.create({
   exerciseSetsContainer: {
     gap: 8,
     marginBottom: 12,
-  },
-
-  exerciseSetContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    backgroundColor: "#1f222888",
-    borderRadius: Border.radius.md,
-    padding: 10,
-  },
-  exerciseSetSetText: {
-    color: Colors.icon,
-    fontFamily: Typography.family.secondary.regular,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    lineHeight: 16,
-  },
-  exerciseSetInputs: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 15,
-  },
-  setInput: {
-    backgroundColor: Colors.background.primary,
-    borderColor: Colors.inputBorder,
-    width: 75,
-    gap: 2,
-    paddingHorizontal: 8,
   },
 });

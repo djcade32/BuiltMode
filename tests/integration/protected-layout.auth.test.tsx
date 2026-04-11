@@ -17,6 +17,8 @@ jest.mock("expo-router", () => {
   return {
     Redirect: ({ href }: { href: string }) => <Text>{`Redirect:${href}`}</Text>,
     Stack: MockStack,
+    useRouter: () => null,
+    usePathname: () => null,
   };
 });
 
@@ -45,6 +47,6 @@ describe("protected layout auth guard", () => {
 
     expect(screen.getByText("Redirect:/(auth)/signin")).toBeTruthy();
     expect(screen.queryByText("StackRendered")).toBeNull();
-    expect(screen.queryByText("Redirect:/modal")).toBeNull();
+    expect(screen.queryByText("Redirect:/activeWorkout")).toBeNull();
   });
 });

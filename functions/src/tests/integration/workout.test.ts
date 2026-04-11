@@ -112,13 +112,14 @@ describe("handleCompleteWorkout", () => {
         sets: [
           {
             id: "set_9",
-            distanceMeters: 1609,
+            distanceMiles: 1609,
             durationSec: 480,
             completed: true,
           },
         ],
       },
     ],
+    duration: 700,
   };
 
   const workout2: CompleteWorkoutRequest = {
@@ -210,13 +211,14 @@ describe("handleCompleteWorkout", () => {
         sets: [
           {
             id: "set_9",
-            distanceMeters: 1609,
+            distanceMiles: 1609,
             durationSec: 480,
             completed: true,
           },
         ],
       },
     ],
+    duration: 700,
   };
 
   beforeEach(async () => {

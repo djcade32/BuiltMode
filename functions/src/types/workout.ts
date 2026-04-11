@@ -1,5 +1,5 @@
+import { Exercise, WorkoutType } from "@builtmode/shared/types/workout";
 import { Timestamp } from "firebase-admin/firestore";
-import type { Exercise, WorkoutType } from "../../../packages/shared/src/types/workout.js";
 
 export type WorkoutStatus = "completed" | "voided";
 
@@ -17,6 +17,7 @@ export type Workout = {
   workoutType?: WorkoutType;
   notes?: string;
   exercises: Exercise[];
+  duration: number;
 
   // Integrity / correction window
   lockedAt: Timestamp;

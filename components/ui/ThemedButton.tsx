@@ -42,6 +42,8 @@ const ThemedButton = ({
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
       style={[styles.container, { opacity: disabled ? 0.5 : 1 }, style]}
       onPress={onPress}
       disabled={disabled}

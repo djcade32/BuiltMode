@@ -7,7 +7,7 @@ const WorkoutLayout = () => {
       <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
         <Stack.Screen name="log" />
         <Stack.Screen name="buildWorkout" />
-        <Stack.Screen name="ready" />
+        <Stack.Screen name="confirmWorkout" />
       </Stack>
     </GestureHandlerRootView>
   );

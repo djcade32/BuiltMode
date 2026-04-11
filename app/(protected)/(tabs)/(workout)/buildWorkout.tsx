@@ -32,6 +32,7 @@ const BuildWorkout = () => {
   const { setInitialWorkout } = useWorkoutStore();
 
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [addedExerciseOrSet, setAddedExerciseOrSet] = useState<boolean>(false);
   const [workoutType, setWorkoutType] = useState(OPTIONS[0]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -71,10 +72,17 @@ const BuildWorkout = () => {
 
   const handleDelete = (exercise: Exercise) => {
     const { id } = exercise;
+    setAddedExerciseOrSet(false);
     return setExercises((prev) => prev.filter((exercise) => exercise.id !== id));
   };
 
+  const handleAddExercise = (exercise: Exercise) => {
+    setAddedExerciseOrSet(true);
+    setExercises((prev) => [...prev, exercise]);
+  };
+
   const handleAddSet = (id: string, addedSet: ExerciseSet) => {
+    setAddedExerciseOrSet(true);
     setExercises((prevExercises) =>
       prevExercises.map((exercise) => {
         if (exercise.id === id) {
@@ -105,7 +113,7 @@ const BuildWorkout = () => {
   const handleCompleteBuild = () => {
     console.log("Build Workout: ", exercises);
     setInitialWorkout({ workoutType, exercises });
-    router.push("/(protected)/(tabs)/(workout)/ready");
+    router.push("/(protected)/(tabs)/(workout)/confirmWorkout");
   };
 
   const handleEditSet = (exerciseId: string, setId: string, updatedSet: ExerciseSet) => {
@@ -156,7 +164,10 @@ const BuildWorkout = () => {
               showsVerticalScrollIndicator={false}
               containerStyle={{ flex: 1 }}
               onContentSizeChange={() => {
-                listRef.current?.scrollToEnd({ animated: true });
+                if (addedExerciseOrSet) {
+                  listRef.current?.scrollToEnd({ animated: true });
+                  setAddedExerciseOrSet(false);
+                }
               }}
               keyboardShouldPersistTaps="handled"
             />
@@ -174,14 +185,14 @@ const BuildWorkout = () => {
             title="COMPLETE BUILD"
             fontSize={Typography.size.sm}
             onPress={handleCompleteBuild}
-            disabled={!exercises.length}
+            disabled={!exercises[0]?.sets.length}
           />
         </View>
 
         <AddExerciseSheet
           visible={isSheetOpen}
           onClose={() => setIsSheetOpen(false)}
-          onSelect={(exercise) => setExercises((prev) => [...prev, exercise])}
+          onSelect={handleAddExercise}
         />
       </SafeAreaView>
     </KeyboardAvoidingView>

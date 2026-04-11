@@ -68,6 +68,7 @@ export const getNextOfficialStartWeekId = onCall((request) => {
 });
 
 export const completeWorkout = onCall(async (request: CallableRequest<CompleteWorkoutRequest>) => {
+  console.log("Calling firebase function completeWorkout:");
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }

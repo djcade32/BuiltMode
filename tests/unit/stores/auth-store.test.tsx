@@ -1,18 +1,18 @@
+import { signInWithEmail, signOutUser, signUpWithEmail } from "@/services/auth-service";
+import { checkForUserProfile } from "@/services/user-service";
+import { useAuthStore } from "@/stores/auth-store";
+import { storage } from "@/stores/mmkv-storage-wrapper";
+import { useUserStore } from "@/stores/user-store";
 import { act } from "react";
-import { signInWithEmail, signOutUser, signUpWithEmail } from "../../services/auth-service";
-import { checkForUserProfile } from "../../services/user-service";
-import { useAuthStore } from "../../stores/auth-store";
-import { storage } from "../../stores/mmkv-storage-wrapper";
-import { useUserStore } from "../../stores/user-store";
 
-jest.mock("../../services/auth-service", () => ({
+jest.mock("@/services/auth-service", () => ({
   signInWithEmail: jest.fn(),
   signUpWithEmail: jest.fn(),
   signOutUser: jest.fn(),
   resetPassword: jest.fn(),
 }));
 
-jest.mock("../../services/user-service", () => ({
+jest.mock("@/services/user-service", () => ({
   checkForUserProfile: jest.fn(),
   isUsernameAvailable: jest.fn(),
   createUserProfile: jest.fn(),

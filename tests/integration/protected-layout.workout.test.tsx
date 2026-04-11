@@ -3,6 +3,8 @@ import ProtectedLayout from "../../app/(protected)/_layout";
 import { storage } from "../../stores/mmkv-storage-wrapper";
 import { useWorkoutStore } from "../../stores/workout-store";
 
+const mockReplace = jest.fn();
+
 jest.mock("expo-router", () => {
   const React = require("react");
   const { Text, View } = require("react-native");
@@ -19,6 +21,10 @@ jest.mock("expo-router", () => {
   return {
     Redirect: ({ href }: { href: string }) => <Text>{`Redirect:${href}`}</Text>,
     Stack: MockStack,
+    useRouter: () => ({
+      replace: mockReplace,
+    }),
+    usePathname: () => null,
   };
 });
 
@@ -37,6 +43,7 @@ jest.mock("../../stores/auth-store", () => ({
 
 describe("active workout guard", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     storage.clearAll();
     useWorkoutStore.setState({
       activeWorkoutDraft: null,
@@ -49,11 +56,11 @@ describe("active workout guard", () => {
     expect(screen.getByText("StackRendered")).toBeTruthy();
     expect(screen.getByText("StackScreen:(onboarding)")).toBeTruthy();
     expect(screen.getByText("StackScreen:(tabs)")).toBeTruthy();
-    expect(screen.getByText("StackScreen:modal")).toBeTruthy();
-    expect(screen.queryByText("Redirect:/(protected)/modal")).toBeNull();
+    expect(screen.getByText("StackScreen:workoutComplete")).toBeTruthy();
+    expect(screen.queryByText("Redirect:/(protected)/activeWorkout")).toBeNull();
   });
 
-  test("redirects to modal when active workout exists", () => {
+  test("redirects to active workout screen when active workout exists", () => {
     useWorkoutStore.setState({
       activeWorkoutDraft: {
         sessionId: "abc123",
@@ -67,7 +74,25 @@ describe("active workout guard", () => {
 
     render(<ProtectedLayout />);
 
-    expect(screen.getByText("Redirect:/(protected)/modal")).toBeTruthy();
-    expect(screen.queryByText("StackRendered")).toBeNull();
+    expect(mockReplace).toHaveBeenCalledWith("/(protected)/activeWorkout");
+    expect(screen.getByText("StackRendered")).toBeTruthy();
+  });
+
+  test("redirects to workout complete when active workout is finishing", () => {
+    useWorkoutStore.setState({
+      activeWorkoutDraft: {
+        sessionId: "abc123",
+        uid: "user1",
+        startedAtMs: 123456,
+        exercises: [],
+        status: "finishing",
+        lastEditedAtMs: 123456,
+      },
+    });
+
+    render(<ProtectedLayout />);
+
+    expect(mockReplace).toHaveBeenCalledWith("/(protected)/workoutComplete");
+    expect(screen.getByText("StackRendered")).toBeTruthy();
   });
 });

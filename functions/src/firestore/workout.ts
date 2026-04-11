@@ -35,6 +35,10 @@ export const getUserWeekAggregate = (tx: Transaction, uid: string, weekId: strin
   return tx.get(db.collection("userWeekAggregates").doc(`${uid}_${weekId}`));
 };
 
+export const getUserLeaderboardEntry = (tx: Transaction, uid: string) => {
+  return tx.get(db.collection("leaderboardEntries").doc(uid));
+};
+
 export const getDayMarker = (
   tx: Transaction,
   uid: string,

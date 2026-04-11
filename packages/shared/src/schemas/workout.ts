@@ -26,7 +26,7 @@ export const exerciseSetSchema = z.object({
   reps: z.number().int().nonnegative().optional(),
   weight: z.number().nonnegative().optional(),
   durationSec: z.number().int().nonnegative().optional(),
-  distanceMeters: z.number().nonnegative().optional(),
+  distanceMiles: z.number().nonnegative().optional(),
   calories: z.number().nonnegative().optional(),
   completed: z.boolean().optional(),
   rpe: z.number().min(1).max(10).optional(),
@@ -58,6 +58,7 @@ export const completeWorkoutRequestSchema = z.object({
   notes: z.string().trim().max(1000).optional(),
   exercises: z.array(exerciseSchema),
   name: z.string().trim().max(100).optional(),
+  duration: z.number().int().nonnegative(),
 });
 
 export const completeWorkoutResponseSchema = z.object({
@@ -67,6 +68,7 @@ export const completeWorkoutResponseSchema = z.object({
   weeklyTargetDays: z.number().int().min(2).max(7),
   streakWeeks: z.number().int().nonnegative(),
   modeScore: z.number().min(0).max(100).nullable(),
+  modeScoreDifference: z.number().min(-100).max(100),
   lockedAt: z.string().min(1),
 });
 

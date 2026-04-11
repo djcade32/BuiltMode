@@ -100,7 +100,6 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
 
   const handleSelect = (item: { name: string; type: ExerciseType }) => {
     const exercise = buildExerciseObject(item);
-    console.log("Added Exercise: ", exercise);
 
     onSelect(exercise);
     handleClose();
