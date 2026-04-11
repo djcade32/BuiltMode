@@ -15,15 +15,20 @@ const ProtectedLayout = () => {
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !activeWorkoutDraft) return;
 
-    const isOnActiveWorkout = pathname === "/activeWorkout";
-    const isOnWorkoutComplete = pathname === "/workoutComplete";
+    const targetPath =
+      activeWorkoutDraft.status === "finishing"
+        ? "/(protected)/workoutComplete"
+        : "/(protected)/activeWorkout";
 
-    if (!isOnActiveWorkout && !isOnWorkoutComplete) {
-      if (activeWorkoutDraft.status === "finishing") {
-        router.replace("/(protected)/workoutComplete");
-      } else {
-        router.replace("/(protected)/activeWorkout");
-      }
+    const currentPath =
+      pathname === "/workoutComplete"
+        ? "/(protected)/workoutComplete"
+        : pathname === "/activeWorkout"
+          ? "/(protected)/activeWorkout"
+          : pathname;
+
+    if (currentPath !== targetPath) {
+      router.replace(targetPath);
     }
   }, [isHydrated, isAuthenticated, activeWorkoutDraft, pathname, router]);
 

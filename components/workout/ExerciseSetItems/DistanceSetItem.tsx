@@ -27,7 +27,7 @@ const DistanceSetItem = ({
   containerStyle,
   isActive = false,
 }: Props) => {
-  if (setIndex > 1) return;
+  if (setIndex > 1) return null;
   return (
     <View
       style={[
@@ -53,9 +53,9 @@ const DistanceSetItem = ({
           <Input
             placeholder="Optional"
             placeholderTextColor={Colors.icon}
-            value={set?.distanceMeters?.toString()}
+            value={set?.distanceMiles?.toString()}
             onChangeText={(value) =>
-              onEditSet(exerciseId, set.id, { ...set, distanceMeters: Number(value) })
+              onEditSet(exerciseId, set.id, { ...set, distanceMiles: Number(value) })
             }
             postText="mi"
             postTextStyle={{ color: Colors.icon, fontSize: 12 }}
@@ -69,7 +69,7 @@ const DistanceSetItem = ({
             keyboardType="decimal-pad"
           />
         ) : (
-          <ThemedText>{`${set.distanceMeters} mi`}</ThemedText>
+          <ThemedText>{`${set.distanceMiles} mi`}</ThemedText>
         )}
         {usedForBuilding && (
           <Pressable onPress={() => onDeleteSet && onDeleteSet(exerciseId, set.id)} hitSlop={15}>

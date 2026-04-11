@@ -29,9 +29,10 @@ type TimeBreakdown = {
  * `seconds`, which represent the breakdown of the total number of seconds provided as input.
  */
 export function breakdownSeconds(totalSeconds: number): TimeBreakdown {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+  const normalized = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(normalized / 3600);
+  const minutes = Math.floor((normalized % 3600) / 60);
+  const seconds = normalized % 60;
 
   return { hours, minutes, seconds };
 }

@@ -92,11 +92,11 @@ export async function handleCompleteWorkout(
     const streakStatus = weekAggregateExists ? weekAggregate.get("streakStatus") : false;
     let modeScoreDifference = 0;
     if (weekAggregateExists && modeScore) {
-      modeScoreDifference = modeScore - weekAggregate.data()?.modeScore;
+      modeScoreDifference = modeScore - (weekAggregate.data()?.modeScore ?? 0);
     } else if (modeScore) {
       const leaderboardEntry = await getUserLeaderboardEntry(tx, uid);
       if (leaderboardEntry.exists) {
-        modeScoreDifference = modeScore - leaderboardEntry.data()?.modeScore;
+        modeScoreDifference = modeScore - (leaderboardEntry.data()?.modeScore ?? 0);
       }
     }
 

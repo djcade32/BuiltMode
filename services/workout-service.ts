@@ -15,15 +15,10 @@ import { httpsCallable } from "firebase/functions";
 export const createCompleteWorkout = async (
   workout: CompleteWorkoutRequest,
 ): Promise<CompleteWorkoutResponse> => {
-  try {
-    const createWorkoutFunction = httpsCallable<CompleteWorkoutRequest, CompleteWorkoutResponse>(
-      functions,
-      "completeWorkout",
-    );
-
-    const workoutResponse = await createWorkoutFunction(workout);
-    return workoutResponse.data;
-  } catch (error: any) {
-    throw error;
-  }
+  const createWorkoutFunction = httpsCallable<CompleteWorkoutRequest, CompleteWorkoutResponse>(
+    functions,
+    "completeWorkout",
+  );
+  const workoutResponse = await createWorkoutFunction(workout);
+  return workoutResponse.data;
 };

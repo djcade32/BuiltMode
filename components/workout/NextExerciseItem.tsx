@@ -24,9 +24,16 @@ const NextExerciseItem = ({ index, exercise, isNext, isCompleted, onPress }: Pro
         return "round";
       case "distance":
         return "effort";
+      case "duration":
+      case "time":
+        return "interval";
+      case "calories":
+        return "target";
+      case "other":
+        return "entry";
 
       default:
-        break;
+        return "entry";
     }
   }, [metricType]);
   return (

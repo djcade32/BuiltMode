@@ -4,8 +4,10 @@
 
 jest.mock("react-native-mmkv", () => {
   const store = new Map<string, string>();
+  const resetMockStore = () => store.clear();
 
   return {
+    __resetMockStore: resetMockStore,
     createMMKV: () => ({
       set: (key: string, value: string | number | boolean) => {
         store.set(key, String(value));

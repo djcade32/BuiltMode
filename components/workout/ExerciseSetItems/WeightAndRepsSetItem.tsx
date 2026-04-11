@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/ui/Input";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { ExerciseSet } from "@/packages/shared/dist";
+import { ExerciseSet } from "@/packages/shared/src";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";

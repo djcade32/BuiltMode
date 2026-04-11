@@ -1,18 +1,21 @@
 import ConfirmWorkout from "@/app/(protected)/(tabs)/(workout)/confirmWorkout";
 import { useWorkoutStore } from "@/stores/workout-store";
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import React from "react";
 import { resetWorkoutStore } from "../../test-utils/reset-workout-store";
 import { makeInitialWorkout } from "../../test-utils/workout-fixtures";
 
-const mockReplace = jest.fn();
 const mockBack = jest.fn();
+const mockRedirect = jest.fn((props: any) => null);
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({
-    replace: mockReplace,
     back: mockBack,
   }),
+  Redirect: (props: any) => {
+    mockRedirect(props);
+    return null;
+  },
 }));
 
 jest.mock("uuid", () => ({
@@ -33,12 +36,14 @@ describe("confirmWorkout", () => {
     jest.clearAllMocks();
   });
 
-  it("redirects to buildWorkout if initialWorkout is missing", async () => {
+  it("redirects to buildWorkout if initialWorkout is missing", () => {
     render(<ConfirmWorkout />);
 
-    await waitFor(() => {
-      expect(mockReplace).not.toHaveBeenCalled();
-    });
+    expect(mockRedirect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: "/(protected)/(tabs)/(workout)/buildWorkout",
+      }),
+    );
   });
 
   it("renders workout preview when initial workout exists", () => {

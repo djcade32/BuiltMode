@@ -30,7 +30,7 @@ const workoutComplete = () => {
         return "effort";
 
       default:
-        break;
+        return "set";
     }
   };
 
@@ -86,7 +86,7 @@ const workoutComplete = () => {
                   }}
                 >
                   {completeWorkoutResponse.modeScoreDifference >= 1 ? "+" : "-"}
-                  {completeWorkoutResponse.modeScoreDifference} today
+                  {Math.abs(completeWorkoutResponse.modeScoreDifference)} today
                 </ThemedText>
               ) : (
                 <></>
@@ -123,9 +123,11 @@ const workoutComplete = () => {
                   backgroundColor: Colors.accent.primary,
                   height: 6,
                   width: `${
-                    (completeWorkoutResponse.activeDaysThisWeek /
-                      completeWorkoutResponse.weeklyTargetDays) *
-                    100
+                    completeWorkoutResponse.weeklyTargetDays > 0
+                      ? (completeWorkoutResponse.activeDaysThisWeek /
+                          completeWorkoutResponse.weeklyTargetDays) *
+                        100
+                      : 0
                   }%`,
                   borderRadius: 3,
                 }}

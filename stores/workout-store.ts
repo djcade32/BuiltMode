@@ -71,7 +71,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             sessionId,
             uid,
             exercises,
-            startedAtMs: Date.now(),
+            startedAtMs: get().activeWorkoutDraft?.startedAtMs ?? Date.now(),
             status: "active",
             lastEditedAtMs: Date.now(),
           },
@@ -95,11 +95,12 @@ export const useWorkoutStore = create<WorkoutState>()(
           },
         };
 
-        const isWorkoutComplete = get().activeWorkoutDraft?.exercises.every(
-          (exercise) =>
-            updatedWorkoutProgress[exercise.id] &&
-            updatedWorkoutProgress[exercise.id].completed === true,
-        );
+        const isWorkoutComplete =
+          get().activeWorkoutDraft?.exercises.every(
+            (exercise) =>
+              updatedWorkoutProgress[exercise.id] &&
+              updatedWorkoutProgress[exercise.id].completed === true,
+          ) ?? false;
         set({
           workoutProgress: updatedWorkoutProgress,
           isWorkoutComplete,

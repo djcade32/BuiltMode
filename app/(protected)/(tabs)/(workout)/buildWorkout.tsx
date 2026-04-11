@@ -32,7 +32,7 @@ const BuildWorkout = () => {
   const { setInitialWorkout } = useWorkoutStore();
 
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [addedExercise, setAddedExercise] = useState<boolean>(false);
+  const [addedExerciseOrSet, setAddedExerciseOrSet] = useState<boolean>(false);
   const [workoutType, setWorkoutType] = useState(OPTIONS[0]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -72,16 +72,17 @@ const BuildWorkout = () => {
 
   const handleDelete = (exercise: Exercise) => {
     const { id } = exercise;
-    setAddedExercise(false);
+    setAddedExerciseOrSet(false);
     return setExercises((prev) => prev.filter((exercise) => exercise.id !== id));
   };
 
   const handleAddExercise = (exercise: Exercise) => {
-    setAddedExercise(true);
+    setAddedExerciseOrSet(true);
     setExercises((prev) => [...prev, exercise]);
   };
 
   const handleAddSet = (id: string, addedSet: ExerciseSet) => {
+    setAddedExerciseOrSet(true);
     setExercises((prevExercises) =>
       prevExercises.map((exercise) => {
         if (exercise.id === id) {
@@ -163,7 +164,10 @@ const BuildWorkout = () => {
               showsVerticalScrollIndicator={false}
               containerStyle={{ flex: 1 }}
               onContentSizeChange={() => {
-                addedExercise && listRef.current?.scrollToEnd({ animated: true });
+                if (addedExerciseOrSet) {
+                  listRef.current?.scrollToEnd({ animated: true });
+                  setAddedExerciseOrSet(false);
+                }
               }}
               keyboardShouldPersistTaps="handled"
             />

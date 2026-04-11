@@ -25,7 +25,7 @@ export type ExerciseSet = {
   reps?: number;
   weight?: number;
   durationSec?: number;
-  distanceMeters?: number;
+  distanceMiles?: number;
   calories?: number;
   completed?: boolean;
   rpe?: number;

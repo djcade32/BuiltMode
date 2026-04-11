@@ -43,6 +43,7 @@ jest.mock("../../stores/auth-store", () => ({
 
 describe("active workout guard", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     storage.clearAll();
     useWorkoutStore.setState({
       activeWorkoutDraft: null,

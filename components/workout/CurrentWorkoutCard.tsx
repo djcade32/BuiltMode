@@ -40,7 +40,7 @@ const ExerciseSetItem = ({
     return completedSets.some((completedSet) => completedSet.id === set.id);
   }, [completedSets]);
 
-  const isLastSet = useMemo(() => completedSets.length === index + 1, [completedSets]);
+  const isLastSet = useMemo(() => completedSets.length === index + 1, [completedSets, index]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -138,7 +138,7 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete }: Props) => {
       workoutProgress && workoutProgress[exercise.id] ? workoutProgress[exercise.id].sets : [];
     setCompletedSets(sets ?? []);
     setActiveSetIndex(sets.length);
-  }, [index]);
+  }, [index, exercise.id, workoutProgress]);
 
   const handleCompleteSet = () => {
     if (!currentSet) return;
@@ -170,6 +170,17 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete }: Props) => {
   };
 
   const handleFinishExercise = () => {
+    if (!currentSet) {
+      // All sets already completed, just mark exercise as finished
+      updateWorkoutProgress({
+        exerciseId: exercise.id,
+        sets: workoutProgress?.[exercise.id]?.sets ?? [],
+        completed: true,
+      });
+      onExerciseComplete(exercise);
+      return;
+    }
+
     const updatedSets =
       workoutProgress && workoutProgress[exercise.id]
         ? [...workoutProgress[exercise.id].sets, currentSet]
@@ -203,14 +214,14 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete }: Props) => {
       if (e.id === exerciseId) {
         return {
           ...e,
-          sets: exercise.sets.map((set) => (set.id === setId ? updatedSet : set)),
+          sets: e.sets.map((set) => (set.id === setId ? updatedSet : set)),
         };
       }
       return e;
     });
 
     updateWorkout({
-      sessionId: exercise.id,
+      sessionId: activeWorkoutDraft.sessionId,
       uid: user.uid,
       exercises: updatedExercises,
     });

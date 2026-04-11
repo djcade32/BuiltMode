@@ -202,32 +202,4 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-
-  exerciseSetContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    backgroundColor: "#1f222888",
-    borderRadius: Border.radius.md,
-    padding: 10,
-  },
-  exerciseSetSetText: {
-    color: Colors.icon,
-    fontFamily: Typography.family.secondary.regular,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    lineHeight: 16,
-  },
-  exerciseSetInputs: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 15,
-  },
-  setInput: {
-    backgroundColor: Colors.background.primary,
-    borderColor: Colors.inputBorder,
-    width: 75,
-    gap: 2,
-    paddingHorizontal: 8,
-  },
 });

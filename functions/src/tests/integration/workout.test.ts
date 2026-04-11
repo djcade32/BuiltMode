@@ -112,7 +112,7 @@ describe("handleCompleteWorkout", () => {
         sets: [
           {
             id: "set_9",
-            distanceMeters: 1609,
+            distanceMiles: 1609,
             durationSec: 480,
             completed: true,
           },
@@ -211,7 +211,7 @@ describe("handleCompleteWorkout", () => {
         sets: [
           {
             id: "set_9",
-            distanceMeters: 1609,
+            distanceMiles: 1609,
             durationSec: 480,
             completed: true,
           },
