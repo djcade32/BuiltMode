@@ -1,5 +1,20 @@
-import { functions } from "@/lib/firebase";
+import { Workout } from "@/functions/src/types/workout";
+import { InfinitePage } from "@/hooks/useInfiniteQuery";
+import { db, functions } from "@/lib/firebase";
 import { CompleteWorkoutRequest, CompleteWorkoutResponse } from "@/packages/shared/src";
+import {
+  collection,
+  doc,
+  DocumentData,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  QueryDocumentSnapshot,
+  startAfter,
+  where,
+} from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
 /**
@@ -21,4 +36,61 @@ export const createCompleteWorkout = async (
   );
   const workoutResponse = await createWorkoutFunction(workout);
   return workoutResponse.data;
+};
+
+export type FirestoreTimestamp = {
+  seconds: number;
+  nanoseconds: number;
+};
+
+type WorkoutCursor = QueryDocumentSnapshot<DocumentData>;
+
+export const getUserWorkouts = async ({
+  pageParam,
+  params,
+  limit: pageSize,
+}: {
+  pageParam?: WorkoutCursor | null;
+  params: { uid: string };
+  limit: number;
+}): Promise<InfinitePage<Workout, WorkoutCursor>> => {
+  const workoutsRef = collection(db, "workouts");
+
+  const workoutsQuery = pageParam
+    ? query(
+        workoutsRef,
+        where("uid", "==", params.uid),
+        orderBy("completedAt", "desc"),
+        startAfter(pageParam),
+        limit(pageSize),
+      )
+    : query(
+        workoutsRef,
+        where("uid", "==", params.uid),
+        orderBy("completedAt", "desc"),
+        limit(pageSize),
+      );
+
+  const snapshot = await getDocs(workoutsQuery);
+
+  const items: Workout[] = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<Workout, "id">),
+  }));
+
+  const hasMore = snapshot.docs.length === pageSize;
+  const nextCursor = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+  return {
+    items,
+    nextCursor,
+    hasMore,
+  };
+};
+
+export const getWorkoutBySessionId = async ({ params }: { params: { sessionId: string } }) => {
+  const workoutDoc = doc(db, `workouts/${params.sessionId}`);
+  const fetchedDoc = await getDoc(workoutDoc);
+
+  if (fetchedDoc.exists()) return fetchedDoc.data() as Workout;
 };

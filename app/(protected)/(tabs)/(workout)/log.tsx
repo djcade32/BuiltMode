@@ -86,7 +86,7 @@ const log = () => {
           ))}
         </View>
       </View>
-      <Link href={"/"} asChild style={{ marginTop: 48 }}>
+      <Link href={"/(protected)/(tabs)/(workout)/viewHistory"} asChild style={{ marginTop: 48 }}>
         <TouchableOpacity>
           <ThemedText style={styles.viewHistoryButton}>VIEW HISTORY</ThemedText>
         </TouchableOpacity>

@@ -7,9 +7,9 @@ import { FlatList, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { ThemedText } from "../themed-text";
 import ThemedButton from "../ui/ThemedButton";
-import DistanceSetItem from "./ExerciseSetItems/DistanceSetItem";
-import RepsOnlySetItem from "./ExerciseSetItems/RepsOnlySetItem";
-import WeightAndRepsSetItem from "./ExerciseSetItems/WeightAndRepsSetItem";
+import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
+import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
+import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
 
 type Props = {
   exercise: Exercise;

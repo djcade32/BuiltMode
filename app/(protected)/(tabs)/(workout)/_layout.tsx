@@ -8,6 +8,8 @@ const WorkoutLayout = () => {
         <Stack.Screen name="log" />
         <Stack.Screen name="buildWorkout" />
         <Stack.Screen name="confirmWorkout" />
+        <Stack.Screen name="viewHistory" />
+        <Stack.Screen name="workoutHistoryDetails/[sessionId]" />
       </Stack>
     </GestureHandlerRootView>
   );

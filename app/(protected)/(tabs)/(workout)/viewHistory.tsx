@@ -1,0 +1,244 @@
+import { ThemedText } from "@/components/themed-text";
+import Input from "@/components/ui/Input";
+import WorkoutHistoryCard from "@/components/workout/workoutHistory/WorkoutHistoryCard";
+import WorkoutHistoryMonthJumpModal from "@/components/workout/workoutHistory/WorkoutHistoryMonthJumpModal";
+import WorkoutHistorySectionHeader from "@/components/workout/workoutHistory/WorkoutHistorySectionHeader";
+import { Colors, Typography } from "@/constants/theme";
+import { Workout } from "@/functions/src/types/workout";
+import { useUserWorkoutsInfinite } from "@/hooks/workouts/useUserWorkoutsInfinite";
+import { getFirestoreMonthSectionLabel } from "@/lib/utils/date";
+import { firstLetterToUpperCase } from "@/lib/utils/string";
+import { useUserStore } from "@/stores/user-store";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SectionList,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+type WorkoutHistorySection = {
+  title: string;
+  data: Workout[];
+};
+
+const ViewHistory = () => {
+  const router = useRouter();
+  const { user } = useUserStore();
+  const [query, setQuery] = useState("");
+  const [isMonthJumpModalVisible, setIsMonthJumpModalVisible] = useState(false);
+
+  const sectionListRef = useRef<SectionList<Workout, WorkoutHistorySection>>(null);
+
+  const uid = user?.uid ?? "";
+
+  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useUserWorkoutsInfinite(uid, 20);
+
+  const workouts = useMemo(() => {
+    return data?.pages.flatMap((page) => page.items) ?? [];
+  }, [data]);
+
+  const filteredWorkouts = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+
+    if (!normalized) return workouts;
+
+    return workouts.filter((workout) => {
+      const workoutName =
+        workout.name || `${firstLetterToUpperCase(workout.workoutType ?? "")} Workout`;
+
+      return workoutName.toLowerCase().includes(normalized);
+    });
+  }, [workouts, query]);
+
+  const sections = useMemo<WorkoutHistorySection[]>(() => {
+    const grouped = filteredWorkouts.reduce<Record<string, Workout[]>>((acc, workout) => {
+      const key = getFirestoreMonthSectionLabel(workout.completedAt);
+
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+
+      acc[key].push(workout);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped).map(([title, data]) => ({
+      title,
+      data,
+    }));
+  }, [filteredWorkouts]);
+
+  const handleOpenMonthJumpModal = () => {
+    if (!sections.length) return;
+    setIsMonthJumpModalVisible(true);
+  };
+
+  const handleJumpToSection = (sectionIndex: number) => {
+    sectionListRef.current?.scrollToLocation({
+      sectionIndex,
+      itemIndex: 0,
+      animated: true,
+      viewOffset: 0,
+    });
+
+    setIsMonthJumpModalVisible(false);
+  };
+
+  if (!uid) return null;
+
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: Colors.background.primary }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.headerContainer}>
+          <Pressable onPress={() => router.back()} hitSlop={15}>
+            <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
+          </Pressable>
+          <ThemedText style={styles.headerTitle}>WORKOUT HISTORY</ThemedText>
+        </View>
+
+        <View style={styles.controlsContainer}>
+          <Input
+            placeholder="Search workouts"
+            placeholderTextColor={Colors.icon}
+            value={query}
+            onChangeText={setQuery}
+            containerStyle={{ marginBottom: 16 }}
+            preIcon={{
+              familyIcon: MaterialIcons,
+              name: "search",
+            }}
+          />
+
+          <TouchableOpacity onPress={handleOpenMonthJumpModal} style={styles.jumpToDateButton}>
+            <MaterialIcons name="calendar-today" size={14} color={Colors.icon} />
+            <ThemedText style={styles.datePickerText}>Jump to Month</ThemedText>
+          </TouchableOpacity>
+        </View>
+
+        {isLoading ? (
+          <View style={styles.centerState}>
+            <ActivityIndicator />
+          </View>
+        ) : error ? (
+          <View style={styles.messageContainer}>
+            <ThemedText>Something went wrong loading workouts.</ThemedText>
+          </View>
+        ) : (
+          <SectionList
+            ref={sectionListRef}
+            sections={sections}
+            keyExtractor={(item) => item.sessionId}
+            contentContainerStyle={styles.listContent}
+            stickySectionHeadersEnabled={false}
+            showsVerticalScrollIndicator={false}
+            onEndReachedThreshold={0.5}
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+              }
+            }}
+            renderSectionHeader={({ section }) => (
+              <WorkoutHistorySectionHeader title={section.title} />
+            )}
+            renderItem={({ item }) => (
+              <WorkoutHistoryCard
+                workout={item}
+                onPress={(workout) => {
+                  router.push(`/workoutHistoryDetails/${workout.sessionId}`);
+                }}
+              />
+            )}
+            SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
+            ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <View style={styles.footerLoader}>
+                  <ActivityIndicator />
+                </View>
+              ) : null
+            }
+            ListEmptyComponent={
+              <View style={styles.messageContainer}>
+                <ThemedText>No workouts found.</ThemedText>
+              </View>
+            }
+          />
+        )}
+
+        <WorkoutHistoryMonthJumpModal
+          visible={isMonthJumpModalVisible}
+          months={sections.map((section) => section.title)}
+          onClose={() => setIsMonthJumpModalVisible(false)}
+          onSelectMonth={handleJumpToSection}
+        />
+      </SafeAreaView>
+    </KeyboardAvoidingView>
+  );
+};
+
+export default ViewHistory;
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 24,
+    backgroundColor: Colors.background.primary,
+    flex: 1,
+  },
+  controlsContainer: {
+    marginTop: 24,
+    gap: 8,
+  },
+  centerState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  messageContainer: {
+    paddingTop: 24,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: Typography.family.primary.bold,
+  },
+  datePickerText: {
+    fontSize: 14,
+    fontFamily: Typography.family.primary.semibold,
+    color: Colors.icon,
+  },
+  jumpToDateButton: {
+    flexDirection: "row",
+    gap: 5,
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  listContent: {
+    paddingTop: 24,
+    paddingBottom: 24,
+  },
+  sectionSeparator: {
+    height: 20,
+  },
+  itemSeparator: {
+    height: 12,
+  },
+  footerLoader: {
+    paddingVertical: 16,
+  },
+});

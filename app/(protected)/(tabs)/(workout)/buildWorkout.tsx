@@ -82,7 +82,7 @@ const BuildWorkout = () => {
   };
 
   const handleAddSet = (id: string, addedSet: ExerciseSet) => {
-    setAddedExerciseOrSet(true);
+    setAddedExerciseOrSet(false);
     setExercises((prevExercises) =>
       prevExercises.map((exercise) => {
         if (exercise.id === id) {
@@ -137,8 +137,8 @@ const BuildWorkout = () => {
     >
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.headerContainer}>
-          <Pressable onPress={() => router.back()}>
-            <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.text.primary} />
+          <Pressable onPress={() => router.back()} hitSlop={15}>
+            <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
           </Pressable>
           <ThemedText style={styles.headerTitle}>BUILD WORKOUT</ThemedText>
         </View>
@@ -210,11 +210,6 @@ const styles = StyleSheet.create({
   titleContainer: {
     gap: 8,
     paddingBottom: 22,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: Colors.icon,
-    fontFamily: Typography.family.primary.medium,
   },
   workoutTypeLabel: {
     fontSize: 12,
