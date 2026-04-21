@@ -25,7 +25,6 @@ const WorkoutHistoryCard = ({ workout, onPress }: Props) => {
 
   const workoutTitle =
     workout.name || `${firstLetterToUpperCase(workout.workoutType ?? "")} Workout`;
-
   return (
     <TouchableOpacity
       style={styles.container}

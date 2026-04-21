@@ -118,11 +118,11 @@ export const useOnboardingStore = create<OnboardingStore>()(
           }
 
           const user: CreateUserProfileRequest = {
-            avatarUrl: convertedUrl,
             username,
+            ...(convertedUrl && { avatarUrl: convertedUrl }),
             displayName: displayName ?? "",
             goal,
-            metrics: metrics ?? undefined,
+            ...(metrics && { metrics }),
             weeklyTargetDays: weeklyStandard,
             homeTimezone,
           };

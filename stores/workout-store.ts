@@ -15,6 +15,7 @@ export interface WorkoutState {
   duration?: number;
   isLoggingWorkout: boolean;
   initialWorkout: {
+    name: string;
     exercises: Exercise[];
     workoutType: WorkoutType;
   } | null;
@@ -24,6 +25,7 @@ export interface WorkoutState {
   currentExerciseIndex: number;
   completeWorkoutResponse?: CompleteWorkoutResponse;
   startWorkout: (payload: {
+    name: string;
     sessionId: string;
     uid: string;
     exercises: Exercise[];
@@ -35,7 +37,11 @@ export interface WorkoutState {
     sets: ExerciseSet[];
     completed?: boolean;
   }) => void;
-  setInitialWorkout: (payload: { exercises: Exercise[]; workoutType: WorkoutType }) => void;
+  setInitialWorkout: (payload: {
+    name: string;
+    exercises: Exercise[];
+    workoutType: WorkoutType;
+  }) => void;
   setCurrentExerciseIndex: (value: number) => void;
   logWorkout: (duration: number) => Promise<CompleteWorkoutResponse | undefined>;
   clearWorkout: () => void;
@@ -51,9 +57,10 @@ export const useWorkoutStore = create<WorkoutState>()(
       isWorkoutComplete: false,
       currentExerciseIndex: 0,
 
-      startWorkout: ({ sessionId, uid, exercises, workoutType }) =>
+      startWorkout: ({ name, sessionId, uid, exercises, workoutType }) =>
         set({
           activeWorkoutDraft: {
+            name,
             sessionId,
             uid,
             exercises,
@@ -77,9 +84,10 @@ export const useWorkoutStore = create<WorkoutState>()(
           },
         }),
 
-      setInitialWorkout: ({ exercises, workoutType }) =>
+      setInitialWorkout: ({ name, exercises, workoutType }) =>
         set({
           initialWorkout: {
+            name,
             workoutType,
             exercises,
           },
