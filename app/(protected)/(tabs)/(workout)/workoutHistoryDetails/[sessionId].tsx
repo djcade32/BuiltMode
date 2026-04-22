@@ -24,7 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const PRIMARY_GRADIENT_COLOR = "#c6a34a38";
 const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 
-const workoutHistoryDetails = () => {
+const WorkoutHistoryDetails = () => {
   const router = useRouter();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
 
@@ -124,7 +124,7 @@ const workoutHistoryDetails = () => {
         />
       )}
       <View style={styles.headerContainer}>
-        <Pressable onPress={() => router.back()} hitSlop={15}>
+        <Pressable testID="workout-details-back-button" onPress={() => router.back()} hitSlop={15}>
           <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
         </Pressable>
         <ThemedText style={styles.headerTitle}>WORKOUT</ThemedText>
@@ -215,7 +215,7 @@ const workoutHistoryDetails = () => {
   );
 };
 
-export default workoutHistoryDetails;
+export default WorkoutHistoryDetails;
 
 const styles = StyleSheet.create({
   container: {
