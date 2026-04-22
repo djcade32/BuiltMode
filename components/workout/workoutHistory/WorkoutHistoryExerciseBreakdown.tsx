@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
+import { breakdownSeconds } from "@/lib/utils/conversions";
 import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
 import React from "react";
 import { StyleSheet, View } from "react-native";
@@ -20,28 +21,31 @@ const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
     order: number;
     type: ExerciseMetricType;
   }) => {
+    const formatNumber = (value?: number, suffix = "") =>
+      value === undefined || value === null ? "—" : `${value}${suffix}`;
+
     if (type === "reps_only") {
       return (
         <View style={styles.exerciseSetContainer}>
           <ThemedText style={styles.setText}>Round {order}</ThemedText>
-          <ThemedText style={styles.setWeightText}>{set.reps} reps</ThemedText>
+          <ThemedText style={styles.setWeightText}>{formatNumber(set.reps, " reps")}</ThemedText>
         </View>
       );
     } else if (type === "distance") {
       return (
         <View>
-          {set.durationSec && (
+          {set.durationSec !== undefined && (
             <View style={styles.exerciseSetContainer}>
               <ThemedText style={styles.setText}>Duration</ThemedText>
               <ThemedText style={{ ...styles.setWeightText, color: Colors.accent.secondary }}>
-                {set.durationSec} mins
+                {breakdownSeconds(set.durationSec).minutes} mins
               </ThemedText>
             </View>
           )}
           <View style={styles.exerciseSetContainer}>
             <ThemedText style={styles.setText}>Distance</ThemedText>
             <ThemedText style={{ ...styles.setWeightText, color: Colors.accent.secondary }}>
-              {set.distanceMiles} miles
+              {formatNumber(set.distanceMiles, " miles")}
             </ThemedText>
           </View>
         </View>
@@ -51,9 +55,25 @@ const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
         <View style={styles.exerciseSetContainer}>
           <ThemedText style={styles.setText}>Set {order}</ThemedText>
           <View style={{ flexDirection: "row", gap: 15 }}>
-            <ThemedText style={styles.setRepText}>{set.reps} reps</ThemedText>
-            <ThemedText style={styles.setWeightText}>{set.weight} lbs</ThemedText>
+            <ThemedText style={styles.setRepText}>{formatNumber(set.reps, " reps")}</ThemedText>
+            <ThemedText style={styles.setWeightText}>{formatNumber(set.weight, " lbs")}</ThemedText>
           </View>
+        </View>
+      );
+    } else if (type === "duration" || type === "time") {
+      return (
+        <View style={styles.exerciseSetContainer}>
+          <ThemedText style={styles.setText}>Duration</ThemedText>
+          <ThemedText style={styles.setWeightText}>
+            {set.durationSec === undefined ? "—" : `${Math.round(set.durationSec / 60)} mins`}
+          </ThemedText>
+        </View>
+      );
+    } else if (type === "calories") {
+      return (
+        <View style={styles.exerciseSetContainer}>
+          <ThemedText style={styles.setText}>Calories</ThemedText>
+          <ThemedText style={styles.setWeightText}>{formatNumber(set.calories, " cal")}</ThemedText>
         </View>
       );
     }
@@ -74,7 +94,7 @@ const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
       </View>
       <View style={styles.exercisesSetsContainer}>
         {exercise.sets.map((set, index) => (
-          <SetItem key={index} set={set} order={index + 1} type={exercise.metricType} />
+          <SetItem key={set.id} set={set} order={index + 1} type={exercise.metricType} />
         ))}
       </View>
     </View>

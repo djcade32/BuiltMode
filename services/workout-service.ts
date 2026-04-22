@@ -92,5 +92,10 @@ export const getWorkoutBySessionId = async ({ params }: { params: { sessionId: s
   const workoutDoc = doc(db, `workouts/${params.sessionId}`);
   const fetchedDoc = await getDoc(workoutDoc);
 
-  if (fetchedDoc.exists()) return fetchedDoc.data() as Workout;
+  if (fetchedDoc.exists()) {
+    return {
+      id: fetchedDoc.id,
+      ...(fetchedDoc.data() as Omit<Workout, "id">),
+    };
+  }
 };

@@ -107,7 +107,6 @@ const workoutHistoryDetails = () => {
     return data?.workoutType ? firstLetterToUpperCase(data.workoutType) : "";
   };
 
-  if (!data) return null;
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {isDropdownOpened && (
@@ -140,6 +139,10 @@ const workoutHistoryDetails = () => {
       ) : error ? (
         <View style={styles.messageContainer}>
           <ThemedText>Something went wrong loading workouts.</ThemedText>
+        </View>
+      ) : !data ? (
+        <View style={styles.messageContainer}>
+          <ThemedText>Workout not found.</ThemedText>
         </View>
       ) : (
         <>
@@ -200,10 +203,7 @@ const workoutHistoryDetails = () => {
                       <FontAwesome name="sticky-note" size={12} color={Colors.icon} />
                       <ThemedText style={styles.notesTitle}>NOTES</ThemedText>
                     </View>
-                    <ThemedText style={styles.notesText}>
-                      Felt strong today. Increased weight on final set. Form stayed solid
-                      throughout.
-                    </ThemedText>
+                    <ThemedText style={styles.notesText}>{data.notes}</ThemedText>
                   </View>
                 );
               }}

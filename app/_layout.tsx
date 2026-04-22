@@ -21,6 +21,7 @@ import {
 } from "@expo-google-fonts/jetbrains-mono";
 
 import { ArchivoBlack_400Regular } from "@expo-google-fonts/archivo-black";
+import { useState } from "react";
 import "react-native-get-random-values";
 
 export const unstable_settings = {
@@ -28,7 +29,7 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  const queryClient = new QueryClient();
+  const [queryClient] = useState(() => new QueryClient());
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,

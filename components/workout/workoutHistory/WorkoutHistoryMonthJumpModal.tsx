@@ -20,7 +20,7 @@ const WorkoutHistoryMonthJumpModal = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalCard} onPress={() => {}}>
+        <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
           <ThemedText style={styles.modalTitle}>Jump to Month</ThemedText>
 
           <View style={styles.monthList}>

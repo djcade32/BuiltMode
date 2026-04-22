@@ -42,7 +42,7 @@ export const createUserProfile = onCall(
     const parsed = createUserProfileRequestSchema.safeParse(request.data);
 
     if (!parsed.success) {
-      throw new HttpsError("invalid-argument", `Invalid profile payload: ${parsed.error}`);
+      throw new HttpsError("invalid-argument", "Invalid profile payload.");
     }
 
     assertValidTimezone(parsed.data.homeTimezone);
