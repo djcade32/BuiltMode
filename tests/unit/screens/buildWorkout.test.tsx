@@ -51,6 +51,7 @@ describe("BuildWorkout", () => {
           name: "Sheet Exercise",
         }),
       ],
+      name: "Strength Workout",
     });
 
     expect(mockPush).toHaveBeenCalledWith("/(protected)/(tabs)/(workout)/confirmWorkout");

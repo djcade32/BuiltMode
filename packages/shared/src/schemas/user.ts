@@ -50,7 +50,7 @@ export const usernameLowerSchema = z
 
 export const displayNameSchema = z.string().trim().min(1).max(40);
 
-export const avatarUrlSchema = z.string().url().max(500).optional();
+export const avatarUrlSchema = z.string().url().max(500).optional().nullable();
 
 export const createUserProfileRequestSchema = z.object({
   username: usernameSchema,

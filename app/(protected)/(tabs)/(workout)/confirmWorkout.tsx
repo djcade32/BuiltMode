@@ -1,7 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
-import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
@@ -67,6 +66,7 @@ const Ready = () => {
     if (!user) return;
     const id = uuidv4();
     startWorkout({
+      name: initialWorkout.name,
       sessionId: id,
       uid: user?.uid,
       exercises: initialWorkout.exercises,
@@ -90,9 +90,7 @@ const Ready = () => {
         <View style={styles.sessionCardContainer}>
           <View style={{ gap: 8, paddingBottom: 16 }}>
             <ThemedText style={styles.sessionCardTitle}>TODAY'S SESSION</ThemedText>
-            <ThemedText style={styles.sessionWorkoutName}>
-              {firstLetterToUpperCase(initialWorkout.workoutType)} Training
-            </ThemedText>
+            <ThemedText style={styles.sessionWorkoutName}>{initialWorkout.name}</ThemedText>
           </View>
 
           <View style={{ borderTopWidth: 1, borderTopColor: Colors.cardBorder }}>

@@ -114,15 +114,18 @@ export const useOnboardingStore = create<OnboardingStore>()(
               console.warn("No User uid, could not upload avatar");
               return;
             }
-            convertedUrl = (await uploadImageAsync(avatarUrl, `user-avatars/${uid}`)) ?? "";
+            convertedUrl = (await uploadImageAsync(avatarUrl, `user-avatars/${uid}`)) ?? null;
+            if (!convertedUrl) {
+              console.warn("Avatar upload failed; creating profile without avatar");
+            }
           }
 
           const user: CreateUserProfileRequest = {
-            avatarUrl: convertedUrl,
             username,
+            ...(convertedUrl && { avatarUrl: convertedUrl }),
             displayName: displayName ?? "",
             goal,
-            metrics: metrics ?? undefined,
+            ...(metrics && { metrics }),
             weeklyTargetDays: weeklyStandard,
             homeTimezone,
           };

@@ -3,7 +3,9 @@ import Switch from "@/components/ui/Switch";
 import ThemedButton from "@/components/ui/ThemedButton";
 import AddExerciseSheet from "@/components/workout/AddExerciseSheet";
 import BuildExerciseItem from "@/components/workout/BuildExerciseItem";
+import WorkoutNameSheet from "@/components/workout/WorkoutNameSheet";
 import { Border, Colors, Typography } from "@/constants/theme";
+import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { Exercise, ExerciseSet, WorkoutType } from "@/packages/shared/src";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
@@ -34,7 +36,9 @@ const BuildWorkout = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [addedExerciseOrSet, setAddedExerciseOrSet] = useState<boolean>(false);
   const [workoutType, setWorkoutType] = useState(OPTIONS[0]);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
+  const [isWorkoutNameSheetVisible, setIsWorkoutNameSheetVisible] = useState(false);
+  const [workoutName, setWorkoutName] = useState<string | undefined>(undefined);
 
   const renderItem = useCallback(({ item, drag }: RenderItemParams<Exercise>) => {
     return (
@@ -82,7 +86,7 @@ const BuildWorkout = () => {
   };
 
   const handleAddSet = (id: string, addedSet: ExerciseSet) => {
-    setAddedExerciseOrSet(true);
+    setAddedExerciseOrSet(false);
     setExercises((prevExercises) =>
       prevExercises.map((exercise) => {
         if (exercise.id === id) {
@@ -112,7 +116,11 @@ const BuildWorkout = () => {
 
   const handleCompleteBuild = () => {
     console.log("Build Workout: ", exercises);
-    setInitialWorkout({ workoutType, exercises });
+    setInitialWorkout({
+      name: workoutName ?? `${firstLetterToUpperCase(workoutType)} Workout`,
+      workoutType,
+      exercises,
+    });
     router.push("/(protected)/(tabs)/(workout)/confirmWorkout");
   };
 
@@ -137,10 +145,15 @@ const BuildWorkout = () => {
     >
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.headerContainer}>
-          <Pressable onPress={() => router.back()}>
-            <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.text.primary} />
+          <Pressable onPress={() => router.back()} hitSlop={15}>
+            <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
           </Pressable>
-          <ThemedText style={styles.headerTitle}>BUILD WORKOUT</ThemedText>
+          <ThemedText style={styles.headerTitle}>
+            {workoutName ? workoutName : `${firstLetterToUpperCase(workoutType)} Workout`}
+          </ThemedText>
+          <TouchableOpacity onPress={() => setIsWorkoutNameSheetVisible(true)}>
+            <MaterialIcons name="edit" size={24} color={Colors.icon} />
+          </TouchableOpacity>
         </View>
 
         <View style={{ marginTop: 24, gap: 5 }}>
@@ -177,7 +190,10 @@ const BuildWorkout = () => {
         </View>
 
         <View style={{ gap: 12, paddingBottom: 10 }}>
-          <TouchableOpacity style={styles.addExerciseButton} onPress={() => setIsSheetOpen(true)}>
+          <TouchableOpacity
+            style={styles.addExerciseButton}
+            onPress={() => setIsAddExerciseSheetOpen(true)}
+          >
             <Entypo name="plus" size={18} color={Colors.icon} />
             <ThemedText style={styles.addExerciseButtonText}>ADD EXERCISE</ThemedText>
           </TouchableOpacity>
@@ -190,9 +206,17 @@ const BuildWorkout = () => {
         </View>
 
         <AddExerciseSheet
-          visible={isSheetOpen}
-          onClose={() => setIsSheetOpen(false)}
+          visible={isAddExerciseSheetOpen}
+          onClose={() => setIsAddExerciseSheetOpen(false)}
           onSelect={handleAddExercise}
+        />
+        <WorkoutNameSheet
+          visible={isWorkoutNameSheetVisible}
+          initialValue={workoutName}
+          onClose={() => setIsWorkoutNameSheetVisible(false)}
+          onSave={(name) => {
+            setWorkoutName(name);
+          }}
         />
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -210,11 +234,6 @@ const styles = StyleSheet.create({
   titleContainer: {
     gap: 8,
     paddingBottom: 22,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: Colors.icon,
-    fontFamily: Typography.family.primary.medium,
   },
   workoutTypeLabel: {
     fontSize: 12,
@@ -265,6 +284,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     gap: 10,
   },
   headerTitle: {

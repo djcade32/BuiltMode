@@ -7,6 +7,7 @@ import {
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -20,6 +21,7 @@ import {
 } from "@expo-google-fonts/jetbrains-mono";
 
 import { ArchivoBlack_400Regular } from "@expo-google-fonts/archivo-black";
+import { useState } from "react";
 import "react-native-get-random-values";
 
 export const unstable_settings = {
@@ -27,6 +29,7 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient());
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -45,18 +48,20 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={DarkTheme}>
-      <ThemedView
-        style={{
-          flex: 1,
-          backgroundColor: Colors.background.primary,
-        }}
-      >
-        <Stack screenOptions={{ contentStyle: { backgroundColor: Colors.background.primary } }}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(protected)" options={{ headerShown: false }} />
-        </Stack>
-      </ThemedView>
-      <StatusBar style="light" />
+      <QueryClientProvider client={queryClient}>
+        <ThemedView
+          style={{
+            flex: 1,
+            backgroundColor: Colors.background.primary,
+          }}
+        >
+          <Stack screenOptions={{ contentStyle: { backgroundColor: Colors.background.primary } }}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(protected)" options={{ headerShown: false }} />
+          </Stack>
+        </ThemedView>
+        <StatusBar style="light" />
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

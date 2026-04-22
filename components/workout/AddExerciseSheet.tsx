@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: Colors.inputBorder,
+    borderColor: Colors.cardBorder,
     borderRadius: Border.radius.md,
     backgroundColor: Colors.background.secondary,
     marginBottom: 10,

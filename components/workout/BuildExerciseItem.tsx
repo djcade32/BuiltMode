@@ -7,9 +7,9 @@ import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from "react-native-popup-menu";
 import { v4 as uuidv4 } from "uuid";
 import { ThemedText } from "../themed-text";
-import DistanceSetItem from "./ExerciseSetItems/DistanceSetItem";
-import RepsOnlySetItem from "./ExerciseSetItems/RepsOnlySetItem";
-import WeightAndRepsSetItem from "./ExerciseSetItems/WeightAndRepsSetItem";
+import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
+import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
+import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
 
 type props = {
   exercise: Exercise;

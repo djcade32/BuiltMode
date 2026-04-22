@@ -7,9 +7,9 @@ import { FlatList, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { ThemedText } from "../themed-text";
 import ThemedButton from "../ui/ThemedButton";
-import DistanceSetItem from "./ExerciseSetItems/DistanceSetItem";
-import RepsOnlySetItem from "./ExerciseSetItems/RepsOnlySetItem";
-import WeightAndRepsSetItem from "./ExerciseSetItems/WeightAndRepsSetItem";
+import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
+import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
+import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
 
 type Props = {
   exercise: Exercise;
@@ -40,8 +40,6 @@ const ExerciseSetItem = ({
     return completedSets.some((completedSet) => completedSet.id === set.id);
   }, [completedSets]);
 
-  const isLastSet = useMemo(() => completedSets.length === index + 1, [completedSets, index]);
-
   const animatedStyle = useAnimatedStyle(() => {
     return {
       opacity: withTiming(isActive || isCompleted ? 1 : 0.2, { duration: 180 }),
@@ -59,7 +57,7 @@ const ExerciseSetItem = ({
           setIndex={index}
           onEditSet={onEditSet}
           usedForBuilding={false}
-          isActive={isActive || isLastSet}
+          isActive={isActive}
           isCompleted={isCompleted}
           containerStyle={{
             padding: 0,
@@ -77,7 +75,7 @@ const ExerciseSetItem = ({
           onEditSet={onEditSet}
           exerciseId={exerciseId}
           usedForBuilding={false}
-          isActive={isActive || isLastSet}
+          isActive={isActive}
           containerStyle={{
             padding: 0,
             backgroundColor: "transparent",
@@ -94,7 +92,7 @@ const ExerciseSetItem = ({
           onEditSet={onEditSet}
           exerciseId={exerciseId}
           usedForBuilding={false}
-          isActive={isActive || isLastSet}
+          isActive={isActive}
           isCompleted={isCompleted}
           containerStyle={{
             padding: 0,
