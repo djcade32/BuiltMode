@@ -74,8 +74,7 @@ export const getUserWorkouts = async ({
   const snapshot = await getDocs(workoutsQuery);
 
   const items: Workout[] = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as Omit<Workout, "id">),
+    ...(doc.data() as Workout),
   }));
 
   const hasMore = snapshot.docs.length === pageSize;
@@ -88,14 +87,17 @@ export const getUserWorkouts = async ({
   };
 };
 
-export const getWorkoutBySessionId = async ({ params }: { params: { sessionId: string } }) => {
+export const getWorkoutBySessionId = async ({
+  params,
+}: {
+  params: { sessionId: string };
+}): Promise<Workout | undefined> => {
   const workoutDoc = doc(db, `workouts/${params.sessionId}`);
   const fetchedDoc = await getDoc(workoutDoc);
 
   if (fetchedDoc.exists()) {
     return {
-      id: fetchedDoc.id,
-      ...(fetchedDoc.data() as Omit<Workout, "id">),
+      ...(fetchedDoc.data() as Workout),
     };
   }
 };

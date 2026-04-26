@@ -53,7 +53,7 @@ const ModeScore = () => {
     return Alert.alert("Oops", "There was an error onboarding you.", [
       { text: "Try again", onPress: handleEnterModePressed },
       {
-        text: "Cancel",
+        text: "Close",
         onPress: async () => {
           await signout();
           router.replace("/(auth)/signin");

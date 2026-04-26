@@ -1,10 +1,12 @@
 import { ThemedText } from "@/components/themed-text";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Border, Colors, Typography } from "@/constants/theme";
+import { useUserTemplatesInfinite } from "@/hooks/workouts/useUserTemplatesInfinite";
+import { useUserStore } from "@/stores/user-store";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
-import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import React, { useMemo } from "react";
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const TEMPLATES = [
@@ -59,6 +61,15 @@ const TemplateItem = ({ icon, title, numOfExercises }: TemplateItemProps) => {
 
 const log = () => {
   const router = useRouter();
+  const { user } = useUserStore();
+  const uid = user?.uid ?? "";
+
+  const { data, error, isLoading } = useUserTemplatesInfinite(uid, 3);
+
+  const recentTemplates = useMemo(() => {
+    return (data?.pages.flatMap((page) => page.items) ?? []).slice(0, 3);
+  }, [data]);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.titleContainer}>
@@ -72,19 +83,35 @@ const log = () => {
       />
       <View style={styles.templatesSection}>
         <ThemedText style={styles.templatesSectionTitle}>RECENT TEMPLATES</ThemedText>
-        <View style={styles.templatesContainer}>
-          {TEMPLATES.map((template, index) => (
-            <TemplateItem
-              key={index}
-              title={template.title}
-              numOfExercises={template.numOfExercises}
-              icon={{
-                iconFamily: FontAwesome6,
-                name: "dumbbell",
-              }}
-            />
-          ))}
-        </View>
+        {isLoading ? (
+          <View style={styles.centerState}>
+            <ActivityIndicator />
+          </View>
+        ) : error ? (
+          <View style={styles.messageContainer}>
+            <ThemedText>Something went wrong loading templates.</ThemedText>
+          </View>
+        ) : !data ? (
+          <View style={styles.messageContainer}>
+            <ThemedText>Templates not found.</ThemedText>
+          </View>
+        ) : (
+          <>
+            <View style={styles.templatesContainer}>
+              {recentTemplates.map((template, index) => (
+                <TemplateItem
+                  key={index}
+                  title={template.name}
+                  numOfExercises={template.exercises.length}
+                  icon={{
+                    iconFamily: FontAwesome6,
+                    name: "dumbbell",
+                  }}
+                />
+              ))}
+            </View>
+          </>
+        )}
       </View>
       <Link href={"/(protected)/(tabs)/(workout)/viewHistory"} asChild style={{ marginTop: 48 }}>
         <TouchableOpacity>
@@ -115,6 +142,7 @@ const styles = StyleSheet.create({
   },
   templatesSection: {
     paddingTop: 48,
+    minHeight: 200,
   },
   templatesSectionTitle: {
     fontSize: 12,
@@ -155,5 +183,14 @@ const styles = StyleSheet.create({
     color: Colors.icon,
     textAlign: "center",
     letterSpacing: 0.7,
+  },
+
+  centerState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  messageContainer: {
+    paddingTop: 24,
   },
 });

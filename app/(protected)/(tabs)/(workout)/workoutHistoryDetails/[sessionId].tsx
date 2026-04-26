@@ -6,11 +6,15 @@ import { breakdownSeconds } from "@/lib/utils/conversions";
 import { formatFirestoreDateTime, getFirestoreDayLabel } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { getWorkoutBySessionId } from "@/services/workout-service";
+import { useUserStore } from "@/stores/user-store";
+import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -26,6 +30,10 @@ const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 
 const WorkoutHistoryDetails = () => {
   const router = useRouter();
+  const { user } = useUserStore();
+  const queryClient = useQueryClient();
+
+  const { saveWorkoutAsTemplate } = useWorkoutStore();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
 
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
@@ -59,7 +67,10 @@ const WorkoutHistoryDetails = () => {
             onSelect={() => {}}
             customStyles={{
               OptionTouchableComponent: TouchableOpacity,
-              optionWrapper: styles.dropdownOptionContainer,
+              optionWrapper: [
+                styles.dropdownOptionContainer,
+                { borderBottomColor: Colors.inputBorder, borderBottomWidth: 1 },
+              ],
             }}
           >
             <MaterialIcons name="content-copy" size={20} color={Colors.gray} />
@@ -67,19 +78,19 @@ const WorkoutHistoryDetails = () => {
           </MenuOption>
 
           <MenuOption
-            onSelect={() => {}}
+            onSelect={handleSaveAsTemplate}
             customStyles={{
               OptionTouchableComponent: TouchableOpacity,
               optionWrapper: styles.dropdownOptionContainer,
             }}
           >
             <MaterialIcons name="save" size={20} color={Colors.gray} />
-            <ThemedText style={styles.dropdownOptionText}>SAVE TEMPLATE</ThemedText>
+            <ThemedText style={styles.dropdownOptionText}>SAVE AS TEMPLATE</ThemedText>
           </MenuOption>
         </MenuOptions>
       </Menu>
     );
-  }, []);
+  }, [data]);
 
   const workoutName = () => {
     return data?.name === ""
@@ -106,6 +117,30 @@ const WorkoutHistoryDetails = () => {
   const workoutType = () => {
     return data?.workoutType ? firstLetterToUpperCase(data.workoutType) : "";
   };
+
+  async function handleSaveAsTemplate() {
+    try {
+      if (!data) return;
+      const template = await saveWorkoutAsTemplate(data);
+      if (!template) {
+        ErrorAlert();
+      }
+      queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
+    } catch (error) {
+      console.error("Error saving workout as template: ", error);
+      ErrorAlert();
+    }
+  }
+
+  function ErrorAlert() {
+    return Alert.alert("Oops", "There was an error saving workout as template.", [
+      { text: "Try again", onPress: handleSaveAsTemplate },
+      {
+        text: "Close",
+        style: "destructive",
+      },
+    ]);
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -138,7 +173,7 @@ const WorkoutHistoryDetails = () => {
         </View>
       ) : error ? (
         <View style={styles.messageContainer}>
-          <ThemedText>Something went wrong loading workouts.</ThemedText>
+          <ThemedText>Something went wrong loading workout.</ThemedText>
         </View>
       ) : !data ? (
         <View style={styles.messageContainer}>
@@ -295,13 +330,13 @@ const styles = StyleSheet.create({
     borderRadius: Border.radius.md,
     borderWidth: 1,
     borderColor: Colors.inputBorder,
-    padding: 8,
-    width: 165,
+    padding: 3,
     zIndex: 101,
   },
   dropdownOptionContainer: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 8,
     gap: 10,
   },
   dropdownOptionText: {

@@ -99,7 +99,10 @@ const ActiveWorkout = () => {
             onSelect={() => (isRunning ? pause() : start())}
             customStyles={{
               OptionTouchableComponent: TouchableOpacity,
-              optionWrapper: styles.dropdownOptionContainer,
+              optionWrapper: [
+                styles.dropdownOptionContainer,
+                { borderBottomColor: Colors.inputBorder, borderBottomWidth: 1 },
+              ],
             }}
           >
             <View style={{ width: 15 }}>
@@ -281,7 +284,7 @@ const styles = StyleSheet.create({
     borderRadius: Border.radius.md,
     borderWidth: 1,
     borderColor: Colors.inputBorder,
-    padding: 8,
+    padding: 3,
     width: 100,
     zIndex: 101,
   },
@@ -289,6 +292,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    padding: 8,
   },
   dropdownOptionText: {
     fontSize: 12,

@@ -3,10 +3,13 @@ import {
   CompleteWorkoutResponse,
   Exercise,
   ExerciseSet,
+  SaveAsTemplateResponse,
   WorkoutType,
 } from "@/packages/shared/src";
+import { saveAsTemplate } from "@/services/template-service";
 import { createCompleteWorkout } from "@/services/workout-service";
 import type { ActiveWorkoutDraft } from "@builtmode/shared/types/workout";
+import { v4 as uuidv4 } from "uuid";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
@@ -45,6 +48,7 @@ export interface WorkoutState {
   setCurrentExerciseIndex: (value: number) => void;
   logWorkout: (duration: number) => Promise<CompleteWorkoutResponse | undefined>;
   clearWorkout: () => void;
+  saveWorkoutAsTemplate: (template: any) => Promise<SaveAsTemplateResponse | undefined>;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -157,6 +161,24 @@ export const useWorkoutStore = create<WorkoutState>()(
           set({
             isLoggingWorkout: false,
           });
+        }
+      },
+
+      saveWorkoutAsTemplate: async (template) => {
+        const request: SaveAsTemplateResponse = {
+          id: template.id ? `${template.id}-template` : `${uuidv4()}-template`,
+          name: template.name,
+          exercises: template.exercises,
+          notes: template.notes,
+          workoutType: template.workoutType,
+        };
+        try {
+          console.log("Sending save template request: ", request);
+          const response = saveAsTemplate(request);
+          if (response) return response;
+          return;
+        } catch (error) {
+          throw error;
         }
       },
 
