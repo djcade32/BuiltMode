@@ -31,14 +31,16 @@ const BuildWorkout = () => {
   const router = useRouter();
   const listRef = useRef<any>(null);
 
-  const { setInitialWorkout } = useWorkoutStore();
+  const { setInitialWorkout, initialWorkout } = useWorkoutStore();
 
-  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>(initialWorkout?.exercises ?? []);
   const [addedExerciseOrSet, setAddedExerciseOrSet] = useState<boolean>(false);
-  const [workoutType, setWorkoutType] = useState(OPTIONS[0]);
+  const [workoutType, setWorkoutType] = useState(initialWorkout?.workoutType ?? OPTIONS[0]);
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   const [isWorkoutNameSheetVisible, setIsWorkoutNameSheetVisible] = useState(false);
-  const [workoutName, setWorkoutName] = useState<string | undefined>(undefined);
+  const [workoutName, setWorkoutName] = useState<string | undefined>(
+    initialWorkout?.name ?? undefined,
+  );
 
   const renderItem = useCallback(({ item, drag }: RenderItemParams<Exercise>) => {
     return (
@@ -138,6 +140,10 @@ const BuildWorkout = () => {
     );
   };
 
+  const handleBackPress = () => {
+    (router.back(), setInitialWorkout(null));
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: Colors.background.primary }}
@@ -145,7 +151,7 @@ const BuildWorkout = () => {
     >
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.headerContainer}>
-          <Pressable onPress={() => router.back()} hitSlop={15}>
+          <Pressable onPress={handleBackPress} hitSlop={15}>
             <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
           </Pressable>
           <ThemedText style={styles.headerTitle}>
@@ -161,7 +167,7 @@ const BuildWorkout = () => {
           <Switch
             options={OPTIONS.map((option) => option.toLocaleUpperCase())}
             onChange={(value) => setWorkoutType(value.toLocaleLowerCase() as WorkoutType)}
-            defaultIndex={0}
+            defaultIndex={OPTIONS.findIndex((option) => option === workoutType)}
           />
         </View>
 

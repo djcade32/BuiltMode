@@ -40,11 +40,13 @@ export interface WorkoutState {
     sets: ExerciseSet[];
     completed?: boolean;
   }) => void;
-  setInitialWorkout: (payload: {
-    name: string;
-    exercises: Exercise[];
-    workoutType: WorkoutType;
-  }) => void;
+  setInitialWorkout: (
+    payload: {
+      name: string;
+      exercises: Exercise[];
+      workoutType: WorkoutType;
+    } | null,
+  ) => void;
   setCurrentExerciseIndex: (value: number) => void;
   logWorkout: (duration: number) => Promise<CompleteWorkoutResponse | undefined>;
   clearWorkout: () => void;
@@ -88,13 +90,17 @@ export const useWorkoutStore = create<WorkoutState>()(
           },
         }),
 
-      setInitialWorkout: ({ name, exercises, workoutType }) =>
+      setInitialWorkout: (
+        payload: { name: string; exercises: Exercise[]; workoutType: WorkoutType } | null,
+      ) =>
         set({
-          initialWorkout: {
-            name,
-            workoutType,
-            exercises,
-          },
+          initialWorkout: payload
+            ? {
+                name: payload.name,
+                workoutType: payload.workoutType,
+                exercises: payload.exercises,
+              }
+            : null,
         }),
 
       updateWorkoutProgress: ({ exerciseId, sets, completed = false }) => {
