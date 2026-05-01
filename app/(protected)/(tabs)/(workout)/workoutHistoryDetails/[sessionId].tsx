@@ -60,6 +60,7 @@ const WorkoutHistoryDetails = () => {
         onSelect: () => setIsWorkoutNameSheetVisible(true),
         text: "SAVE AS TEMPLATE",
         icon: <MaterialIcons name="save" size={20} color={Colors.gray} />,
+        disabled: !data,
       },
     ],
     [data],

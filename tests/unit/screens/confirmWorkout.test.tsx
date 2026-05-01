@@ -69,7 +69,8 @@ describe("confirmWorkout", () => {
     fireEvent.press(getByText("START WORKOUT"));
 
     expect(startWorkoutSpy).toHaveBeenCalledWith({
-      sessionId: "mock-session-id",
+      name: "Strength Workout",
+      sessionId: "mock-session-id-workout",
       uid: "user-1",
       exercises: expect.any(Array),
       workoutType: "strength",
