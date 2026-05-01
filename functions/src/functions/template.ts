@@ -1,7 +1,7 @@
 import { SaveAsTemplateRequest, SaveAsTemplateResponse } from "@builtmode/shared/types/template";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
-import { createTemplate } from "../firestore/template.js";
+import { createTemplate, deleteTemplate } from "../firestore/template.js";
 import { getUserByUid } from "../firestore/user.js";
 import { db } from "../lib/firebaseAdmin.js";
 import { Template } from "../types/template.js";
@@ -36,4 +36,13 @@ export async function handleSaveAsTemplate(
 
     return {} as SaveAsTemplateResponse;
   });
+}
+
+export async function handleDeleteTemplate(id: string): Promise<boolean> {
+  try {
+    await deleteTemplate(id);
+    return true;
+  } catch (error) {
+    return false;
+  }
 }

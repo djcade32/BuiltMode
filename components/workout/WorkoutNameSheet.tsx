@@ -28,9 +28,16 @@ type Props = {
   initialValue?: string;
   onClose: () => void;
   onSave: (workoutName: string) => void;
+  title?: string;
 };
 
-const WorkoutNameSheet = ({ visible, initialValue = "", onClose, onSave }: Props) => {
+const WorkoutNameSheet = ({
+  visible,
+  initialValue = "",
+  onClose,
+  onSave,
+  title = "Name Your Workout",
+}: Props) => {
   const [workoutName, setWorkoutName] = useState(initialValue);
 
   useEffect(() => {
@@ -76,7 +83,7 @@ const WorkoutNameSheet = ({ visible, initialValue = "", onClose, onSave }: Props
 
             <View style={styles.header}>
               <View>
-                <ThemedText style={styles.title}>Name Your Workout</ThemedText>
+                <ThemedText style={styles.title}>{title}</ThemedText>
                 <ThemedText style={styles.subtitle}>
                   Optional, but helps you stay organized.
                 </ThemedText>

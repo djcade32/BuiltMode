@@ -1,6 +1,9 @@
 import { ThemedText } from "@/components/themed-text";
+import DropdownMenu, { DropdownMenuOption } from "@/components/ui/DropdownMenu";
 import WorkoutHistoryExerciseBreakdown from "@/components/workout/workoutHistory/WorkoutHistoryExerciseBreakdown";
+import WorkoutNameSheet from "@/components/workout/WorkoutNameSheet";
 import { Border, Colors, Typography } from "@/constants/theme";
+import { Workout } from "@/functions/src/types/workout";
 import { useQuery } from "@/hooks/useQuery";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { formatFirestoreDateTime, getFirestoreDayLabel } from "@/lib/utils/date";
@@ -11,7 +14,7 @@ import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,8 +25,8 @@ import {
   View,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
-import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from "react-native-popup-menu";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 const PRIMARY_GRADIENT_COLOR = "#c6a34a38";
 const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
@@ -33,10 +36,11 @@ const WorkoutHistoryDetails = () => {
   const { user } = useUserStore();
   const queryClient = useQueryClient();
 
-  const { saveWorkoutAsTemplate } = useWorkoutStore();
+  const { saveWorkoutAsTemplate, setInitialWorkout } = useWorkoutStore();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
 
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
+  const [isWorkoutNameSheetVisible, setIsWorkoutNameSheetVisible] = useState<boolean>(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["workout", sessionId],
@@ -45,52 +49,21 @@ const WorkoutHistoryDetails = () => {
     enabled: !!sessionId,
   });
 
-  const DropDown = useCallback(() => {
-    return (
-      <Menu
-        renderer={renderers.ContextMenu}
-        rendererProps={{ placement: "bottom" }}
-        onClose={() => setIsDropdownOpened(false)}
-      >
-        <MenuTrigger
-          customStyles={{ TriggerTouchableComponent: TouchableOpacity }}
-          onPress={() => setIsDropdownOpened((prev) => !prev)}
-        >
-          <MaterialIcons name="more-horiz" size={22} color={Colors.icon} />
-        </MenuTrigger>
-        <MenuOptions
-          customStyles={{
-            optionsContainer: styles.dropdownOptionsContainer,
-          }}
-        >
-          <MenuOption
-            onSelect={() => {}}
-            customStyles={{
-              OptionTouchableComponent: TouchableOpacity,
-              optionWrapper: [
-                styles.dropdownOptionContainer,
-                { borderBottomColor: Colors.inputBorder, borderBottomWidth: 1 },
-              ],
-            }}
-          >
-            <MaterialIcons name="content-copy" size={20} color={Colors.gray} />
-            <ThemedText style={styles.dropdownOptionText}>COPY</ThemedText>
-          </MenuOption>
-
-          <MenuOption
-            onSelect={handleSaveAsTemplate}
-            customStyles={{
-              OptionTouchableComponent: TouchableOpacity,
-              optionWrapper: styles.dropdownOptionContainer,
-            }}
-          >
-            <MaterialIcons name="save" size={20} color={Colors.gray} />
-            <ThemedText style={styles.dropdownOptionText}>SAVE AS TEMPLATE</ThemedText>
-          </MenuOption>
-        </MenuOptions>
-      </Menu>
-    );
-  }, [data]);
+  const dropDownOptions: DropdownMenuOption[] = useMemo(
+    () => [
+      {
+        onSelect: () => data && handleCopyPress(data),
+        text: "COPY",
+        icon: <MaterialIcons name="content-copy" size={20} color={Colors.gray} />,
+      },
+      {
+        onSelect: () => setIsWorkoutNameSheetVisible(true),
+        text: "SAVE AS TEMPLATE",
+        icon: <MaterialIcons name="save" size={20} color={Colors.gray} />,
+      },
+    ],
+    [data],
+  );
 
   const workoutName = () => {
     return data?.name === ""
@@ -118,19 +91,42 @@ const WorkoutHistoryDetails = () => {
     return data?.workoutType ? firstLetterToUpperCase(data.workoutType) : "";
   };
 
-  async function handleSaveAsTemplate() {
+  const showToast = (message: string, actionText?: string, action?: () => void) => {
+    Toast.show({
+      type: "success",
+      text1: message,
+      props: { action, actionText: actionText },
+    });
+  };
+
+  async function handleSaveAsTemplate(name?: string) {
     try {
       if (!data) return;
+      data.name = name ?? data.name;
       const template = await saveWorkoutAsTemplate(data);
       if (!template) {
         ErrorAlert();
       }
       queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
+      showToast("Workout saved as template", "View", () =>
+        router.push("/(protected)/(tabs)/(workout)/viewTemplates"),
+      );
     } catch (error) {
       console.error("Error saving workout as template: ", error);
       ErrorAlert();
     }
   }
+
+  const handleCopyPress = (workout: Workout) => {
+    setInitialWorkout({
+      name: workout.name ?? "",
+      exercises: workout.exercises,
+      workoutType: workout.workoutType ?? "other",
+    });
+
+    router.push("/(protected)/(tabs)/(workout)/buildWorkout");
+    showToast("Workout copied");
+  };
 
   function ErrorAlert() {
     return Alert.alert("Oops", "There was an error saving workout as template.", [
@@ -164,7 +160,11 @@ const WorkoutHistoryDetails = () => {
         </Pressable>
         <ThemedText style={styles.headerTitle}>WORKOUT</ThemedText>
         <TouchableOpacity style={styles.moreButtonContainer}>
-          <DropDown />
+          <DropdownMenu
+            onClose={() => setIsDropdownOpened((prev) => !prev)}
+            renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
+            options={dropDownOptions}
+          />
         </TouchableOpacity>
       </View>
       {isLoading ? (
@@ -246,6 +246,15 @@ const WorkoutHistoryDetails = () => {
           </View>
         </>
       )}
+      <WorkoutNameSheet
+        title="Name Template"
+        visible={isWorkoutNameSheetVisible}
+        onClose={() => setIsWorkoutNameSheetVisible(false)}
+        onSave={(name) => {
+          setIsWorkoutNameSheetVisible(false);
+          handleSaveAsTemplate(name);
+        }}
+      />
     </SafeAreaView>
   );
 };

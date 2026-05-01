@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import ThemedButton from "@/components/ui/ThemedButton";
+import WorkoutHistoryCard from "@/components/workout/workoutHistory/WorkoutHistoryCard";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Template } from "@/functions/src/types/template";
 import { Workout } from "@/functions/src/types/workout";
@@ -39,52 +40,15 @@ const TemplateItem = ({ template, onPress }: TemplateItemProps) => {
 
   return (
     <TouchableOpacity style={styles.templateItemContainer} onPress={() => onPress(template)}>
-      <ThemedText style={styles.templateItemTitle}>{name}</ThemedText>
+      <ThemedText style={styles.templateItemTitle} ellipsizeMode="tail" numberOfLines={1}>
+        {name}
+      </ThemedText>
       <ThemedText
         style={[styles.templateItemNumOfExercises, { marginBottom: 5, color: Colors.gray }]}
       >{`${exercises.length} exercises`}</ThemedText>
       <ThemedText style={styles.templateItemNumOfExercises}>
         {firstLetterToUpperCase(workoutType ?? "other")}
       </ThemedText>
-    </TouchableOpacity>
-  );
-};
-
-const WorkoutItem = ({ workout, onPress }: WorkoutItemProps) => {
-  const { name, completedAt, duration, exercises, workoutType } = workout;
-
-  return (
-    <TouchableOpacity style={styles.lastWorkoutContainer} onPress={() => onPress(workout)}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <ThemedText style={styles.lastWorkoutName}>{name}</ThemedText>
-        <ThemedText
-          style={{
-            fontFamily: Typography.family.secondary.regular,
-            fontSize: 10,
-            color: Colors.icon,
-          }}
-        >
-          {formatFirestoreTimestamp(completedAt)}
-        </ThemedText>
-      </View>
-      <ThemedText
-        style={{
-          fontFamily: Typography.family.secondary.regular,
-          fontSize: 12,
-          color: Colors.gray,
-          paddingTop: 4,
-        }}
-      >
-        {firstLetterToUpperCase(workoutType ?? "other")}
-      </ThemedText>
-
-      <View style={styles.lastWorkoutFooterContainer}>
-        <ThemedText style={styles.lastWorkoutFooterText}>
-          <MaterialCommunityIcons name="clock" size={12} /> {durationTimeString(duration)} •{" "}
-          {exercises.length} exercises
-        </ThemedText>
-        <ThemedText style={styles.lastWorkoutFooterText}></ThemedText>
-      </View>
     </TouchableOpacity>
   );
 };
@@ -100,7 +64,9 @@ const LastWorkout = ({ workout, onPress }: WorkoutItemProps) => {
           <ThemedText style={styles.repeatButtonText}>REPEAT</ThemedText>
         </TouchableOpacity>
       </View>
-      <ThemedText style={styles.lastWorkoutName}>{name}</ThemedText>
+      <ThemedText style={styles.lastWorkoutName} ellipsizeMode="tail" numberOfLines={1}>
+        {name}
+      </ThemedText>
       <View>
         <ThemedText style={styles.lastWorkoutInfoText}>
           {exercises.length} exercises • {firstLetterToUpperCase(workoutType ?? "other")}
@@ -155,7 +121,6 @@ const log = () => {
   };
 
   const handleTemplatePress = (template: Template) => {
-    console.log("template: ", template);
     setInitialWorkout({
       name: template.name ?? "",
       exercises: template.exercises,
@@ -227,9 +192,14 @@ const log = () => {
               }}
             >
               <ThemedText style={styles.templatesSectionTitle}>TEMPLATES</ThemedText>
-              <TouchableOpacity style={{ borderBottomWidth: 1, borderBottomColor: Colors.gray }}>
-                <ThemedText style={styles.viewAllButton}>VIEW ALL</ThemedText>
-              </TouchableOpacity>
+              {templates.length ? (
+                <TouchableOpacity
+                  style={{ borderBottomWidth: 1, borderBottomColor: Colors.gray }}
+                  onPress={() => router.push("/(protected)/(tabs)/(workout)/viewTemplates")}
+                >
+                  <ThemedText style={styles.viewAllButton}>VIEW ALL</ThemedText>
+                </TouchableOpacity>
+              ) : null}
             </View>
             {fetchedTemplatesIsLoading ? (
               <View style={styles.centerState}>
@@ -307,7 +277,7 @@ const log = () => {
             ) : (
               <View style={{ gap: 12 }}>
                 {workouts.map((workout) => (
-                  <WorkoutItem
+                  <WorkoutHistoryCard
                     key={workout.sessionId}
                     workout={workout}
                     onPress={() => router.push(`/workoutHistoryDetails/${workout.sessionId}`)}
@@ -318,7 +288,7 @@ const log = () => {
           </View>
         </View>
 
-        <Link href={"/(protected)/(tabs)/(workout)/viewHistory"} asChild style={{ marginTop: 48 }}>
+        <Link href={"/(protected)/(tabs)/(workout)/viewHistory"} asChild style={{ marginTop: 24 }}>
           <TouchableOpacity style={styles.viewHistoryButtonContainer}>
             <ThemedText style={styles.viewHistoryButton}>VIEW ALL HISTORY</ThemedText>
           </TouchableOpacity>

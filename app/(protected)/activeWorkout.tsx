@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import DropdownMenu, { DropdownMenuOption } from "@/components/ui/DropdownMenu";
 import ThemedButton from "@/components/ui/ThemedButton";
 import CurrentWorkoutCard from "@/components/workout/CurrentWorkoutCard";
 import NextExerciseItem from "@/components/workout/NextExerciseItem";
@@ -9,7 +10,7 @@ import { Exercise } from "@/packages/shared/src";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -19,7 +20,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from "react-native-popup-menu";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -77,57 +77,21 @@ const ActiveWorkout = () => {
   const stopwatch = useStopwatch({ autoStart: true, interval: 100 });
   const { pause, start, hours, minutes, seconds, isRunning, totalSeconds } = stopwatch;
 
-  const DropDown = useCallback(() => {
-    return (
-      <Menu
-        renderer={renderers.ContextMenu}
-        rendererProps={{ placement: "bottom" }}
-        onClose={() => setIsDropdownOpened(false)}
-      >
-        <MenuTrigger
-          customStyles={{ TriggerTouchableComponent: TouchableOpacity }}
-          onPress={() => setIsDropdownOpened((prev) => !prev)}
-        >
-          <MaterialIcons name="more-horiz" size={22} color={Colors.icon} />
-        </MenuTrigger>
-        <MenuOptions
-          customStyles={{
-            optionsContainer: styles.dropdownOptionsContainer,
-          }}
-        >
-          <MenuOption
-            onSelect={() => (isRunning ? pause() : start())}
-            customStyles={{
-              OptionTouchableComponent: TouchableOpacity,
-              optionWrapper: [
-                styles.dropdownOptionContainer,
-                { borderBottomColor: Colors.inputBorder, borderBottomWidth: 1 },
-              ],
-            }}
-          >
-            <View style={{ width: 15 }}>
-              <FontAwesome6 name={isRunning ? "pause" : "play"} size={20} color={Colors.icon} />
-            </View>
-            <ThemedText style={styles.dropdownOptionText}>
-              {isRunning ? "PAUSE" : "RESUME"}
-            </ThemedText>
-          </MenuOption>
-          <MenuOption
-            onSelect={handleExit}
-            customStyles={{
-              OptionTouchableComponent: TouchableOpacity,
-              optionWrapper: styles.dropdownOptionContainer,
-            }}
-          >
-            <View style={{ marginLeft: -1 }}>
-              <Ionicons name="exit-outline" size={20} color={Colors.icon} />
-            </View>
-            <ThemedText style={styles.dropdownOptionText}>EXIT</ThemedText>
-          </MenuOption>
-        </MenuOptions>
-      </Menu>
-    );
-  }, [pause, clearWorkout, isRunning]);
+  const dropDownOptions: DropdownMenuOption[] = useMemo(
+    () => [
+      {
+        onSelect: () => (isRunning ? pause() : start()),
+        text: isRunning ? "PAUSE" : "RESUME",
+        icon: <FontAwesome6 name={isRunning ? "pause" : "play"} size={20} color={Colors.icon} />,
+      },
+      {
+        onSelect: () => handleExit(),
+        text: "EXIT",
+        icon: <Ionicons name="exit-outline" size={20} color={Colors.icon} />,
+      },
+    ],
+    [pause, clearWorkout, isRunning],
+  );
 
   if (!activeWorkoutDraft) return null;
 
@@ -203,7 +167,14 @@ const ActiveWorkout = () => {
               <ThemedText style={styles.lockedInText}>ACTIVE MODE</ThemedText>
             </View>
             <TouchableOpacity style={styles.moreButtonContainer}>
-              <DropDown />
+              <DropdownMenu
+                onClose={() => setIsDropdownOpened((prev) => !prev)}
+                renderTriggerItem={
+                  <MaterialIcons name="more-horiz" size={22} color={Colors.icon} />
+                }
+                options={dropDownOptions}
+                menuOptionsCustomStyles={{ optionsContainer: { width: 100 } }}
+              />
             </TouchableOpacity>
           </View>
 

@@ -1,9 +1,10 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Workout } from "@/functions/src/types/workout";
-import { breakdownSeconds } from "@/lib/utils/conversions";
-import { formatFirestoreDateTime } from "@/lib/utils/date";
+import { formatFirestoreTime, formatFirestoreTimestamp } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
+import { durationTimeString } from "@/lib/utils/time";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -13,42 +14,41 @@ type Props = {
 };
 
 const WorkoutHistoryCard = ({ workout, onPress }: Props) => {
-  const getDurationString = (value: number) => {
-    const { hours, minutes, seconds } = breakdownSeconds(value);
-
-    if (hours > 0) {
-      return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-    }
-
-    return `${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
-
   const workoutTitle =
     workout.name || `${firstLetterToUpperCase(workout.workoutType ?? "")} Workout`;
   return (
-    <TouchableOpacity
-      style={styles.container}
-      activeOpacity={0.85}
-      onPress={() => onPress?.(workout)}
-    >
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>{workoutTitle}</ThemedText>
-        <ThemedText style={styles.duration}>{getDurationString(workout.duration ?? 0)}</ThemedText>
-      </View>
-
-      <View style={styles.dateRow}>
-        <ThemedText style={styles.infoText}>
-          {formatFirestoreDateTime(workout.completedAt)}
+    <TouchableOpacity style={styles.container} onPress={() => onPress?.(workout)}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <ThemedText style={styles.workoutName} ellipsizeMode="tail" numberOfLines={1}>
+          {workoutTitle}
         </ThemedText>
+        <View>
+          <ThemedText style={styles.workoutTime}>
+            {formatFirestoreTimestamp(workout.completedAt)}
+          </ThemedText>
+          <ThemedText style={[styles.workoutTime, { textAlign: "right" }]}>
+            {formatFirestoreTime(workout.completedAt)}
+          </ThemedText>
+        </View>
       </View>
-      <ThemedText style={styles.infoText}>
-        {firstLetterToUpperCase(workout.workoutType ?? "")}
+      <ThemedText
+        style={{
+          fontFamily: Typography.family.secondary.regular,
+          fontSize: 12,
+          color: Colors.gray,
+          paddingTop: 4,
+        }}
+      >
+        {firstLetterToUpperCase(workout.workoutType ?? "other")}
       </ThemedText>
-      <ThemedText style={styles.infoText}>
-        {workout.exercises?.length
-          ? `${workout.exercises.length} exercise${workout.exercises.length > 1 ? "s" : ""}`
-          : "0 exercises"}
-      </ThemedText>
+
+      <View style={styles.workoutFooterContainer}>
+        <ThemedText style={styles.workoutFooterText}>
+          <MaterialCommunityIcons name="clock" size={12} /> {durationTimeString(workout.duration)} •{" "}
+          {workout.exercises.length} exercises
+        </ThemedText>
+        <ThemedText style={styles.workoutFooterText}></ThemedText>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -57,41 +57,33 @@ export default WorkoutHistoryCard;
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    borderRadius: Border.radius.md,
+    padding: 16,
     backgroundColor: Colors.background.secondary,
-    gap: 8,
+    borderRadius: Border.radius.md,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
   },
-  header: {
+  workoutName: {
+    fontFamily: Typography.family.primary.bold,
+    fontSize: 18,
+    letterSpacing: 0.45,
+  },
+  workoutFooterContainer: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.cardBorder,
+    paddingTop: 12,
     flexDirection: "row",
-    justifyContent: "space-between",
+    gap: 20,
   },
-  title: {
-    fontSize: 14,
-    fontFamily: Typography.family.primary.semibold,
-    flex: 1,
-    marginRight: 8,
-  },
-  duration: {
-    fontSize: 14,
+  workoutFooterText: {
     fontFamily: Typography.family.secondary.regular,
-    color: Colors.gray,
-  },
-  dateRow: {
-    flexDirection: "row",
-    gap: 3,
-  },
-  infoText: {
     fontSize: 12,
     color: Colors.icon,
   },
-  separator: {
-    height: 11,
-    width: 1,
-    borderRadius: 9999,
-    backgroundColor: Colors.inputBorder,
+  workoutTime: {
+    fontFamily: Typography.family.secondary.regular,
+    fontSize: 10,
+    color: Colors.icon,
   },
 });

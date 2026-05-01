@@ -15,6 +15,11 @@ import {
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
+type Error = {
+  success: boolean;
+  message?: string;
+};
+
 export const saveAsTemplate = async (
   template: SaveAsTemplateRequest,
 ): Promise<SaveAsTemplateResponse> => {
@@ -68,4 +73,15 @@ export const getUserTemplates = async ({
     nextCursor,
     hasMore,
   };
+};
+
+export const deleteTemplate = async (id: string): Promise<Error> => {
+  const deleteTemplateFunction = httpsCallable<{ id: string }, boolean>(
+    functions,
+    "deleteTemplate",
+  );
+  const response = await deleteTemplateFunction({ id });
+  return response.data
+    ? { success: response.data }
+    : { success: response.data, message: `Error deleting template ${id}.` };
 };

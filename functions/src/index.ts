@@ -15,7 +15,7 @@ import { CreateUserProfileRequest } from "@builtmode/shared/types/user";
 import { CompleteWorkoutRequest } from "@builtmode/shared/types/workout";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
-import { handleSaveAsTemplate } from "./functions/template.js";
+import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
 import { handleCreateUserProfile } from "./functions/user.js";
 import { handleCompleteWorkout } from "./functions/workout.js";
 import { assertValidTimezone } from "./utils/time.js";
@@ -96,4 +96,18 @@ export const saveAsTemplate = onCall(async (request: CallableRequest<SaveAsTempl
   }
 
   return await handleSaveAsTemplate(request.auth.uid, parsed.data);
+});
+
+export const deleteTemplate = onCall(async (request: CallableRequest<{ id: string }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+
+  const { id } = request.data;
+
+  if (!id && id !== "") {
+    throw new HttpsError("invalid-argument", "Invalid delete template payload.");
+  }
+
+  return await handleDeleteTemplate(id);
 });
