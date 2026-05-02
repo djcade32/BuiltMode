@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
+import DropdownMenu, { DropdownMenuOption } from "@/components/ui/DropdownMenu";
 import Switch from "@/components/ui/Switch";
 import ThemedButton from "@/components/ui/ThemedButton";
 import AddExerciseSheet from "@/components/workout/AddExerciseSheet";
@@ -7,11 +8,14 @@ import WorkoutNameSheet from "@/components/workout/WorkoutNameSheet";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { Exercise, ExerciseSet, WorkoutType } from "@/packages/shared/src";
+import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -24,21 +28,27 @@ import DraggableFlatList, {
   ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 const OPTIONS: WorkoutType[] = ["strength", "conditioning", "cardio", "mixed"];
 
 const BuildWorkout = () => {
   const router = useRouter();
   const listRef = useRef<any>(null);
+  const queryClient = useQueryClient();
 
-  const { setInitialWorkout } = useWorkoutStore();
+  const { setInitialWorkout, initialWorkout, saveWorkoutAsTemplate } = useWorkoutStore();
+  const { user } = useUserStore();
 
-  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>(initialWorkout?.exercises ?? []);
   const [addedExerciseOrSet, setAddedExerciseOrSet] = useState<boolean>(false);
-  const [workoutType, setWorkoutType] = useState(OPTIONS[0]);
+  const [workoutType, setWorkoutType] = useState(initialWorkout?.workoutType ?? OPTIONS[0]);
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   const [isWorkoutNameSheetVisible, setIsWorkoutNameSheetVisible] = useState(false);
-  const [workoutName, setWorkoutName] = useState<string | undefined>(undefined);
+  const [workoutName, setWorkoutName] = useState<string | undefined>(
+    initialWorkout?.name ?? undefined,
+  );
+  const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
 
   const renderItem = useCallback(({ item, drag }: RenderItemParams<Exercise>) => {
     return (
@@ -54,6 +64,62 @@ const BuildWorkout = () => {
       </ScaleDecorator>
     );
   }, []);
+
+  const handleSaveAsTemplate = useCallback(async () => {
+    try {
+      const template = await saveWorkoutAsTemplate({
+        name: workoutName ?? `${firstLetterToUpperCase(workoutType)} Workout`,
+        workoutType,
+        exercises,
+        notes: "",
+      });
+      if (!template) {
+        ErrorAlert();
+      }
+      queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
+      showToast("Workout saved as template", "View", () =>
+        router.push("/(protected)/(tabs)/(workout)/viewTemplates"),
+      );
+    } catch (error) {
+      console.error("Error saving workout as template: ", error);
+      ErrorAlert();
+    }
+  }, [workoutName, workoutType, exercises, saveWorkoutAsTemplate, queryClient, user?.uid, router]);
+
+  const dropDownOptions: DropdownMenuOption[] = useMemo(
+    () => [
+      {
+        onSelect: () => setIsWorkoutNameSheetVisible(true),
+        text: "EDIT NAME",
+        icon: <MaterialIcons name="edit" size={24} color={Colors.icon} />,
+      },
+      {
+        onSelect: handleSaveAsTemplate,
+        text: "SAVE AS TEMPLATE",
+        icon: <MaterialIcons name="save" size={20} color={Colors.gray} />,
+        disabled: !exercises.length,
+      },
+    ],
+    [exercises],
+  );
+
+  const showToast = (message: string, actionText?: string, action?: () => void) => {
+    Toast.show({
+      type: "success",
+      text1: message,
+      props: { action, actionText: actionText },
+    });
+  };
+
+  function ErrorAlert() {
+    return Alert.alert("Oops", "There was an error saving workout as template.", [
+      { text: "Try again", onPress: handleSaveAsTemplate },
+      {
+        text: "Close",
+        style: "destructive",
+      },
+    ]);
+  }
 
   const noExercisesView = (
     <View style={styles.noExercisesContainer}>
@@ -138,21 +204,43 @@ const BuildWorkout = () => {
     );
   };
 
+  const handleBackPress = () => {
+    (router.back(), setInitialWorkout(null));
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: Colors.background.primary }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      {isDropdownOpened && (
+        <View
+          style={{
+            backgroundColor: Colors.background.primary,
+            opacity: 0.8,
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+          }}
+        />
+      )}
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.headerContainer}>
-          <Pressable onPress={() => router.back()} hitSlop={15}>
+          <Pressable onPress={handleBackPress} hitSlop={15}>
             <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
           </Pressable>
           <ThemedText style={styles.headerTitle}>
             {workoutName ? workoutName : `${firstLetterToUpperCase(workoutType)} Workout`}
           </ThemedText>
-          <TouchableOpacity onPress={() => setIsWorkoutNameSheetVisible(true)}>
-            <MaterialIcons name="edit" size={24} color={Colors.icon} />
+          <TouchableOpacity style={styles.moreButtonContainer}>
+            <DropdownMenu
+              onClose={() => setIsDropdownOpened((prev) => !prev)}
+              renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
+              options={dropDownOptions}
+            />
           </TouchableOpacity>
         </View>
 
@@ -161,7 +249,7 @@ const BuildWorkout = () => {
           <Switch
             options={OPTIONS.map((option) => option.toLocaleUpperCase())}
             onChange={(value) => setWorkoutType(value.toLocaleLowerCase() as WorkoutType)}
-            defaultIndex={0}
+            defaultIndex={OPTIONS.findIndex((option) => option === workoutType)}
           />
         </View>
 
@@ -290,5 +378,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontFamily: Typography.family.primary.bold,
+  },
+
+  moreButtonContainer: {
+    backgroundColor: Colors.background.secondary,
+    borderRadius: Border.radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    height: 32,
+    width: 32,
   },
 });

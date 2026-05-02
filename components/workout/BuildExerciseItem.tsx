@@ -1,12 +1,12 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Exercise, ExerciseSet } from "@/packages/shared/src";
 import { Entypo, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import React, { useCallback } from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Pressable as GesturePressable } from "react-native-gesture-handler";
-import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from "react-native-popup-menu";
 import { v4 as uuidv4 } from "uuid";
 import { ThemedText } from "../themed-text";
+import DropdownMenu, { DropdownMenuOption } from "../ui/DropdownMenu";
 import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
 import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
 import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
@@ -30,31 +30,16 @@ const BuildExerciseItem = ({
 }: props) => {
   const { id, name, metricType, sets } = exercise;
 
-  const DropDown = useCallback(() => {
-    return (
-      <Menu renderer={renderers.ContextMenu} rendererProps={{ placement: "bottom" }}>
-        <MenuTrigger customStyles={{ TriggerTouchableComponent: TouchableOpacity }}>
-          <MaterialIcons name="more-horiz" size={22} color={Colors.icon} />
-        </MenuTrigger>
-        <MenuOptions
-          customStyles={{
-            optionsContainer: styles.dropdownOptionsContainer,
-          }}
-        >
-          <MenuOption
-            onSelect={() => onDeleteExercise && onDeleteExercise(exercise)}
-            customStyles={{
-              OptionTouchableComponent: TouchableOpacity,
-              optionWrapper: styles.dropdownOptionContainer,
-            }}
-          >
-            <FontAwesome6 name="trash" size={10} color={Colors.icon} />
-            <ThemedText style={styles.dropdownOptionText}>DELETE</ThemedText>
-          </MenuOption>
-        </MenuOptions>
-      </Menu>
-    );
-  }, [onDeleteExercise]);
+  const dropDownOptions: DropdownMenuOption[] = useMemo(
+    () => [
+      {
+        onSelect: () => onDeleteExercise && onDeleteExercise(exercise),
+        text: "DELETE",
+        icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
+      },
+    ],
+    [onDeleteExercise, exercise],
+  );
 
   const handleAddSet = () => {
     const setId = `${uuidv4()}-set`;
@@ -85,7 +70,11 @@ const BuildExerciseItem = ({
       <View style={styles.headerContainer}>
         <ThemedText style={styles.name}>{name}</ThemedText>
         <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
-          <DropDown />
+          <DropdownMenu
+            renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
+            options={dropDownOptions}
+            menuOptionsCustomStyles={{ optionsContainer: { width: 100 } }}
+          />
         </View>
       </View>
       <View style={styles.exerciseSetsContainer}>

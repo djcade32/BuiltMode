@@ -1,5 +1,5 @@
 import { ThemedView } from "@/components/themed-view";
-import { Colors } from "@/constants/theme";
+import { Colors, Typography } from "@/constants/theme";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -12,6 +12,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
+import Toast, { BaseToastProps } from "react-native-toast-message";
 
 import {
   JetBrainsMono_400Regular,
@@ -20,12 +21,66 @@ import {
   JetBrainsMono_700Bold,
 } from "@expo-google-fonts/jetbrains-mono";
 
+import { ThemedText } from "@/components/themed-text";
 import { ArchivoBlack_400Regular } from "@expo-google-fonts/archivo-black";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import { TouchableOpacity, View } from "react-native";
 import "react-native-get-random-values";
 
 export const unstable_settings = {
   anchor: "(protected)",
+};
+
+const toastConfig = {
+  /*
+    Overwrite 'success' type,
+    by modifying the existing `BaseToast` component
+  */
+  success: (props: BaseToastProps & { props: { action?: () => void; actionText?: string } }) => (
+    <View
+      style={{
+        backgroundColor: Colors.background.secondary,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: Colors.cardBorder,
+        borderLeftWidth: 5,
+        borderLeftColor: Colors.accent.primary,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: 8,
+        width: "90%",
+        maxWidth: 350,
+        alignSelf: "center",
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={{ justifyContent: "center", alignItems: "center", paddingHorizontal: 10 }}>
+          <Ionicons name="checkmark-circle" size={24} color={Colors.accent.primary} />
+        </View>
+
+        <ThemedText
+          style={{
+            fontSize: 15,
+            fontFamily: Typography.family.primary.medium,
+            color: Colors.text.primary,
+          }}
+        >
+          {props.text1}
+        </ThemedText>
+      </View>
+      {props.props?.actionText && (
+        <TouchableOpacity style={{ marginRight: 10 }} onPress={props.props?.action}>
+          <ThemedText
+            style={{ color: Colors.accent.primary, fontFamily: Typography.family.primary.medium }}
+          >
+            {props.props.actionText}
+          </ThemedText>
+        </TouchableOpacity>
+      )}
+    </View>
+  ),
 };
 
 export default function RootLayout() {
@@ -59,6 +114,7 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(protected)" options={{ headerShown: false }} />
           </Stack>
+          <Toast position="bottom" config={toastConfig} bottomOffset={80} swipeable />
         </ThemedView>
         <StatusBar style="light" />
       </QueryClientProvider>

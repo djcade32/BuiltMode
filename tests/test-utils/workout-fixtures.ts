@@ -20,9 +20,11 @@ export const makeExercises = (): Exercise[] => [
 ];
 
 export const makeInitialWorkout = (overrides?: {
+  name?: string;
   exercises?: Exercise[];
   workoutType?: WorkoutType;
 }) => ({
+  name: overrides?.name ?? "Strength Workout",
   exercises: overrides?.exercises ?? makeExercises(),
   workoutType: overrides?.workoutType ?? "strength",
 });

@@ -64,7 +64,7 @@ const Ready = () => {
 
   const handleStartWorkout = () => {
     if (!user) return;
-    const id = uuidv4();
+    const id = `${uuidv4()}-workout`;
     startWorkout({
       name: initialWorkout.name,
       sessionId: id,

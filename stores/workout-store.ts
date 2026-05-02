@@ -3,10 +3,14 @@ import {
   CompleteWorkoutResponse,
   Exercise,
   ExerciseSet,
+  SaveAsTemplateRequest,
+  SaveAsTemplateResponse,
   WorkoutType,
 } from "@/packages/shared/src";
+import { saveAsTemplate } from "@/services/template-service";
 import { createCompleteWorkout } from "@/services/workout-service";
 import type { ActiveWorkoutDraft } from "@builtmode/shared/types/workout";
+import { v4 as uuidv4 } from "uuid";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
@@ -37,14 +41,17 @@ export interface WorkoutState {
     sets: ExerciseSet[];
     completed?: boolean;
   }) => void;
-  setInitialWorkout: (payload: {
-    name: string;
-    exercises: Exercise[];
-    workoutType: WorkoutType;
-  }) => void;
+  setInitialWorkout: (
+    payload: {
+      name: string;
+      exercises: Exercise[];
+      workoutType: WorkoutType;
+    } | null,
+  ) => void;
   setCurrentExerciseIndex: (value: number) => void;
   logWorkout: (duration: number) => Promise<CompleteWorkoutResponse | undefined>;
   clearWorkout: () => void;
+  saveWorkoutAsTemplate: (template: any) => Promise<SaveAsTemplateResponse | undefined>;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -84,13 +91,17 @@ export const useWorkoutStore = create<WorkoutState>()(
           },
         }),
 
-      setInitialWorkout: ({ name, exercises, workoutType }) =>
+      setInitialWorkout: (
+        payload: { name: string; exercises: Exercise[]; workoutType: WorkoutType } | null,
+      ) =>
         set({
-          initialWorkout: {
-            name,
-            workoutType,
-            exercises,
-          },
+          initialWorkout: payload
+            ? {
+                name: payload.name,
+                workoutType: payload.workoutType,
+                exercises: payload.exercises,
+              }
+            : null,
         }),
 
       updateWorkoutProgress: ({ exerciseId, sets, completed = false }) => {
@@ -157,6 +168,24 @@ export const useWorkoutStore = create<WorkoutState>()(
           set({
             isLoggingWorkout: false,
           });
+        }
+      },
+
+      saveWorkoutAsTemplate: async (template) => {
+        const request: SaveAsTemplateRequest = {
+          id: template.id ? `${template.id}-template` : `${uuidv4()}-template`,
+          name: template.name,
+          exercises: template.exercises,
+          notes: template.notes,
+          workoutType: template.workoutType,
+        };
+        try {
+          console.log("Sending save template request: ", request);
+          const response = await saveAsTemplate(request);
+          if (response) return response;
+          return;
+        } catch (error) {
+          throw error;
         }
       },
 

@@ -199,6 +199,7 @@ const styles = StyleSheet.create({
   controlsContainer: {
     marginTop: 24,
     gap: 8,
+    paddingBottom: 8,
   },
   centerState: {
     flex: 1,
@@ -229,7 +230,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   listContent: {
-    paddingTop: 24,
+    paddingTop: 16,
     paddingBottom: 24,
   },
   sectionSeparator: {

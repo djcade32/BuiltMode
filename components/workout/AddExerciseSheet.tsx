@@ -3,7 +3,7 @@ import { EXERCISES_GROUPED } from "@/constants/exercises";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Exercise, ExerciseMetricType, ExerciseType } from "@/packages/shared/src";
 import { MaterialIcons } from "@expo/vector-icons";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -28,6 +28,14 @@ type Props = {
 
 const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
   const [query, setQuery] = useState("");
+  const isClosingRef = useRef(false);
+
+  useEffect(() => {
+    if (visible) {
+      isClosingRef.current = false;
+      setQuery("");
+    }
+  }, [visible]);
 
   const filteredExerciseGroups = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -64,6 +72,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
   }, [query]);
 
   const handleClose = () => {
+    isClosingRef.current = true;
     setQuery("");
     onClose();
   };
@@ -131,7 +140,10 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
               placeholder="Search exercises"
               placeholderTextColor={Colors.icon}
               value={query}
-              onChangeText={setQuery}
+              onChangeText={(text) => {
+                if (isClosingRef.current) return;
+                setQuery(text);
+              }}
               containerStyle={{
                 marginBottom: 16,
               }}
