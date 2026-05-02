@@ -15,7 +15,7 @@ import {
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
-type Error = {
+type DeleteTemplateResult = {
   success: boolean;
   message?: string;
 };
@@ -75,13 +75,24 @@ export const getUserTemplates = async ({
   };
 };
 
-export const deleteTemplate = async (id: string): Promise<Error> => {
+export const deleteTemplate = async (id: string): Promise<DeleteTemplateResult> => {
   const deleteTemplateFunction = httpsCallable<{ id: string }, boolean>(
     functions,
     "deleteTemplate",
   );
-  const response = await deleteTemplateFunction({ id });
-  return response.data
-    ? { success: response.data }
-    : { success: response.data, message: `Error deleting template ${id}.` };
+  if (!id.trim()) {
+    return { success: false, message: "Template id is required." };
+  }
+
+  try {
+    const response = await deleteTemplateFunction({ id });
+    return response.data
+      ? { success: true }
+      : { success: false, message: `Error deleting template ${id}.` };
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof globalThis.Error ? err.message : `Error deleting template ${id}.`,
+    };
+  }
 };

@@ -41,7 +41,7 @@ const TemplateItem = ({ template, onPress, onDelete }: TemplateItemProps) => {
         icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
       },
     ],
-    [],
+    [onDelete],
   );
 
   return (
@@ -87,7 +87,7 @@ const ViewTemplates = () => {
       await deleteTemplate(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["templates", uid] });
     },
     onError: () => {
       Alert.alert("Error", "Something went wrong. Try again.");

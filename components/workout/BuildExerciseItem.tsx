@@ -38,7 +38,7 @@ const BuildExerciseItem = ({
         icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
       },
     ],
-    [onDeleteExercise],
+    [onDeleteExercise, exercise],
   );
 
   const handleAddSet = () => {

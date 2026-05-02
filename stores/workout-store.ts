@@ -3,6 +3,7 @@ import {
   CompleteWorkoutResponse,
   Exercise,
   ExerciseSet,
+  SaveAsTemplateRequest,
   SaveAsTemplateResponse,
   WorkoutType,
 } from "@/packages/shared/src";
@@ -171,7 +172,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       },
 
       saveWorkoutAsTemplate: async (template) => {
-        const request: SaveAsTemplateResponse = {
+        const request: SaveAsTemplateRequest = {
           id: template.id ? `${template.id}-template` : `${uuidv4()}-template`,
           name: template.name,
           exercises: template.exercises,
@@ -180,7 +181,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         };
         try {
           console.log("Sending save template request: ", request);
-          const response = saveAsTemplate(request);
+          const response = await saveAsTemplate(request);
           if (response) return response;
           return;
         } catch (error) {

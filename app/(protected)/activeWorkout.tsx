@@ -10,7 +10,7 @@ import { Exercise } from "@/packages/shared/src";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -77,6 +77,13 @@ const ActiveWorkout = () => {
   const stopwatch = useStopwatch({ autoStart: true, interval: 100 });
   const { pause, start, hours, minutes, seconds, isRunning, totalSeconds } = stopwatch;
 
+  const handleExit = useCallback(() => {
+    return Alert.alert("Are You Sure?", "All workout progress will be lost.", [
+      { text: "Continue", onPress: () => clearWorkout(), style: "destructive" },
+      { text: "Cancel" },
+    ]);
+  }, [clearWorkout]);
+
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
       {
@@ -90,7 +97,7 @@ const ActiveWorkout = () => {
         icon: <Ionicons name="exit-outline" size={20} color={Colors.icon} />,
       },
     ],
-    [pause, clearWorkout, isRunning],
+    [pause, clearWorkout, isRunning, handleExit],
   );
 
   if (!activeWorkoutDraft) return null;
@@ -123,13 +130,6 @@ const ActiveWorkout = () => {
     } catch (error) {
       console.error("Error logging workout: ", error);
     }
-  };
-
-  const handleExit = () => {
-    return Alert.alert("Are You Sure?", "All workout progress will be lost.", [
-      { text: "Continue", onPress: () => clearWorkout(), style: "destructive" },
-      { text: "Cancel" },
-    ]);
   };
 
   return (

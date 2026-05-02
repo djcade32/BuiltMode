@@ -103,10 +103,13 @@ const WorkoutHistoryDetails = () => {
   async function handleSaveAsTemplate(name?: string) {
     try {
       if (!data) return;
-      data.name = name ?? data.name;
-      const template = await saveWorkoutAsTemplate(data);
+      const template = await saveWorkoutAsTemplate({
+        ...data,
+        name: name ?? data.name,
+      });
       if (!template) {
         ErrorAlert();
+        return;
       }
       queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
       showToast("Workout saved as template", "View", () =>
@@ -162,7 +165,8 @@ const WorkoutHistoryDetails = () => {
         <ThemedText style={styles.headerTitle}>WORKOUT</ThemedText>
         <TouchableOpacity style={styles.moreButtonContainer}>
           <DropdownMenu
-            onClose={() => setIsDropdownOpened((prev) => !prev)}
+            onOpen={() => setIsDropdownOpened(true)}
+            onClose={() => setIsDropdownOpened(false)}
             renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
             options={dropDownOptions}
           />

@@ -68,13 +68,15 @@ const toastConfig = {
           {props.text1}
         </ThemedText>
       </View>
-      <TouchableOpacity style={{ marginRight: 10 }} onPress={props.props.action}>
-        <ThemedText
-          style={{ color: Colors.accent.primary, fontFamily: Typography.family.primary.medium }}
-        >
-          {props.props.actionText}
-        </ThemedText>
-      </TouchableOpacity>
+      {props.props?.actionText && (
+        <TouchableOpacity style={{ marginRight: 10 }} onPress={props.props?.action}>
+          <ThemedText
+            style={{ color: Colors.accent.primary, fontFamily: Typography.family.primary.medium }}
+          >
+            {props.props.actionText}
+          </ThemedText>
+        </TouchableOpacity>
+      )}
     </View>
   ),
 };

@@ -181,7 +181,10 @@ describe("WorkoutHistoryDetails", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockSaveWorkoutAsTemplate.mockResolvedValue(undefined);
+    mockSaveWorkoutAsTemplate.mockResolvedValue({
+      id: "template-123",
+      ...mockWorkout,
+    });
   });
 
   it("renders loading state", () => {

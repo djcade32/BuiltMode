@@ -34,7 +34,13 @@ export async function handleSaveAsTemplate(
 
     createTemplate(tx, templateDoc);
 
-    return {} as SaveAsTemplateResponse;
+    return {
+      id,
+      exercises,
+      name,
+      notes: templateDoc.notes,
+      workoutType: templateDoc.workoutType,
+    } as SaveAsTemplateResponse;
   });
 }
 
@@ -43,6 +49,7 @@ export async function handleDeleteTemplate(id: string): Promise<boolean> {
     await deleteTemplate(id);
     return true;
   } catch (error) {
-    return false;
+    console.error("Failed to delete template:", id, error);
+    throw new HttpsError("internal", "Failed to delete template.");
   }
 }

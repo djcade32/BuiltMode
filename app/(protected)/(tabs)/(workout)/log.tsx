@@ -84,7 +84,7 @@ const LastWorkout = ({ workout, onPress }: WorkoutItemProps) => {
   );
 };
 
-const log = () => {
+const Log = () => {
   const router = useRouter();
   const { user } = useUserStore();
   const { setInitialWorkout } = useWorkoutStore();
@@ -298,7 +298,7 @@ const log = () => {
   );
 };
 
-export default log;
+export default Log;
 
 const styles = StyleSheet.create({
   container: {

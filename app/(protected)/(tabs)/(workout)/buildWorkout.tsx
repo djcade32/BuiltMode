@@ -65,6 +65,27 @@ const BuildWorkout = () => {
     );
   }, []);
 
+  const handleSaveAsTemplate = useCallback(async () => {
+    try {
+      const template = await saveWorkoutAsTemplate({
+        name: workoutName,
+        workoutType,
+        exercises,
+        notes: "",
+      });
+      if (!template) {
+        ErrorAlert();
+      }
+      queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
+      showToast("Workout saved as template", "View", () =>
+        router.push("/(protected)/(tabs)/(workout)/viewTemplates"),
+      );
+    } catch (error) {
+      console.error("Error saving workout as template: ", error);
+      ErrorAlert();
+    }
+  }, [workoutName, workoutType, exercises, saveWorkoutAsTemplate, queryClient, user?.uid, router]);
+
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
       {
@@ -89,27 +110,6 @@ const BuildWorkout = () => {
       props: { action, actionText: actionText },
     });
   };
-
-  async function handleSaveAsTemplate() {
-    try {
-      const template = await saveWorkoutAsTemplate({
-        name: workoutName,
-        workoutType,
-        exercises,
-        notes: "",
-      });
-      if (!template) {
-        ErrorAlert();
-      }
-      queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
-      showToast("Workout saved as template", "View", () =>
-        router.push("/(protected)/(tabs)/(workout)/viewTemplates"),
-      );
-    } catch (error) {
-      console.error("Error saving workout as template: ", error);
-      ErrorAlert();
-    }
-  }
 
   function ErrorAlert() {
     return Alert.alert("Oops", "There was an error saving workout as template.", [

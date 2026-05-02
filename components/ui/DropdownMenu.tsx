@@ -67,7 +67,7 @@ const DropdownMenu = ({
               OptionTouchableComponent: TouchableOpacity,
               optionWrapper: [
                 styles.dropdownOptionContainer,
-                index + 1 === options.length - 1
+                index !== options.length - 1
                   ? { borderBottomColor: Colors.inputBorder, borderBottomWidth: 1 }
                   : {},
                 option?.menuOptionCustomStyles?.optionWrapper,

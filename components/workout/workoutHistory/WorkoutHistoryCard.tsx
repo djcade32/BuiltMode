@@ -18,7 +18,9 @@ const WorkoutHistoryCard = ({ workout, onPress }: Props) => {
     workout.name || `${firstLetterToUpperCase(workout.workoutType ?? "")} Workout`;
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress?.(workout)}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+      <View
+        style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}
+      >
         <ThemedText style={styles.workoutName} ellipsizeMode="tail" numberOfLines={1}>
           {workoutTitle}
         </ThemedText>
@@ -67,6 +69,8 @@ const styles = StyleSheet.create({
     fontFamily: Typography.family.primary.bold,
     fontSize: 18,
     letterSpacing: 0.45,
+    flexShrink: 1,
+    paddingRight: 8,
   },
   workoutFooterContainer: {
     marginTop: 12,
