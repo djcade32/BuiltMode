@@ -96,7 +96,7 @@ describe("BuildWorkout", () => {
 
     await waitFor(() => {
       expect(saveTemplateSpy).toHaveBeenCalledWith({
-        name: undefined,
+        name: "Strength Workout",
         workoutType: "strength",
         exercises: [
           expect.objectContaining({
