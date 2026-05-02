@@ -50,7 +50,9 @@ const toastConfig = {
         justifyContent: "space-between",
         alignItems: "center",
         padding: 8,
-        width: 350,
+        width: "90%",
+        maxWidth: 350,
+        alignSelf: "center",
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center" }}>

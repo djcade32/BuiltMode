@@ -109,5 +109,5 @@ export const deleteTemplate = onCall(async (request: CallableRequest<{ id: strin
     throw new HttpsError("invalid-argument", "Invalid delete template payload.");
   }
 
-  return await handleDeleteTemplate(id);
+  return await handleDeleteTemplate(request.auth.uid, id);
 });

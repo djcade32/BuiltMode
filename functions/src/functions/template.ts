@@ -1,7 +1,7 @@
 import { SaveAsTemplateRequest, SaveAsTemplateResponse } from "@builtmode/shared/types/template";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
-import { createTemplate, deleteTemplate } from "../firestore/template.js";
+import { createTemplate, deleteTemplate, getTemplate } from "../firestore/template.js";
 import { getUserByUid } from "../firestore/user.js";
 import { db } from "../lib/firebaseAdmin.js";
 import { Template } from "../types/template.js";
@@ -44,10 +44,21 @@ export async function handleSaveAsTemplate(
   });
 }
 
-export async function handleDeleteTemplate(id: string): Promise<boolean> {
+export async function handleDeleteTemplate(uid: string, id: string): Promise<boolean> {
   try {
-    await deleteTemplate(id);
-    return true;
+    return await db.runTransaction(async (tx) => {
+      const template = await getTemplate(tx, id);
+      if (template) {
+        if (template.uid === uid) {
+          await deleteTemplate(tx, id);
+          return true;
+        }
+        console.error("Failed to delete template. Denied Access: ", id);
+        return false;
+      }
+      console.error("Failed to delete template. Doesn't exist:", id);
+      return false;
+    });
   } catch (error) {
     console.error("Failed to delete template:", id, error);
     throw new HttpsError("internal", "Failed to delete template.");

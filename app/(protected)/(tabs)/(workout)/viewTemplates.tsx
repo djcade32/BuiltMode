@@ -84,7 +84,10 @@ const ViewTemplates = () => {
 
   const { mutate: deleteTemplateFunc, isPending } = useMutation({
     mutationFn: async (id: string) => {
-      await deleteTemplate(id);
+      const result = await deleteTemplate(id);
+      if (!result.success) {
+        throw new Error(result.message ?? "Failed to delete template.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates", uid] });

@@ -73,7 +73,7 @@ describe("template handlers integration", () => {
 
       const result = await handleSaveAsTemplate(TEST_UID, request);
 
-      expect(result).toEqual({});
+      expect(result).toEqual(request);
 
       const templateSnap = await db.doc(`templates/${TEMPLATE_ID}`).get();
 
@@ -159,7 +159,7 @@ describe("template handlers integration", () => {
         completedAt: Timestamp.now(),
       });
 
-      const result = await handleDeleteTemplate(TEMPLATE_ID);
+      const result = await handleDeleteTemplate(TEST_UID, TEMPLATE_ID);
 
       expect(result).toBe(true);
 
@@ -168,10 +168,10 @@ describe("template handlers integration", () => {
       expect(templateSnap.exists).toBe(false);
     });
 
-    it("returns true when deleting a non-existing template does not throw", async () => {
-      const result = await handleDeleteTemplate("missing-template-id");
+    it("returns false when deleting a non-existing template", async () => {
+      const result = await handleDeleteTemplate(TEST_UID, "missing-template-id");
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
   });
 });

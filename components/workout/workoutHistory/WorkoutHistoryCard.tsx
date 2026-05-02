@@ -49,7 +49,6 @@ const WorkoutHistoryCard = ({ workout, onPress }: Props) => {
           <MaterialCommunityIcons name="clock" size={12} /> {durationTimeString(workout.duration)} •{" "}
           {workout.exercises.length} exercises
         </ThemedText>
-        <ThemedText style={styles.workoutFooterText}></ThemedText>
       </View>
     </TouchableOpacity>
   );

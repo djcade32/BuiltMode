@@ -68,7 +68,7 @@ const BuildWorkout = () => {
   const handleSaveAsTemplate = useCallback(async () => {
     try {
       const template = await saveWorkoutAsTemplate({
-        name: workoutName,
+        name: workoutName ?? `${firstLetterToUpperCase(workoutType)} Workout`,
         workoutType,
         exercises,
         notes: "",
@@ -235,15 +235,11 @@ const BuildWorkout = () => {
           <ThemedText style={styles.headerTitle}>
             {workoutName ? workoutName : `${firstLetterToUpperCase(workoutType)} Workout`}
           </ThemedText>
-          {/* <TouchableOpacity onPress={() => setIsWorkoutNameSheetVisible(true)}>
-            <MaterialIcons name="edit" size={24} color={Colors.icon} />
-          </TouchableOpacity> */}
           <TouchableOpacity style={styles.moreButtonContainer}>
             <DropdownMenu
               onClose={() => setIsDropdownOpened((prev) => !prev)}
               renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
               options={dropDownOptions}
-              // menuOptionsCustomStyles={{ optionsContainer: { width: 100 } }}
             />
           </TouchableOpacity>
         </View>

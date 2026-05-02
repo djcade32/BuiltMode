@@ -7,7 +7,12 @@ export const createTemplate = (tx: Transaction, template: Template) => {
   tx.set(ref, template);
 };
 
-export const deleteTemplate = async (templateId: string) => {
+export const getTemplate = async (tx: Transaction, templateId: string) => {
   const templateDocRef = db.collection("templates").doc(templateId);
-  await templateDocRef.delete();
+  return (await tx.get(templateDocRef)).data();
+};
+
+export const deleteTemplate = async (tx: Transaction, templateId: string) => {
+  const templateDocRef = db.collection("templates").doc(templateId);
+  tx.delete(templateDocRef);
 };
