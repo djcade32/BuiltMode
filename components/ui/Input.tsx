@@ -1,12 +1,12 @@
 import { Border, Colors, Typography } from "@/constants/theme";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
   TextInputProps,
   TextStyle,
-  View,
   ViewStyle,
 } from "react-native";
 
@@ -14,6 +14,8 @@ type props = TextInputProps & {
   containerStyle?: ViewStyle;
   preIcon?: { familyIcon: any; name: string; color?: string };
   postIcon?: { familyIcon: any; name: string; color?: string };
+  preText?: string;
+  preTextStyle?: TextStyle;
   postText?: string;
   postTextStyle?: TextStyle;
 };
@@ -22,6 +24,8 @@ const Input = ({
   containerStyle,
   preIcon,
   postIcon,
+  preText,
+  preTextStyle,
   postText,
   postTextStyle,
   style,
@@ -29,6 +33,7 @@ const Input = ({
   onFocus,
   ...rest
 }: props) => {
+  const textInputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState<boolean>(false);
 
   const renderIcon = (familyIcon: any, name: string) => {
@@ -39,7 +44,11 @@ const Input = ({
     });
   };
 
-  const preIconComponent = preIcon && renderIcon(preIcon.familyIcon, preIcon.name);
+  const preIconComponent = preText ? (
+    <Text style={[styles.postText, preTextStyle]}>{preText}</Text>
+  ) : (
+    preIcon && renderIcon(preIcon.familyIcon, preIcon.name)
+  );
 
   const postIconComponent = postText ? (
     <Text style={[styles.postText, postTextStyle]}>{postText}</Text>
@@ -48,7 +57,8 @@ const Input = ({
   );
 
   return (
-    <View
+    <Pressable
+      onPress={() => textInputRef.current?.focus()}
       style={[
         styles.container,
         {
@@ -62,6 +72,7 @@ const Input = ({
       {preIconComponent}
       <TextInput
         {...rest}
+        ref={textInputRef}
         style={[styles.textInput, style]}
         onBlur={(e) => {
           setIsFocused(false);
@@ -75,7 +86,7 @@ const Input = ({
         selectionColor={Colors.text.primary}
       />
       {postIconComponent}
-    </View>
+    </Pressable>
   );
 };
 
@@ -95,6 +106,7 @@ const styles = StyleSheet.create({
   textInput: {
     color: Colors.text.primary,
     paddingVertical: 15,
+    paddingHorizontal: 5,
     flex: 1,
   },
   postText: {

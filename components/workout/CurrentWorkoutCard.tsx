@@ -8,6 +8,7 @@ import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated"
 import { ThemedText } from "../themed-text";
 import ThemedButton from "../ui/ThemedButton";
 import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
+import DurationSetItem from "./exerciseSetItems/DurationSetItem";
 import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
 import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
 
@@ -76,6 +77,24 @@ const ExerciseSetItem = ({
           exerciseId={exerciseId}
           usedForBuilding={false}
           isActive={isActive}
+          containerStyle={{
+            padding: 0,
+            backgroundColor: "transparent",
+            gap: 15,
+          }}
+        />
+      );
+    } else if (type === "duration") {
+      return (
+        <DurationSetItem
+          key={set.id}
+          set={set}
+          setIndex={index}
+          onEditSet={onEditSet}
+          exerciseId={exerciseId}
+          usedForBuilding={false}
+          isActive={isActive}
+          isCompleted={isCompleted}
           containerStyle={{
             padding: 0,
             backgroundColor: "transparent",
@@ -195,13 +214,14 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete }: Props) => {
     switch (metricType) {
       case "weight_reps":
         return "Set";
+      case "duration":
       case "reps_only":
         return "Round";
       case "distance":
-        return "Effort";
+        return "Attempt";
 
       default:
-        break;
+        return "Set";
     }
   }, [metricType]);
 

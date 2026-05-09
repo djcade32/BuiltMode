@@ -1,18 +1,19 @@
 import { Typography } from "@/constants/theme";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, TextStyle, View } from "react-native";
 import { ThemedText } from "../themed-text";
 
 type Props = {
   hours: number;
   minutes: number;
   seconds: number;
+  style?: TextStyle;
 };
 
-export const StopwatchDisplay = ({ hours, minutes, seconds }: Props) => {
+export const StopwatchDisplay = ({ hours, minutes, seconds, style }: Props) => {
   return (
     <View>
-      <ThemedText style={styles.timer}>
+      <ThemedText style={[styles.timer, style]}>
         {`${hours < 10 ? "0" : ""}${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`}
       </ThemedText>
     </View>

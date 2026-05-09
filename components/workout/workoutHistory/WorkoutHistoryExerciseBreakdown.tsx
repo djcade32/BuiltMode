@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { breakdownSeconds } from "@/lib/utils/conversions";
+import { formatTimeInput } from "@/lib/utils/time";
 import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
 import React from "react";
 import { StyleSheet, View } from "react-native";
@@ -65,7 +66,7 @@ const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
         <View style={styles.exerciseSetContainer}>
           <ThemedText style={styles.setText}>Duration</ThemedText>
           <ThemedText style={styles.setWeightText}>
-            {set.durationSec === undefined ? "—" : `${Math.round(set.durationSec / 60)} mins`}
+            {set.durationSec === undefined ? "—" : formatTimeInput(set.durationSec)}
           </ThemedText>
         </View>
       );

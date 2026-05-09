@@ -27,7 +27,7 @@ const workoutComplete = () => {
       case "reps_only":
         return "round";
       case "distance":
-        return "effort";
+        return "attempt";
 
       default:
         return "set";

@@ -23,7 +23,7 @@ const NextExerciseItem = ({ index, exercise, isNext, isCompleted, onPress }: Pro
       case "reps_only":
         return "round";
       case "distance":
-        return "effort";
+        return "attempt";
       case "duration":
       case "time":
         return "interval";

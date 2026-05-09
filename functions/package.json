@@ -12,9 +12,7 @@
     "logs": "firebase functions:log",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest src/tests/unit",
-    "test:integration": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand src/tests/integration",
-    "android": "expo run:android",
-    "ios": "expo run:ios"
+    "test:integration": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand src/tests/integration"
   },
   "engines": {
     "node": "22"
@@ -24,12 +22,12 @@
     "@builtmode/shared": "file:../shared",
     "dayjs": "^1.11.19",
     "dayjs-timezone-iana-plugin": "^0.2.0",
-    "firebase-admin": "^13.6.0",
-    "firebase-functions": "^7.0.0",
-    "react-native-toast-message": "^2.3.3",
     "expo": "~54.0.33",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.2.5",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "react-native-toast-message": "^2.3.3"
   },
   "type": "module",
   "devDependencies": {

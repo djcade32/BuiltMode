@@ -77,26 +77,12 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
     onClose();
   };
 
-  const buildExerciseObject = ({ name, type }: { name: string; type: ExerciseType }) => {
-    // Get metricType
-    let metricType: ExerciseMetricType = "weight_reps";
-    switch (type) {
-      case "strength":
-        metricType = "weight_reps";
-        break;
-
-      case "conditioning":
-        metricType = "reps_only";
-        break;
-
-      case "cardio":
-        metricType = "distance";
-        break;
-
-      default:
-        metricType = "other";
-        break;
-    }
+  const buildExerciseObject = (item: {
+    name: string;
+    type: ExerciseType;
+    metricType: ExerciseMetricType;
+  }) => {
+    const { name, metricType } = item;
     const id = `${uuidv4()}-exercise`;
     const exercise: Exercise = {
       id,
@@ -107,7 +93,11 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
     return exercise;
   };
 
-  const handleSelect = (item: { name: string; type: ExerciseType }) => {
+  const handleSelect = (item: {
+    name: string;
+    type: ExerciseType;
+    metricType: ExerciseMetricType;
+  }) => {
     const exercise = buildExerciseObject(item);
 
     onSelect(exercise);

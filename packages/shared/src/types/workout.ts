@@ -26,7 +26,9 @@ export type ExerciseSet = {
   weight?: number;
   durationSec?: number;
   distanceMiles?: number;
+  distanceUnit?: "mi" | "km" | "m";
   calories?: number;
+  timeSeconds?: number;
   completed?: boolean;
   rpe?: number;
 };

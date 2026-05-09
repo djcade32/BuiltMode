@@ -50,6 +50,7 @@ const RepsOnlySetItem = ({
           containerStyle={{ ...styles.setInput, flex: 1 }}
           keyboardType="numeric"
           postText="reps"
+          autoFocus
         />
       ) : (
         <ThemedText>{`${set.reps} reps`}</ThemedText>
