@@ -141,7 +141,10 @@ const Log = () => {
           <ThemedButton
             title="BUILD WORKOUT"
             fontSize={Typography.size.sm}
-            onPress={() => router.push("/(protected)/(tabs)/(workout)/buildWorkout")}
+            onPress={() => {
+              setInitialWorkout(null);
+              router.push("/(protected)/(tabs)/(workout)/buildWorkout");
+            }}
           />
         </View>
 

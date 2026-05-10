@@ -16,6 +16,7 @@ type Props = {
   isActive?: boolean;
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
+  autoFocus?: boolean;
 };
 
 const WeightAndRepsSetItem = ({
@@ -28,6 +29,7 @@ const WeightAndRepsSetItem = ({
   isActive = false,
   isCompleted = false,
   containerStyle,
+  autoFocus = false,
 }: Props) => {
   return (
     <View style={[styles.exerciseSetContainer, containerStyle]}>
@@ -53,6 +55,7 @@ const WeightAndRepsSetItem = ({
             postTextStyle={{ color: Colors.icon, fontSize: 12 }}
             containerStyle={styles.setInput}
             keyboardType="number-pad"
+            autoFocus={autoFocus}
           />
         ) : (
           <ThemedText>{`${set.weight} lbs`}</ThemedText>
@@ -109,7 +112,7 @@ const styles = StyleSheet.create({
   setInput: {
     backgroundColor: Colors.background.primary,
     borderColor: Colors.inputBorder,
-    width: 75,
+    width: 85,
     gap: 2,
     paddingHorizontal: 8,
   },

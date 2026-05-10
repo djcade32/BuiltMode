@@ -36,3 +36,28 @@ export function breakdownSeconds(totalSeconds: number): TimeBreakdown {
 
   return { hours, minutes, seconds };
 }
+
+/**
+ * The function `timeStringToSeconds` converts a time string in the format "HH:MM:SS" to the total
+ * number of seconds.
+ * @param {string} time - The `timeStringToSeconds` function takes a time string in the format
+ * "HH:MM:SS" or "MM:SS" and converts it to the total number of seconds.
+ * @returns The function `timeStringToSeconds` returns the total number of seconds represented by the
+ * input time string.
+ */
+export const timeStringToSeconds = (time: string): number => {
+  if (!time) return 0;
+
+  const parts = time
+    .trim()
+    .split(":")
+    .map((p) => Number(p));
+
+  if (parts.length < 2 || parts.length > 3 || parts.some((n) => isNaN(n) || n < 0)) {
+    return 0;
+  }
+
+  const [h = 0, m = 0, s = 0] = parts.length === 3 ? parts : [0, parts[0], parts[1]];
+
+  return h * 3600 + m * 60 + s;
+};

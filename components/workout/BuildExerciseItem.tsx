@@ -1,23 +1,26 @@
 import { Border, Colors, Typography } from "@/constants/theme";
-import { Exercise, ExerciseSet } from "@/packages/shared/src";
+import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
 import { Entypo, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { v4 as uuidv4 } from "uuid";
 import { ThemedText } from "../themed-text";
 import DropdownMenu, { DropdownMenuOption } from "../ui/DropdownMenu";
+import ChangeMetricTypeSheet from "./ChangeMetricTypeSheet";
 import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
+import DurationSetItem from "./exerciseSetItems/DurationSetItem";
 import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
 import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
 
-type props = {
+type Props = {
   exercise: Exercise;
   onAddSet: (id: string, set: ExerciseSet) => void;
   onDeleteSet: (exerciseId: string, setId: string) => void;
   onEditSet: (exerciseId: string, setId: string, set: ExerciseSet) => void;
   onDragLongPress?: () => void;
   onDeleteExercise?: (exercise: Exercise) => void;
+  onChangeMetricType?: (exerciseId: string, metricType: ExerciseMetricType) => void;
 };
 
 const BuildExerciseItem = ({
@@ -27,15 +30,23 @@ const BuildExerciseItem = ({
   onAddSet,
   onDeleteSet,
   onEditSet,
-}: props) => {
+  onChangeMetricType,
+}: Props) => {
   const { id, name, metricType, sets } = exercise;
+  const [isMetricSheetVisible, setIsMetricSheetVisible] = useState(false);
+  const [autoFocusSet, setAutoFocusSet] = useState(false);
 
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
       {
-        onSelect: () => onDeleteExercise && onDeleteExercise(exercise),
+        onSelect: () => onDeleteExercise?.(exercise),
         text: "DELETE",
         icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
+      },
+      {
+        onSelect: () => setIsMetricSheetVisible(true),
+        text: "CHANGE METRIC",
+        icon: <FontAwesome6 name="ruler" size={10} color={Colors.icon} />,
       },
     ],
     [onDeleteExercise, exercise],
@@ -43,91 +54,140 @@ const BuildExerciseItem = ({
 
   const handleAddSet = () => {
     const setId = `${uuidv4()}-set`;
-    let set: ExerciseSet = {
+
+    const set: ExerciseSet = {
       id: setId,
     };
+
+    setAutoFocusSet(true);
     onAddSet(id, set);
+  };
+
+  const handleChangeMetricType = (nextMetricType: ExerciseMetricType) => {
+    if (nextMetricType === metricType) return;
+
+    onChangeMetricType?.(id, nextMetricType);
   };
 
   const setCallToActionText = () => {
     switch (metricType) {
       case "weight_reps":
+      case "calories":
+      case "time":
         return "ADD SET";
-      case "distance":
-        return "ADD EFFORT";
       case "reps_only":
+      case "duration":
         return "ADD ROUND";
+      case "distance":
+        return "ADD ATTEMPT";
       default:
         return "ADD SET";
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <GesturePressable onLongPress={onDragLongPress} style={{ position: "absolute", right: 5 }}>
-        <MaterialIcons name="drag-handle" size={24} color={Colors.inputBorder} />
-      </GesturePressable>
-      <View style={styles.headerContainer}>
-        <ThemedText style={styles.name}>{name}</ThemedText>
-        <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
-          <DropdownMenu
-            renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
-            options={dropDownOptions}
-            menuOptionsCustomStyles={{ optionsContainer: { width: 100 } }}
+  const renderSetItem = (set: ExerciseSet, index: number) => {
+    const setIndex = index + 1;
+
+    switch (metricType) {
+      case "weight_reps":
+        return (
+          <WeightAndRepsSetItem
+            key={set.id}
+            set={set}
+            exerciseId={id}
+            setIndex={setIndex}
+            onDeleteSet={onDeleteSet}
+            onEditSet={onEditSet}
+            autoFocus={autoFocusSet}
           />
+        );
+
+      case "distance":
+        return (
+          <DistanceSetItem
+            key={set.id}
+            set={set}
+            setIndex={setIndex}
+            onDeleteSet={onDeleteSet}
+            onEditSet={onEditSet}
+            exerciseId={id}
+            autoFocus={autoFocusSet}
+          />
+        );
+
+      case "reps_only":
+        return (
+          <RepsOnlySetItem
+            key={set.id}
+            set={set}
+            setIndex={setIndex}
+            onDeleteSet={onDeleteSet}
+            onEditSet={onEditSet}
+            exerciseId={id}
+            autoFocus={autoFocusSet}
+          />
+        );
+
+      case "duration":
+        return (
+          <DurationSetItem
+            key={set.id}
+            set={set}
+            setIndex={setIndex}
+            onDeleteSet={onDeleteSet}
+            onEditSet={onEditSet}
+            exerciseId={id}
+            autoFocus={autoFocusSet}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <View style={styles.container}>
+        <GesturePressable onLongPress={onDragLongPress} style={styles.dragHandle}>
+          <MaterialIcons name="drag-handle" size={24} color={Colors.inputBorder} />
+        </GesturePressable>
+
+        <View style={styles.headerContainer}>
+          <View style={styles.titleContainer}>
+            <ThemedText style={styles.name}>{name}</ThemedText>
+            <ThemedText style={styles.metricLabel}>
+              {metricType.replace("_", " ").toUpperCase()}
+            </ThemedText>
+          </View>
+
+          <View style={styles.dropdownContainer}>
+            <DropdownMenu
+              renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
+              options={dropDownOptions}
+              menuOptionsCustomStyles={{ optionsContainer: { width: 150 } }}
+            />
+          </View>
         </View>
+
+        <View style={styles.exerciseSetsContainer}>
+          {sets.map((set, index) => renderSetItem(set, index))}
+        </View>
+
+        <TouchableOpacity style={styles.addSetButtonContainer} onPress={handleAddSet}>
+          <Entypo name="plus" size={14} color={Colors.icon} />
+          <ThemedText style={styles.addSetButtonText}>{setCallToActionText()}</ThemedText>
+        </TouchableOpacity>
       </View>
-      <View style={styles.exerciseSetsContainer}>
-        {exercise.sets.map((set, index) => {
-          const idx = index + 1;
-          if (metricType === "weight_reps") {
-            return (
-              <WeightAndRepsSetItem
-                key={set.id}
-                set={set}
-                exerciseId={id}
-                setIndex={idx}
-                onDeleteSet={onDeleteSet}
-                onEditSet={onEditSet}
-              />
-            );
-          } else if (metricType === "distance") {
-            return (
-              <DistanceSetItem
-                key={set.id}
-                set={set}
-                setIndex={idx}
-                onDeleteSet={onDeleteSet}
-                onEditSet={onEditSet}
-                exerciseId={id}
-              />
-            );
-          } else if (metricType === "reps_only") {
-            return (
-              <RepsOnlySetItem
-                key={set.id}
-                set={set}
-                setIndex={idx}
-                onDeleteSet={onDeleteSet}
-                onEditSet={onEditSet}
-                exerciseId={id}
-              />
-            );
-          }
-        })}
-      </View>
-      <TouchableOpacity
-        style={[
-          styles.addSetButtonContainer,
-          { opacity: sets.length > 0 && metricType === "distance" ? 0.25 : 1 },
-        ]}
-        onPress={handleAddSet}
-        disabled={sets.length > 0 && metricType === "distance"}
-      >
-        <Entypo name="plus" size={14} color={Colors.icon} />
-        <ThemedText style={styles.addSetButtonText}>{setCallToActionText()}</ThemedText>
-      </TouchableOpacity>
-    </View>
+
+      <ChangeMetricTypeSheet
+        visible={isMetricSheetVisible}
+        exerciseName={name}
+        currentMetricType={metricType}
+        onClose={() => setIsMetricSheetVisible(false)}
+        onSelectMetricType={handleChangeMetricType}
+      />
+    </>
   );
 };
 
@@ -142,34 +202,34 @@ const styles = StyleSheet.create({
     borderRadius: Border.radius.md,
     zIndex: 100,
   },
-  dropdownOptionsContainer: {
-    backgroundColor: Colors.input,
-    borderRadius: Border.radius.md,
-    borderWidth: 1,
-    borderColor: Colors.inputBorder,
-    padding: 8,
-    width: 100,
+  dragHandle: {
+    position: "absolute",
+    right: 5,
   },
-  dropdownOptionContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  dropdownOptionText: {
-    fontSize: 12,
-    color: Colors.gray,
-    letterSpacing: 0.6,
-  },
-
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    // marginBottom: 20,
     paddingVertical: 10,
     alignItems: "center",
   },
+  titleContainer: {
+    flex: 1,
+    gap: 5,
+    paddingRight: 12,
+  },
   name: {
     fontFamily: Typography.family.primary.bold,
+  },
+  metricLabel: {
+    fontSize: 10,
+    letterSpacing: 1,
+    color: Colors.icon,
+    fontFamily: Typography.family.primary.semibold,
+  },
+  dropdownContainer: {
+    flexDirection: "row",
+    gap: 5,
+    alignItems: "center",
   },
   addSetButtonContainer: {
     flexDirection: "row",

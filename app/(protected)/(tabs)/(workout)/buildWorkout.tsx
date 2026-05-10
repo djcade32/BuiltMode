@@ -7,7 +7,7 @@ import BuildExerciseItem from "@/components/workout/BuildExerciseItem";
 import WorkoutNameSheet from "@/components/workout/WorkoutNameSheet";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
-import { Exercise, ExerciseSet, WorkoutType } from "@/packages/shared/src";
+import { Exercise, ExerciseMetricType, ExerciseSet, WorkoutType } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
@@ -60,6 +60,7 @@ const BuildWorkout = () => {
           onAddSet={handleAddSet}
           onDeleteSet={handleDeleteSet}
           onEditSet={handleEditSet}
+          onChangeMetricType={handleChangeMetricType}
         />
       </ScaleDecorator>
     );
@@ -85,6 +86,11 @@ const BuildWorkout = () => {
       ErrorAlert();
     }
   }, [workoutName, workoutType, exercises, saveWorkoutAsTemplate, queryClient, user?.uid, router]);
+
+  const getWorkoutType = useCallback(
+    () => OPTIONS.findIndex((option) => option === workoutType),
+    [workoutType],
+  );
 
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
@@ -204,6 +210,21 @@ const BuildWorkout = () => {
     );
   };
 
+  const handleChangeMetricType = (exerciseId: string, metricType: ExerciseMetricType) => {
+    setExercises((prevExercises) =>
+      prevExercises.map((exercise) => {
+        if (exercise.id === exerciseId) {
+          return {
+            ...exercise,
+            metricType,
+            sets: [],
+          };
+        }
+        return exercise;
+      }),
+    );
+  };
+
   const handleBackPress = () => {
     (router.back(), setInitialWorkout(null));
   };
@@ -249,7 +270,7 @@ const BuildWorkout = () => {
           <Switch
             options={OPTIONS.map((option) => option.toLocaleUpperCase())}
             onChange={(value) => setWorkoutType(value.toLocaleLowerCase() as WorkoutType)}
-            defaultIndex={OPTIONS.findIndex((option) => option === workoutType)}
+            defaultIndex={getWorkoutType()}
           />
         </View>
 

@@ -15,6 +15,8 @@ type Props = {
   usedForBuilding?: boolean;
   containerStyle?: ViewStyle;
   isActive?: boolean;
+  isCompleted?: boolean;
+  autoFocus?: boolean;
 };
 
 const DistanceSetItem = ({
@@ -26,32 +28,42 @@ const DistanceSetItem = ({
   usedForBuilding = true,
   containerStyle,
   isActive = false,
+  isCompleted = false,
+  autoFocus = false,
 }: Props) => {
-  if (setIndex > 1) return null;
   return (
     <View
       style={[
         {
           backgroundColor: "#1f222888",
           borderRadius: Border.radius.md,
-          padding: 10,
           flex: 1,
         },
         containerStyle,
       ]}
     >
-      {usedForBuilding && (
-        <View>
-          <ThemedText style={{ color: Colors.icon, fontSize: 12, marginBottom: 5 }}>
-            Duration will be tracked during workout
-          </ThemedText>
-        </View>
-      )}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: usedForBuilding ? 5 : 15 }}>
-        <ThemedText style={styles.exerciseSetSetText}>DISTANCE</ThemedText>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 20,
+          justifyContent: "space-between",
+          paddingVertical: 10,
+          paddingHorizontal: 20,
+        }}
+      >
+        {isCompleted && (
+          <View style={styles.checkmarkIconContainer}>
+            <Feather name="check" size={18} color={Colors.accent.primary} />
+          </View>
+        )}
+        <ThemedText style={styles.exerciseSetSetText}>
+          ATTEMPT{"\n"}
+          {setIndex}
+        </ThemedText>
         {usedForBuilding || isActive ? (
           <Input
-            placeholder="Optional"
+            placeholder="0"
             placeholderTextColor={Colors.icon}
             value={set?.distanceMiles?.toString()}
             onChangeText={(value) =>
@@ -67,6 +79,7 @@ const DistanceSetItem = ({
               flex: 1,
             }}
             keyboardType="decimal-pad"
+            autoFocus={autoFocus}
           />
         ) : (
           <ThemedText>{`${set.distanceMiles} mi`}</ThemedText>
@@ -90,5 +103,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.6,
     lineHeight: 16,
+  },
+  checkmarkIconContainer: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#c6a34a38",
+    borderRadius: Border.radius.md,
   },
 });

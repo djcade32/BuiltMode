@@ -15,23 +15,22 @@ const ExerciseListRow = ({ exercise, index }: { exercise: Exercise; index: numbe
   const setText = (metricType: ExerciseMetricType) => {
     switch (metricType) {
       case "weight_reps":
-        return "sets";
-
-      case "reps_only":
-        return "rounds";
-
-      case "distance":
-        return "mi";
+        return "set";
 
       case "duration":
       case "time":
-        return "min";
+      case "reps_only":
+        return "round";
+
+      case "distance":
+        return "attempt";
+
       case "calories":
         return "cal";
       case "other":
 
       default:
-        return "sets";
+        return "set";
     }
   };
 
@@ -47,7 +46,7 @@ const ExerciseListRow = ({ exercise, index }: { exercise: Exercise; index: numbe
       <ThemedText style={styles.listExerciseName}>{exercise.name}</ThemedText>
       <ThemedText
         style={styles.listSetText}
-      >{`${setValue} ${setText(exercise.metricType)}`}</ThemedText>
+      >{`${setValue} ${setText(exercise.metricType)}${setValue > 1 ? "s" : ""}`}</ThemedText>
     </View>
   );
 };
