@@ -89,7 +89,7 @@ const BuildWorkout = () => {
 
   const getWorkoutType = useCallback(
     () => OPTIONS.findIndex((option) => option === workoutType),
-    [OPTIONS, workoutType, exercises],
+    [workoutType],
   );
 
   const dropDownOptions: DropdownMenuOption[] = useMemo(

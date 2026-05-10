@@ -53,7 +53,7 @@ export const timeStringToSeconds = (time: string): number => {
     .split(":")
     .map((p) => Number(p));
 
-  if (parts.length < 2 || parts.length > 3 || parts.some((n) => isNaN(n))) {
+  if (parts.length < 2 || parts.length > 3 || parts.some((n) => isNaN(n) || n < 0)) {
     return 0;
   }
 

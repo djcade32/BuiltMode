@@ -22,6 +22,7 @@ type Props = {
   isActive?: boolean;
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
+  autoFocus?: boolean;
 };
 
 const getExpiryTimestamp = (durationSec: number) => {
@@ -42,6 +43,7 @@ const DurationSetItem = ({
   isActive = false,
   isCompleted = false,
   containerStyle,
+  autoFocus = false,
 }: Props) => {
   const [isTimerStarted, setIsTimerStarted] = useState(false);
   const [isTimerExpired, setIsTimerExpired] = useState(false);
@@ -132,7 +134,7 @@ const DurationSetItem = ({
               postTextStyle={styles.postText}
               containerStyle={styles.inputContainer}
               keyboardType="number-pad"
-              autoFocus
+              autoFocus={autoFocus}
             />
           )}
 
@@ -147,7 +149,7 @@ const DurationSetItem = ({
           )}
         </View>
       ) : (
-        <ThemedText>{`${formatTimeInput(set.durationSec ?? "")} duration`}</ThemedText>
+        <ThemedText>{`${durationTimeString(set.durationSec ?? 0)} duration`}</ThemedText>
       )}
 
       {usedForBuilding && (

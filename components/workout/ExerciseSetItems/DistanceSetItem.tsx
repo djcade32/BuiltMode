@@ -16,6 +16,7 @@ type Props = {
   containerStyle?: ViewStyle;
   isActive?: boolean;
   isCompleted?: boolean;
+  autoFocus?: boolean;
 };
 
 const DistanceSetItem = ({
@@ -28,6 +29,7 @@ const DistanceSetItem = ({
   containerStyle,
   isActive = false,
   isCompleted = false,
+  autoFocus = false,
 }: Props) => {
   return (
     <View
@@ -35,19 +37,11 @@ const DistanceSetItem = ({
         {
           backgroundColor: "#1f222888",
           borderRadius: Border.radius.md,
-          // padding: 10,
           flex: 1,
         },
         containerStyle,
       ]}
     >
-      {/* {usedForBuilding && (
-        <View>
-          <ThemedText style={{ color: Colors.icon, fontSize: 12, marginBottom: 5 }}>
-            Duration will be tracked during workout
-          </ThemedText>
-        </View>
-      )} */}
       <View
         style={{
           flexDirection: "row",
@@ -63,7 +57,6 @@ const DistanceSetItem = ({
             <Feather name="check" size={18} color={Colors.accent.primary} />
           </View>
         )}
-        {/* <View style={{ flexDirection: "row", alignItems: "center", gap: usedForBuilding ? 5 : 15 }}> */}
         <ThemedText style={styles.exerciseSetSetText}>
           ATTEMPT{"\n"}
           {setIndex}
@@ -86,7 +79,7 @@ const DistanceSetItem = ({
               flex: 1,
             }}
             keyboardType="decimal-pad"
-            autoFocus
+            autoFocus={autoFocus}
           />
         ) : (
           <ThemedText>{`${set.distanceMiles} mi`}</ThemedText>

@@ -34,6 +34,7 @@ const BuildExerciseItem = ({
 }: Props) => {
   const { id, name, metricType, sets } = exercise;
   const [isMetricSheetVisible, setIsMetricSheetVisible] = useState(false);
+  const [autoFocusSet, setAutoFocusSet] = useState(false);
 
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
@@ -58,6 +59,7 @@ const BuildExerciseItem = ({
       id: setId,
     };
 
+    setAutoFocusSet(true);
     onAddSet(id, set);
   };
 
@@ -96,6 +98,7 @@ const BuildExerciseItem = ({
             setIndex={setIndex}
             onDeleteSet={onDeleteSet}
             onEditSet={onEditSet}
+            autoFocus={autoFocusSet}
           />
         );
 
@@ -108,6 +111,7 @@ const BuildExerciseItem = ({
             onDeleteSet={onDeleteSet}
             onEditSet={onEditSet}
             exerciseId={id}
+            autoFocus={autoFocusSet}
           />
         );
 
@@ -120,6 +124,7 @@ const BuildExerciseItem = ({
             onDeleteSet={onDeleteSet}
             onEditSet={onEditSet}
             exerciseId={id}
+            autoFocus={autoFocusSet}
           />
         );
 
@@ -132,6 +137,7 @@ const BuildExerciseItem = ({
             onDeleteSet={onDeleteSet}
             onEditSet={onEditSet}
             exerciseId={id}
+            autoFocus={autoFocusSet}
           />
         );
 

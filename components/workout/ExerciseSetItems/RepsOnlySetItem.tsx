@@ -16,6 +16,7 @@ type Props = {
   isActive?: boolean;
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
+  autoFocus?: boolean;
 };
 
 const RepsOnlySetItem = ({
@@ -28,6 +29,7 @@ const RepsOnlySetItem = ({
   isActive = false,
   isCompleted = false,
   containerStyle,
+  autoFocus = false,
 }: Props) => {
   return (
     <View style={[styles.container, containerStyle]}>
@@ -50,7 +52,7 @@ const RepsOnlySetItem = ({
           containerStyle={{ ...styles.setInput, flex: 1 }}
           keyboardType="numeric"
           postText="reps"
-          autoFocus
+          autoFocus={autoFocus}
         />
       ) : (
         <ThemedText>{`${set.reps} reps`}</ThemedText>

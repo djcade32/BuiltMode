@@ -1,13 +1,13 @@
 import { Typography } from "@/constants/theme";
 import React from "react";
-import { StyleSheet, TextStyle, View } from "react-native";
+import { StyleProp, StyleSheet, TextStyle, View } from "react-native";
 import { ThemedText } from "../themed-text";
 
 type Props = {
   hours: number;
   minutes: number;
   seconds: number;
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
 };
 
 export const StopwatchDisplay = ({ hours, minutes, seconds, style }: Props) => {
