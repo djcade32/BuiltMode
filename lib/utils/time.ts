@@ -11,6 +11,10 @@ export const durationTimeString = (duration: number) => {
 };
 
 export const formatTimeInput = (value: number | string): string => {
+  if (typeof value === "number") {
+    return durationTimeString(Math.max(0, Math.trunc(value)));
+  }
+
   // Convert to string and remove non-digits
   const digits = value.toString().replace(/\D/g, "");
 
