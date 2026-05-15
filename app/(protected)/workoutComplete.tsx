@@ -25,6 +25,7 @@ const workoutComplete = () => {
       case "weight_reps":
         return "set";
       case "reps_only":
+      case "duration":
         return "round";
       case "distance":
         return "attempt";
@@ -38,6 +39,9 @@ const workoutComplete = () => {
     clearWorkout();
     router.replace("/(protected)/(tabs)/(workout)/log");
   };
+
+  const isTrainingTargetMet =
+    completeWorkoutResponse?.activeDaysThisWeek === completeWorkoutResponse?.weeklyTargetDays;
 
   if (!completeWorkoutResponse) return <Redirect href={"/(protected)/(tabs)/(workout)/log"} />;
 
@@ -100,7 +104,7 @@ const workoutComplete = () => {
         </View>
         <View style={styles.section}>
           <ThemedText style={styles.subtitle}>WEEK PROGRESS</ThemedText>
-          <View style={styles.modeScoreContainer}>
+          <View style={[styles.modeScoreContainer, isTrainingTargetMet ? styles.targetMet : null]}>
             <View
               style={{
                 flexDirection: "row",
@@ -109,12 +113,22 @@ const workoutComplete = () => {
               }}
             >
               <ThemedText style={styles.progressText}>
-                {completeWorkoutResponse?.activeDaysThisWeek} /{" "}
-                {completeWorkoutResponse?.weeklyTargetDays}
+                <ThemedText
+                  style={[
+                    styles.progressText,
+                    isTrainingTargetMet ? { color: Colors.accent.primary } : null,
+                  ]}
+                >
+                  {completeWorkoutResponse?.activeDaysThisWeek}
+                </ThemedText>
+                /{completeWorkoutResponse?.weeklyTargetDays}
               </ThemedText>
               <ThemedText style={styles.daysCompletedText}>DAYS COMPLETED</ThemedText>
             </View>
 
+            <ThemedText style={{ fontSize: 12, color: Colors.gray }}>
+              You met your standard for the week.
+            </ThemedText>
             <View
               style={{ backgroundColor: Colors.background.primary, height: 6, borderRadius: 3 }}
             >
@@ -133,6 +147,9 @@ const workoutComplete = () => {
                 }}
               />
             </View>
+            <ThemedText style={{ fontSize: 12, color: Colors.icon }}>
+              Additional workouts still count toward your history.
+            </ThemedText>
           </View>
         </View>
         <View style={styles.section}>
@@ -162,9 +179,11 @@ const workoutComplete = () => {
             marginBottom: 24,
           }}
         >
-          {completeWorkoutResponse.modeScoreDifference > -1
-            ? "Keep showing up."
-            : "Stay consistent."}
+          {isTrainingTargetMet
+            ? "Great Work!"
+            : completeWorkoutResponse.modeScoreDifference > -1
+              ? "Keep showing up."
+              : "Stay consistent."}
         </ThemedText>
 
         <View style={styles.footContainer}>
@@ -270,5 +289,10 @@ const styles = StyleSheet.create({
     padding: 24,
     borderTopColor: Colors.background.secondary,
     borderTopWidth: 1,
+  },
+
+  targetMet: {
+    borderTopColor: Colors.accent.primary,
+    borderTopWidth: 3,
   },
 });

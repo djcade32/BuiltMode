@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { firestoreTimestampSchema } from "./firestore.js";
 
 export const goalSchema = z.union([
   z.literal("BUILD MUSCLE"),
@@ -114,6 +115,25 @@ export const friendSummarySchema = z.object({
   status: friendRequestStatusSchema,
 });
 
+export const userStatsSchema = {
+  currentWeekStreak: z.number().nonnegative(),
+  bestWeekStreak: z.number().nonnegative(),
+  totalWorkoutsLogged: z.number().nonnegative(),
+  modeScore: z.number().nullable(),
+  weeklyTargetDays: z.number().nonnegative(),
+  updatedAt: firestoreTimestampSchema,
+};
+
+export const userMonthAggregateSchema = {
+  uid: z.string().min(1),
+  monthId: z.string().min(1),
+  totalWorkouts: z.number().nonnegative(),
+  activeDaysCount: z.number().nonnegative(),
+  workoutCountByDate: z.record(z.string(), z.number()),
+  createdAt: firestoreTimestampSchema,
+  updatedAt: firestoreTimestampSchema,
+};
+
 export type WeeklyTargetDays = z.infer<typeof weeklyTargetDaysSchema>;
 export type Goal = z.infer<typeof goalSchema>;
 export type Metrics = z.infer<typeof metricsSchema>;
@@ -128,3 +148,5 @@ export type UpdateHomeTimezoneRequest = z.infer<typeof updateHomeTimezoneRequest
 export type UpdateHomeTimezoneResponse = z.infer<typeof updateHomeTimezoneResponseSchema>;
 export type FriendRequestStatus = z.infer<typeof friendRequestStatusSchema>;
 export type FriendSummary = z.infer<typeof friendSummarySchema>;
+export type UserStats = z.infer<typeof userStatsSchema>;
+export type UserMonthAggregate = z.infer<typeof userMonthAggregateSchema>;

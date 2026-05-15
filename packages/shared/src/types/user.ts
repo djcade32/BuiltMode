@@ -1,3 +1,5 @@
+import { firestoreTimestamp } from "./firestore.js";
+
 export type Goal =
   | "BUILD MUSCLE"
   | "CUT BODY FAT"
@@ -37,6 +39,40 @@ export type User = {
   homeTimezoneSetAt: string;
   homeTimezoneUpdatedAt?: string;
   updatedAt: string;
+};
+
+export type UserWeekAggregate = {
+  uid: string;
+  weekId: string;
+  isOfficialWeek: boolean;
+  weeklyTargetDays: number;
+  activeDaysThisWeek: number;
+  metTargetThisWeek: boolean;
+  streakWeeks: number;
+  streakStatus: "inactive" | "active";
+  isDeloadWeek: boolean;
+  modeScore: number | null;
+  scoreVersion: number;
+  updatedAt: string;
+};
+
+export type UserStats = {
+  currentWeekStreak: number;
+  bestWeekStreak: number;
+  totalWorkoutsLogged: number;
+  modeScore: number | null;
+  weeklyTargetDays: number;
+  updatedAt: firestoreTimestamp;
+};
+
+export type UserMonthAggregate = {
+  uid: string;
+  monthId: string; // "2026-05"
+  totalWorkouts: number;
+  activeDaysCount: number;
+  workoutCountByDate: Record<string, number>; // localDateKey -> workout count
+  createdAt: firestoreTimestamp;
+  updatedAt: firestoreTimestamp;
 };
 
 export type PublicUserProfile = {

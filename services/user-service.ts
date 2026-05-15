@@ -4,6 +4,9 @@ import {
   CreateUserProfileResponse,
   Goal,
   User,
+  UserMonthAggregate,
+  UserStats,
+  UserWeekAggregate,
   WeeklyTargetDays,
 } from "@/packages/shared/src";
 import { httpsCallable } from "firebase/functions";
@@ -111,6 +114,65 @@ export const createUserProfile = async (
 
     const userResponse = await createUserProfileFunction(user);
     return userResponse.data;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+export const fetchUserWeekAggregate = async ({
+  params,
+}: {
+  params: { uid: string; weekId: string };
+}): Promise<UserWeekAggregate | null> => {
+  const { uid, weekId } = params;
+  try {
+    const docId = `${uid}_${weekId}`;
+    const weekAggregateDoc = doc(db, `userWeekAggregates/${docId}`);
+    const data = (await getDoc(weekAggregateDoc)).data();
+    const aggregate = {
+      ...data,
+    } as UserWeekAggregate;
+
+    return aggregate;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+export const fetchUserMonthAggregate = async ({
+  params,
+}: {
+  params: { uid: string; monthId: string };
+}): Promise<UserMonthAggregate | null> => {
+  const { uid, monthId } = params;
+  try {
+    const docId = `${uid}_${monthId}`;
+    const monthAggregateDoc = doc(db, `userMonthAggregates/${docId}`);
+    const data = (await getDoc(monthAggregateDoc)).data();
+    const aggregate = {
+      ...data,
+    } as UserMonthAggregate;
+
+    return aggregate;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+export const fetchUserStats = async ({
+  params,
+}: {
+  params: { uid: string };
+}): Promise<UserStats | null> => {
+  const { uid } = params;
+  try {
+    const userStatsDoc = doc(db, `userStats/${uid}`);
+    const data = (await getDoc(userStatsDoc)).data();
+    const aggregate = {
+      ...data,
+    } as UserStats;
+
+    return aggregate;
   } catch (error: any) {
     throw error;
   }
