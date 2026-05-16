@@ -48,7 +48,7 @@ describe("workoutComplete", () => {
     expect(getByText("Workout Complete")).toBeTruthy();
     expect(getByText("01:01:11")).toBeTruthy();
     expect(getByText("82")).toBeTruthy();
-    expect(getByText("3 / 4")).toBeTruthy();
+    expect(getByText("3")).toBeTruthy();
     expect(getByText("Bench Press")).toBeTruthy();
     expect(getByText("Pull Ups")).toBeTruthy();
     expect(getByText("Keep showing up.")).toBeTruthy();

@@ -15,9 +15,9 @@ const TrainingTargetWidget = () => {
   if (!user) return null;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["user-week-aggregate", getWeekId(Date(), user.homeTimezone)],
+    queryKey: ["user-week-aggregate", getWeekId(new Date(), user.homeTimezone)],
     queryFn: fetchUserWeekAggregate,
-    params: { uid: user.uid, weekId: getWeekId(Date(), user.homeTimezone) },
+    params: { uid: user.uid, weekId: getWeekId(new Date(), user.homeTimezone) },
     enabled: !!user,
   });
 

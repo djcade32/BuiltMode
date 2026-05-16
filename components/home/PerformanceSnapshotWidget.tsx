@@ -29,9 +29,9 @@ const PerformanceSnapshotWidget = () => {
     isLoading: monthAggregateIsLoading,
     error: monthAggregateError,
   } = useQuery({
-    queryKey: ["user-month-aggregate", getMonthId(Date(), user.homeTimezone)],
+    queryKey: ["user-month-aggregate", getMonthId(new Date(), user.homeTimezone)],
     queryFn: fetchUserMonthAggregate,
-    params: { uid: user.uid, monthId: getMonthId(Date(), user.homeTimezone) },
+    params: { uid: user.uid, monthId: getMonthId(new Date(), user.homeTimezone) },
     enabled: !!user,
   });
 

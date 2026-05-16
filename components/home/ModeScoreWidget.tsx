@@ -35,7 +35,7 @@ const ModeScoreWidget = () => {
   });
 
   const getModeScoreDiffNumber = useMemo(() => {
-    if (!lastWeek?.modeScore || !data?.modeScore) return "";
+    if (lastWeek?.modeScore == null || data?.modeScore == null) return "";
     return `${data.modeScore > lastWeek.modeScore ? "+" : ""}${data.modeScore - lastWeek.modeScore}`;
   }, [lastWeek?.modeScore, data?.modeScore]);
 
@@ -61,6 +61,7 @@ const ModeScoreWidget = () => {
             <ThemedText style={styles.modeScoreNumber}>{data.modeScore}</ThemedText>
             {!!lastWeek ? (
               <ThemedText
+                testID="mode-score-diff"
                 style={{
                   fontSize: 12,
                   lineHeight: 16,
