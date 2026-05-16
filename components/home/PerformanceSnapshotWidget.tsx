@@ -11,16 +11,16 @@ import { ThemedText } from "../themed-text";
 const PerformanceSnapshotWidget = () => {
   const { user } = useUserStore();
 
-  if (!user) return null;
+  const uid = user?.uid;
 
   const {
     data: userStatsData,
     isLoading: userStatsIsLoading,
     error: userStatsError,
   } = useQuery({
-    queryKey: ["user-stats", user.uid],
+    queryKey: ["user-stats", uid],
     queryFn: fetchUserStats,
-    params: { uid: user?.uid },
+    params: { uid: uid ?? "" },
     enabled: !!user,
   });
 
@@ -29,11 +29,13 @@ const PerformanceSnapshotWidget = () => {
     isLoading: monthAggregateIsLoading,
     error: monthAggregateError,
   } = useQuery({
-    queryKey: ["user-month-aggregate", getMonthId(new Date(), user.homeTimezone)],
+    queryKey: ["user-month-aggregate", user ? getMonthId(new Date(), user.homeTimezone) : ""],
     queryFn: fetchUserMonthAggregate,
-    params: { uid: user.uid, monthId: getMonthId(new Date(), user.homeTimezone) },
+    params: { uid: uid ?? "", monthId: user ? getMonthId(new Date(), user.homeTimezone) : "" },
     enabled: !!user,
   });
+
+  if (!user) return null;
 
   return (
     <View style={styles.container}>

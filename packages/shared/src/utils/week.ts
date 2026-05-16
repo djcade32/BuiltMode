@@ -15,7 +15,8 @@ dayjs.extend(timezone);
 export function getWeekId(date: Date | string, homeTimezone: string) {
   assertValidTimezone(homeTimezone);
 
-  const zonedDate = dayjs(date).tz(homeTimezone);
+  const zonedDate =
+    typeof date === "string" ? dayjs.tz(date, homeTimezone) : dayjs(date).tz(homeTimezone);
 
   const startOfWeek = zonedDate.startOf("week").add(1, "day");
 
@@ -30,6 +31,7 @@ export function getWeekId(date: Date | string, homeTimezone: string) {
 
 export function getMonthId(date: Date | string, homeTimezone: string) {
   assertValidTimezone(homeTimezone);
-  const zonedDate = dayjs(date).tz(homeTimezone);
+  const zonedDate =
+    typeof date === "string" ? dayjs.tz(date, homeTimezone) : dayjs(date).tz(homeTimezone);
   return zonedDate.format("YYYY-MM");
 }

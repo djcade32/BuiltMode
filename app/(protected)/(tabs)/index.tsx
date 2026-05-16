@@ -26,15 +26,16 @@ export default function HomeScreen() {
   const { setInitialWorkout } = useWorkoutStore();
   const { user } = useUserStore();
 
-  if (!user) return null;
+  const uid = user?.uid;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["user-stats", user.uid],
+    queryKey: ["user-stats", uid],
     queryFn: fetchUserStats,
-    params: { uid: user?.uid },
-    enabled: !!user,
+    params: { uid: uid ?? "" },
+    enabled: !!uid,
   });
 
+  if (!user) return null;
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
@@ -179,7 +180,7 @@ export default function HomeScreen() {
                     marginBottom: 8,
                   }}
                 >
-                  Why doesn't my score start yet?
+                  Why doesn&apos;t my score start yet?
                 </ThemedText>
                 <ThemedText style={{ fontSize: 12, lineHeight: 19.5, color: Colors.icon }}>
                   To keep weekly tracking fair, all users begin on a full training week. Use this

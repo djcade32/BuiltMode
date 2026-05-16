@@ -115,16 +115,16 @@ export const friendSummarySchema = z.object({
   status: friendRequestStatusSchema,
 });
 
-export const userStatsSchema = {
+export const userStatsSchema = z.object({
   currentWeekStreak: z.number().nonnegative(),
   bestWeekStreak: z.number().nonnegative(),
   totalWorkoutsLogged: z.number().nonnegative(),
   modeScore: z.number().nullable(),
   weeklyTargetDays: z.number().nonnegative(),
   updatedAt: firestoreTimestampSchema,
-};
+});
 
-export const userMonthAggregateSchema = {
+export const userMonthAggregateSchema = z.object({
   uid: z.string().min(1),
   monthId: z.string().min(1),
   totalWorkouts: z.number().nonnegative(),
@@ -132,7 +132,7 @@ export const userMonthAggregateSchema = {
   workoutCountByDate: z.record(z.string(), z.number()),
   createdAt: firestoreTimestampSchema,
   updatedAt: firestoreTimestampSchema,
-};
+});
 
 export type WeeklyTargetDays = z.infer<typeof weeklyTargetDaysSchema>;
 export type Goal = z.infer<typeof goalSchema>;

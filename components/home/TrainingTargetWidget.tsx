@@ -12,19 +12,21 @@ import Progressbar from "../ui/Progressbar";
 const TrainingTargetWidget = () => {
   const { user } = useUserStore();
 
-  if (!user) return null;
+  const uid = user?.uid;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["user-week-aggregate", getWeekId(new Date(), user.homeTimezone)],
+    queryKey: ["user-week-aggregate", user ? getWeekId(new Date(), user.homeTimezone) : ""],
     queryFn: fetchUserWeekAggregate,
-    params: { uid: user.uid, weekId: getWeekId(new Date(), user.homeTimezone) },
+    params: { uid: uid ?? "", weekId: user ? getWeekId(new Date(), user.homeTimezone) : "" },
     enabled: !!user,
   });
 
   const getPercentage = useCallback(
-    () => (data ? (data.activeDaysThisWeek / user.weeklyTargetDays) * 100 : 0),
+    () => (data && user ? (data.activeDaysThisWeek / user.weeklyTargetDays) * 100 : 0),
     [user?.weeklyTargetDays, data?.activeDaysThisWeek],
   );
+
+  if (!user) return null;
 
   return (
     <View style={[styles.container, data?.metTargetThisWeek ? styles.targetMet : null]}>

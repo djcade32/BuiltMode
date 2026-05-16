@@ -62,8 +62,8 @@ export async function handleCompleteWorkout(
     const weeklyTargetDays = user.get("weeklyTargetDays");
 
     const weekId = handleGetWeekId(now.toDate(), homeTimezone);
-    const monthId = `${weekId.split("-")[0]}-${weekId.split("-")[1]}`;
     const localDateKey = handleGetLocalDateKey(now.toDate(), homeTimezone);
+    const monthId = dayjs(localDateKey).format("YYYY-MM");
 
     const isOfficialWeek =
       dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
@@ -126,7 +126,7 @@ export async function handleCompleteWorkout(
     const totalWorkoutsInMonth = monthAggregateExists
       ? monthAggregate.data()?.totalWorkouts + 1
       : 1;
-    let workoutCountByDate: Record<string, number> = {};
+    let workoutCountByDate: Record<string, number> = { [localDateKey]: 1 };
     if (monthAggregateExists) {
       if (monthAggregate.data()?.workoutCountByDate[localDateKey]) {
         workoutCountByDate = {
@@ -140,9 +140,10 @@ export async function handleCompleteWorkout(
         };
       }
     }
-    const activeDaysCount = monthAggregateExists
-      ? (await getTotalActiveDaysInMonth(tx, uid, localDateKey)) + 1
-      : 1;
+    const activeDaysInMonth = monthAggregateExists
+      ? await getTotalActiveDaysInMonth(tx, uid, localDateKey)
+      : 0;
+    const activeDaysCount = dayMarkerExists ? activeDaysInMonth : activeDaysInMonth + 1;
 
     const userStats = await getUserStats(tx, uid);
     const userStatsExists = userStats.exists;

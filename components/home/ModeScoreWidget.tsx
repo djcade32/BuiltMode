@@ -12,24 +12,25 @@ import { ThemedText } from "../themed-text";
 const ModeScoreWidget = () => {
   const { user } = useUserStore();
 
-  if (!user?.weeklyTargetDays) return null;
+  const uid = user?.uid;
+  const homeTimezone = user?.homeTimezone;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["user-week-aggregate", getWeekId(Date(), user.homeTimezone)],
+    queryKey: ["user-week-aggregate", getWeekId(Date(), homeTimezone ?? "")],
     queryFn: fetchUserWeekAggregate,
-    params: { uid: user.uid, weekId: getWeekId(Date(), user.homeTimezone) },
-    enabled: !!user,
+    params: { uid: uid ?? "", weekId: getWeekId(Date(), homeTimezone ?? "") },
+    enabled: !!uid,
   });
 
   const { data: lastWeek } = useQuery({
     queryKey: [
       "user-week-aggregate",
-      getWeekId(dayjs(Date()).subtract(7, "days").toDate(), user.homeTimezone),
+      getWeekId(dayjs(Date()).subtract(7, "days").toDate(), homeTimezone ?? ""),
     ],
     queryFn: fetchUserWeekAggregate,
     params: {
-      uid: user.uid,
-      weekId: getWeekId(dayjs(Date()).subtract(7, "days").toDate(), user.homeTimezone),
+      uid: uid ?? "",
+      weekId: getWeekId(dayjs(Date()).subtract(7, "days").toDate(), homeTimezone ?? ""),
     },
     enabled: !!user,
   });
@@ -38,6 +39,8 @@ const ModeScoreWidget = () => {
     if (lastWeek?.modeScore == null || data?.modeScore == null) return "";
     return `${data.modeScore > lastWeek.modeScore ? "+" : ""}${data.modeScore - lastWeek.modeScore}`;
   }, [lastWeek?.modeScore, data?.modeScore]);
+
+  if (!user?.weeklyTargetDays) return null;
 
   return (
     <View style={styles.container}>

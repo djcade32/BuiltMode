@@ -128,12 +128,12 @@ export const fetchUserWeekAggregate = async ({
   try {
     const docId = `${uid}_${weekId}`;
     const weekAggregateDoc = doc(db, `userWeekAggregates/${docId}`);
-    const data = (await getDoc(weekAggregateDoc)).data();
-    const aggregate = {
-      ...data,
-    } as UserWeekAggregate;
+    const snapshot = await getDoc(weekAggregateDoc);
+    if (!snapshot.exists()) {
+      return null;
+    }
 
-    return aggregate;
+    return snapshot.data() as UserWeekAggregate;
   } catch (error: any) {
     throw error;
   }
@@ -148,12 +148,12 @@ export const fetchUserMonthAggregate = async ({
   try {
     const docId = `${uid}_${monthId}`;
     const monthAggregateDoc = doc(db, `userMonthAggregates/${docId}`);
-    const data = (await getDoc(monthAggregateDoc)).data();
-    const aggregate = {
-      ...data,
-    } as UserMonthAggregate;
+    const snapshot = await getDoc(monthAggregateDoc);
+    if (!snapshot.exists()) {
+      return null;
+    }
 
-    return aggregate;
+    return snapshot.data() as UserMonthAggregate;
   } catch (error: any) {
     throw error;
   }
@@ -167,12 +167,12 @@ export const fetchUserStats = async ({
   const { uid } = params;
   try {
     const userStatsDoc = doc(db, `userStats/${uid}`);
-    const data = (await getDoc(userStatsDoc)).data();
-    const aggregate = {
-      ...data,
-    } as UserStats;
+    const snapshot = await getDoc(userStatsDoc);
+    if (!snapshot.exists()) {
+      return null;
+    }
 
-    return aggregate;
+    return snapshot.data() as UserStats;
   } catch (error: any) {
     throw error;
   }

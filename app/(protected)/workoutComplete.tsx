@@ -126,9 +126,11 @@ const workoutComplete = () => {
               <ThemedText style={styles.daysCompletedText}>DAYS COMPLETED</ThemedText>
             </View>
 
-            <ThemedText style={{ fontSize: 12, color: Colors.gray }}>
-              You met your standard for the week.
-            </ThemedText>
+            {isTrainingTargetMet && (
+              <ThemedText style={{ fontSize: 12, color: Colors.gray }}>
+                You met your standard for the week.
+              </ThemedText>
+            )}
             <View
               style={{ backgroundColor: Colors.background.primary, height: 6, borderRadius: 3 }}
             >
@@ -147,9 +149,11 @@ const workoutComplete = () => {
                 }}
               />
             </View>
-            <ThemedText style={{ fontSize: 12, color: Colors.icon }}>
-              Additional workouts still count toward your history.
-            </ThemedText>
+            {isTrainingTargetMet && (
+              <ThemedText style={{ fontSize: 12, color: Colors.icon }}>
+                Additional workouts still count toward your history.
+              </ThemedText>
+            )}
           </View>
         </View>
         <View style={styles.section}>
