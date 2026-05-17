@@ -26,6 +26,12 @@ const TrainingTargetWidget = () => {
     [user?.weeklyTargetDays, data?.activeDaysThisWeek],
   );
 
+  const getDaysLeft = () => {
+    const today = new Date().getDay();
+    if (today === 0) return 1;
+    return Math.abs(today - 8);
+  };
+
   if (!user) return null;
 
   return (
@@ -34,7 +40,7 @@ const TrainingTargetWidget = () => {
         <View style={styles.loading}>
           <ActivityIndicator />
         </View>
-      ) : error || !data ? (
+      ) : error ? (
         <View style={styles.loading}>
           <ThemedText style={{ color: Colors.icon, fontSize: 12 }}>
             Error loading training metrics
@@ -63,7 +69,7 @@ const TrainingTargetWidget = () => {
                   color: Colors.accent.primary,
                 }}
               >
-                In {Math.abs(new Date().getDay() - 8)} Days
+                In {getDaysLeft()} {getDaysLeft() > 1 ? "Days" : "Day"}
               </ThemedText>
             ) : (
               <ThemedText
@@ -79,10 +85,10 @@ const TrainingTargetWidget = () => {
                     fontFamily: Typography.family.primary.bold,
                     fontSize: 24,
                     lineHeight: 32,
-                    color: data.metTargetThisWeek ? Colors.accent.primary : Colors.text.primary,
+                    color: data?.metTargetThisWeek ? Colors.accent.primary : Colors.text.primary,
                   }}
                 >
-                  {data.activeDaysThisWeek}
+                  {data?.activeDaysThisWeek}
                 </ThemedText>{" "}
                 /{user.weeklyTargetDays}
               </ThemedText>
@@ -108,7 +114,7 @@ const TrainingTargetWidget = () => {
           ) : (
             <View>
               <Progressbar percentage={getPercentage()} />
-              {data.metTargetThisWeek ? (
+              {data?.metTargetThisWeek ? (
                 <ThemedText
                   style={{
                     fontSize: 12,

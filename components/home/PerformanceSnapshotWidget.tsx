@@ -43,7 +43,7 @@ const PerformanceSnapshotWidget = () => {
         <View style={styles.loading}>
           <ActivityIndicator />
         </View>
-      ) : userStatsError || !userStatsData || monthAggregateError || !monthAggregateData ? (
+      ) : userStatsError || monthAggregateError ? (
         <View style={styles.loading}>
           <ThemedText style={{ color: Colors.icon, fontSize: 12 }}>
             Error loading performance snapshot
@@ -76,7 +76,7 @@ const PerformanceSnapshotWidget = () => {
                     <ThemedText style={styles.metricTitle}>Week Streak</ThemedText>
                   </View>
                 </View>
-                <ThemedText style={styles.metricNumber}>{userStatsData.bestWeekStreak}</ThemedText>
+                <ThemedText style={styles.metricNumber}>{userStatsData?.bestWeekStreak}</ThemedText>
               </View>
             )}
             <View
@@ -109,8 +109,8 @@ const PerformanceSnapshotWidget = () => {
               </View>
               <ThemedText style={styles.metricNumber}>
                 {user.isPracticeWeek
-                  ? (userStatsData.totalWorkoutsLogged ?? 0)
-                  : monthAggregateData.totalWorkouts}
+                  ? (userStatsData?.totalWorkoutsLogged ?? 0)
+                  : monthAggregateData?.totalWorkouts}
               </ThemedText>
             </View>
 
@@ -138,7 +138,7 @@ const PerformanceSnapshotWidget = () => {
                   </View>
                 </View>
                 <ThemedText style={styles.metricNumber}>
-                  {monthAggregateData.activeDaysCount}
+                  {monthAggregateData?.activeDaysCount}
                 </ThemedText>
               </View>
             )}

@@ -4,6 +4,7 @@ import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { ExerciseMetricType } from "@/packages/shared/src";
+import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, useRouter } from "expo-router";
 import React, { useMemo } from "react";
@@ -12,6 +13,8 @@ import { ScrollView, StyleSheet, View } from "react-native";
 const workoutComplete = () => {
   const router = useRouter();
   const { duration, completeWorkoutResponse, clearWorkout, activeWorkoutDraft } = useWorkoutStore();
+  const { user } = useUserStore();
+  const isPracticeWeek = user?.isPracticeWeek;
 
   const durationStr = useMemo(() => {
     if (!duration) return "00:00:00";
@@ -45,6 +48,8 @@ const workoutComplete = () => {
 
   if (!completeWorkoutResponse) return <Redirect href={"/(protected)/(tabs)/(workout)/log"} />;
 
+  if (!user) return null;
+
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
@@ -69,92 +74,211 @@ const workoutComplete = () => {
         </View>
 
         <View style={styles.section}>
-          <ThemedText style={styles.subtitle}>MODE SCORE</ThemedText>
-          <View style={styles.modeScoreContainer}>
-            <View
-              style={{
-                justifyContent: "space-between",
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <ThemedText style={styles.modeScoreText}>
-                {completeWorkoutResponse.modeScore ?? 0}
+          <ThemedText style={styles.subtitle}>
+            {isPracticeWeek ? "PRACTICE WEEK" : "MODE SCORE"}
+          </ThemedText>
+          {isPracticeWeek ? (
+            <View style={styles.modeScoreContainer}>
+              <ThemedText
+                style={{
+                  fontFamily: Typography.family.primary.bold,
+                  fontSize: 20,
+                  lineHeight: 28,
+                  letterSpacing: -0.5,
+                }}
+              >
+                Official tracking starts soon
               </ThemedText>
-              {completeWorkoutResponse.modeScoreDifference ? (
-                <ThemedText
-                  style={{
-                    fontFamily: Typography.family.secondary.semibold,
-                    fontSize: 14,
-                    color: Colors.accent.primary,
-                  }}
-                >
-                  {completeWorkoutResponse.modeScoreDifference >= 1 ? "+" : "-"}
-                  {Math.abs(completeWorkoutResponse.modeScoreDifference)} today
-                </ThemedText>
-              ) : (
-                <></>
-              )}
+              <ThemedText
+                style={{
+                  fontSize: 14,
+                  lineHeight: 22.8,
+                  color: Colors.gray,
+                }}
+              >
+                This workout is saved, but it won't affect your Mode Score or Week Streak yet.
+              </ThemedText>
+              <ThemedText
+                style={{
+                  fontSize: 12,
+                  lineHeight: 16,
+                  color: Colors.icon,
+                }}
+              >
+                Your first official week begins Monday at 4:00 AM.
+              </ThemedText>
             </View>
+          ) : (
+            <View style={styles.modeScoreContainer}>
+              <View
+                style={{
+                  justifyContent: "space-between",
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <ThemedText style={styles.modeScoreText}>
+                  {completeWorkoutResponse.modeScore ?? 0}
+                </ThemedText>
+                {completeWorkoutResponse.modeScoreDifference ? (
+                  <ThemedText
+                    style={{
+                      fontFamily: Typography.family.secondary.semibold,
+                      fontSize: 14,
+                      color: Colors.accent.primary,
+                    }}
+                  >
+                    {completeWorkoutResponse.modeScoreDifference >= 1 ? "+" : "-"}
+                    {Math.abs(completeWorkoutResponse.modeScoreDifference)} today
+                  </ThemedText>
+                ) : (
+                  <></>
+                )}
+              </View>
 
-            <ThemedText style={styles.modeScoreInfoText}>
-              Based on recent activity and adherence.
-            </ThemedText>
-          </View>
+              <ThemedText style={styles.modeScoreInfoText}>
+                Based on recent activity and adherence.
+              </ThemedText>
+            </View>
+          )}
         </View>
         <View style={styles.section}>
-          <ThemedText style={styles.subtitle}>WEEK PROGRESS</ThemedText>
-          <View style={[styles.modeScoreContainer, isTrainingTargetMet ? styles.targetMet : null]}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <ThemedText style={styles.progressText}>
-                <ThemedText
-                  style={[
-                    styles.progressText,
-                    isTrainingTargetMet ? { color: Colors.accent.primary } : null,
-                  ]}
-                >
-                  {completeWorkoutResponse?.activeDaysThisWeek}
-                </ThemedText>
-                /{completeWorkoutResponse?.weeklyTargetDays}
-              </ThemedText>
-              <ThemedText style={styles.daysCompletedText}>DAYS COMPLETED</ThemedText>
-            </View>
+          <ThemedText style={styles.subtitle}>
+            {isPracticeWeek ? "PREPARATION" : "WEEK PROGRESS"}
+          </ThemedText>
+          {isPracticeWeek ? (
+            <View style={styles.modeScoreContainer}>
+              <View
+                style={{
+                  borderBottomColor: Colors.inputBorder,
+                  borderBottomWidth: 1,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  paddingBottom: 10,
+                }}
+              >
+                <View>
+                  <ThemedText
+                    style={{
+                      fontFamily: Typography.family.primary.semibold,
+                      fontSize: 12,
+                      lineHeight: 16,
+                      letterSpacing: 0.6,
+                      color: Colors.icon,
+                      marginBottom: 5,
+                    }}
+                  >
+                    TOTAL WORKOUTS
+                  </ThemedText>
+                  <ThemedText
+                    style={{
+                      fontFamily: Typography.family.secondary.bold,
+                      fontSize: 30,
+                      lineHeight: 36,
+                    }}
+                  >
+                    3
+                  </ThemedText>
+                </View>
 
-            {isTrainingTargetMet && (
-              <ThemedText style={{ fontSize: 12, color: Colors.gray }}>
-                You met your standard for the week.
+                <View
+                  style={{
+                    height: 50,
+                    width: 1,
+                    backgroundColor: Colors.inputBorder,
+                  }}
+                />
+
+                <View>
+                  <ThemedText
+                    style={{
+                      fontFamily: Typography.family.primary.semibold,
+                      fontSize: 12,
+                      lineHeight: 16,
+                      letterSpacing: 0.6,
+                      color: Colors.icon,
+                      marginBottom: 5,
+                    }}
+                  >
+                    OFFICIAL START
+                  </ThemedText>
+                  <ThemedText
+                    style={{
+                      fontFamily: Typography.family.secondary.bold,
+                      fontSize: 30,
+                      lineHeight: 36,
+                    }}
+                  >
+                    Monday
+                  </ThemedText>
+                </View>
+              </View>
+              <ThemedText
+                style={{
+                  fontSize: 12,
+                  lineHeight: 16,
+                  color: Colors.icon,
+                  textAlign: "center",
+                }}
+              >
+                Build rhythm before the standard begins.
               </ThemedText>
-            )}
+            </View>
+          ) : (
             <View
-              style={{ backgroundColor: Colors.background.primary, height: 6, borderRadius: 3 }}
+              style={[styles.modeScoreContainer, isTrainingTargetMet ? styles.targetMet : null]}
             >
               <View
                 style={{
-                  backgroundColor: Colors.accent.primary,
-                  height: 6,
-                  width: `${
-                    completeWorkoutResponse.weeklyTargetDays > 0
-                      ? (completeWorkoutResponse.activeDaysThisWeek /
-                          completeWorkoutResponse.weeklyTargetDays) *
-                        100
-                      : 0
-                  }%`,
-                  borderRadius: 3,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
-              />
+              >
+                <ThemedText style={styles.progressText}>
+                  <ThemedText
+                    style={[
+                      styles.progressText,
+                      isTrainingTargetMet ? { color: Colors.accent.primary } : null,
+                    ]}
+                  >
+                    {completeWorkoutResponse?.activeDaysThisWeek}
+                  </ThemedText>
+                  /{completeWorkoutResponse?.weeklyTargetDays}
+                </ThemedText>
+                <ThemedText style={styles.daysCompletedText}>DAYS COMPLETED</ThemedText>
+              </View>
+
+              {isTrainingTargetMet && (
+                <ThemedText style={{ fontSize: 12, color: Colors.gray }}>
+                  You met your standard for the week.
+                </ThemedText>
+              )}
+              <View
+                style={{ backgroundColor: Colors.background.primary, height: 6, borderRadius: 3 }}
+              >
+                <View
+                  style={{
+                    backgroundColor: Colors.accent.primary,
+                    height: 6,
+                    width: `${
+                      completeWorkoutResponse.weeklyTargetDays > 0
+                        ? (completeWorkoutResponse.activeDaysThisWeek /
+                            completeWorkoutResponse.weeklyTargetDays) *
+                          100
+                        : 0
+                    }%`,
+                    borderRadius: 3,
+                  }}
+                />
+              </View>
+              {isTrainingTargetMet && (
+                <ThemedText style={{ fontSize: 12, color: Colors.icon }}>
+                  Additional workouts still count toward your history.
+                </ThemedText>
+              )}
             </View>
-            {isTrainingTargetMet && (
-              <ThemedText style={{ fontSize: 12, color: Colors.icon }}>
-                Additional workouts still count toward your history.
-              </ThemedText>
-            )}
-          </View>
+          )}
         </View>
         <View style={styles.section}>
           <ThemedText style={styles.subtitle}>SESSION BREAKDOWN</ThemedText>
@@ -175,20 +299,33 @@ const workoutComplete = () => {
           </View>
         </View>
 
-        <ThemedText
-          style={{
-            color: Colors.icon,
-            fontSize: 12,
-            textAlign: "center",
-            marginBottom: 24,
-          }}
-        >
-          {isTrainingTargetMet
-            ? "Great Work!"
-            : completeWorkoutResponse.modeScoreDifference > -1
-              ? "Keep showing up."
-              : "Stay consistent."}
-        </ThemedText>
+        {isPracticeWeek ? (
+          <ThemedText
+            style={{
+              color: Colors.icon,
+              fontSize: 12,
+              textAlign: "center",
+              marginBottom: 24,
+            }}
+          >
+            Practice logged. Keep building.
+          </ThemedText>
+        ) : (
+          <ThemedText
+            style={{
+              color: Colors.icon,
+              fontSize: 12,
+              textAlign: "center",
+              marginBottom: 24,
+            }}
+          >
+            {isTrainingTargetMet
+              ? "Great Work!"
+              : completeWorkoutResponse.modeScoreDifference > -1
+                ? "Keep showing up."
+                : "Stay consistent."}
+          </ThemedText>
+        )}
 
         <View style={styles.footContainer}>
           <ThemedButton title="DONE" onPress={handleDone} />
