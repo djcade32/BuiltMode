@@ -136,15 +136,17 @@ jest.mock("@/services/user-service", () => ({
   fetchUserMonthAggregate: jest.fn(),
 }));
 
-jest.mock("@builtmode/shared", () => ({
-  getWeekId: jest.fn((date: Date | string) => {
-    // In the widgets, current week uses Date(), which returns a string.
-    // Last week uses dayjs(...).subtract(...).toDate(), which returns a Date object.
-    if (date instanceof Date) return "2026-05-04";
-    return "2026-05-11";
+jest.mock(
+  "@builtmode/shared",
+  () => ({
+    getWeekId: jest.fn((date: Date | string) => {
+      if (date instanceof Date) return "2026-05-04";
+      return "2026-05-11";
+    }),
+    getMonthId: jest.fn(() => "2026-05"),
   }),
-  getMonthId: jest.fn(() => "2026-05"),
-}));
+  { virtual: true },
+);
 
 jest.mock("@/hooks/useQuery", () => ({
   useQuery: jest.fn(({ queryKey, params }: any) => {

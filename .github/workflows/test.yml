@@ -39,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Build shared package
-        run: npm run build --workspace=@builtmode
+        run: npm run build --workspace @builtmode/shared
 
       - name: Build functions
         run: npm run build --workspace functions
