@@ -11,7 +11,7 @@
     "lint": "expo lint",
     "test": "jest --config jest.client.config.js",
     "test:unit": "npm run test -- tests/unit",
-    "test:integration": "npm run test -- tests/integration",
+    "test:integration": "npm run test -- tests/integration --runInBand",
     "test:server": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --config functions/jest.config.ts",
     "test:all": "npm run test && npm run test:server",
     "build:shared": "npm --workspace @builtmode/shared run build",
@@ -20,6 +20,7 @@
     "build": "npm run build:shared && npm run build:functions"
   },
   "dependencies": {
+    "@builtmode/shared": "workspace:*",
     "@expo-google-fonts/archivo-black": "^0.4.1",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",

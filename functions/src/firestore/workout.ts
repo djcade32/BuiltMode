@@ -1,13 +1,7 @@
 import dayjs from "dayjs";
 import { Transaction } from "firebase-admin/firestore";
 import { db } from "../lib/firebaseAdmin.js";
-import {
-  DayMarker,
-  ModeScoreBreakdown,
-  ModeScoreInput,
-  UserWeekAggregate,
-  Workout,
-} from "../types/workout.js";
+import { DayMarker, ModeScoreBreakdown, ModeScoreInput, Workout } from "../types/workout.js";
 import { clamp, roundToNearestInt } from "../utils/math.js";
 
 export const createCompleteWorkout = (tx: Transaction, workout: Workout) => {
@@ -19,20 +13,6 @@ export const createDayMarker = (tx: Transaction, dayMarker: DayMarker) => {
   const { uid, weekId, localDateKey } = dayMarker;
   const ref = db.collection(`userWeekDays/${uid}_${weekId}/days`).doc(localDateKey);
   tx.set(ref, dayMarker);
-};
-
-export const createUserWeekAggregate = (
-  tx: Transaction,
-  uid: string,
-  weekId: string,
-  weekAggregate: UserWeekAggregate,
-) => {
-  const ref = db.collection("userWeekAggregates").doc(`${uid}_${weekId}`);
-  tx.set(ref, weekAggregate);
-};
-
-export const getUserWeekAggregate = (tx: Transaction, uid: string, weekId: string) => {
-  return tx.get(db.collection("userWeekAggregates").doc(`${uid}_${weekId}`));
 };
 
 export const getUserLeaderboardEntry = (tx: Transaction, uid: string) => {
@@ -106,6 +86,38 @@ export const getWorkoutsWithinLast30Days = async (
     dayMarkerExists && daysWorkedout++;
   }
 
+  return daysWorkedout;
+};
+
+export const getDateKeysForMonth = (date: Date | string): Set<string> => {
+  const result = new Set<string>();
+  const startOfMonth = dayjs(date).startOf("month").toDate();
+  const numOfDaysInMonth = dayjs(date).daysInMonth();
+
+  for (let i = 0; i < numOfDaysInMonth; i++) {
+    result.add(dayjs(startOfMonth).add(i, "day").format("YYYY-MM-DD"));
+  }
+  console.log("results: ", result);
+  return result;
+};
+
+export const getTotalActiveDaysInMonth = async (
+  tx: Transaction,
+  uid: string,
+  todayLocalDateKey: Date | string,
+) => {
+  // Turn set into array to better iterate over
+  const validWindowKeys = [...getDateKeysForMonth(todayLocalDateKey)];
+  let daysWorkedout = 0;
+  for (const dateKey of validWindowKeys) {
+    const weekId = dayjs(dateKey).startOf("week").add(1, "day");
+    console.log("looking for weekId: ", weekId.format("YYYY-MM-DD"), " with date key: ", dateKey);
+    const dayMarkerExists = (await getDayMarker(tx, uid, weekId.format("YYYY-MM-DD"), dateKey))
+      .exists;
+    dayMarkerExists && daysWorkedout++;
+    dayMarkerExists && console.log("found workout");
+  }
+  console.log("daysWorkedout: ", daysWorkedout);
   return daysWorkedout;
 };
 

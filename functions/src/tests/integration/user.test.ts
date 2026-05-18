@@ -4,27 +4,35 @@ import { db } from "../../lib/firebaseAdmin.js";
 import { clearAuth, clearFirestore } from "../utils/clearEmulators.js";
 
 describe("handleCreateUserProfile", () => {
-  const uid = "test-user-123";
-  const uid2 = "other-user-456";
-  const usernameLower = "djcade32";
-
-  const input: CreateUserProfileRequest = {
-    username: "djcade32",
-    displayName: "Norman",
-    goal: "BUILD MUSCLE",
-    metrics: {
-      height: 70,
-      weight: 204,
-      bodyFatPercentage: 16,
-      system: "IMPERIAL",
-    },
-    homeTimezone: "America/New_York",
-    weeklyTargetDays: 4,
-  };
+  let uid: string;
+  let uid2: string;
+  let username: string;
+  let usernameLower: string;
+  let input: CreateUserProfileRequest;
 
   beforeEach(async () => {
     await clearFirestore();
     await clearAuth();
+    const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    uid = `test-user-${unique}`;
+    uid2 = `other-user-${unique}`;
+    username = `djcade32_${unique}`;
+    usernameLower = username.toLowerCase();
+
+    input = {
+      username,
+      displayName: "Norman",
+      goal: "BUILD MUSCLE",
+      metrics: {
+        height: 70,
+        weight: 204,
+        bodyFatPercentage: 16,
+        system: "IMPERIAL",
+      },
+      homeTimezone: "America/New_York",
+      weeklyTargetDays: 4,
+    };
   });
 
   test("creates user doc, username index, and leaderboard entry", async () => {

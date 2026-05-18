@@ -12,7 +12,7 @@ import { durationTimeString } from "@/lib/utils/time";
 
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome6, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -132,7 +132,10 @@ const Log = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 15 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 15 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.titleContainer}>
           <ThemedText type="title">LOG</ThemedText>
           <ThemedText style={styles.subtitle}>Build your session. Then start.</ThemedText>
@@ -197,10 +200,11 @@ const Log = () => {
               <ThemedText style={styles.templatesSectionTitle}>TEMPLATES</ThemedText>
               {templates.length ? (
                 <TouchableOpacity
-                  style={{ borderBottomWidth: 1, borderBottomColor: Colors.gray }}
                   onPress={() => router.push("/(protected)/(tabs)/(workout)/viewTemplates")}
                 >
-                  <ThemedText style={styles.viewAllButton}>VIEW ALL</ThemedText>
+                  <ThemedText style={styles.viewAllButton}>
+                    VIEW ALL <FontAwesome6 name="arrow-right" size={12} />
+                  </ThemedText>
                 </TouchableOpacity>
               ) : null}
             </View>

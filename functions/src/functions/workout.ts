@@ -1,17 +1,25 @@
+import { UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
 import { CompleteWorkoutRequest, CompleteWorkoutResponse } from "@builtmode/shared/types/workout";
 import dayjs from "dayjs";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
 import { updateLeaderboardEntry } from "../firestore/leaderboard.js";
-import { getUserByUid } from "../firestore/user.js";
+import {
+  createUserMonthAggregates,
+  createUserStats,
+  createUserWeekAggregate,
+  getUserByUid,
+  getUserMonthAggregate,
+  getUserStats,
+  getUserWeekAggregate,
+} from "../firestore/user.js";
 import {
   calculateModeScore,
   createCompleteWorkout,
   createDayMarker,
-  createUserWeekAggregate,
   getDayMarker,
+  getTotalActiveDaysInMonth,
   getUserLeaderboardEntry,
-  getUserWeekAggregate,
   getWorkoutsWithinLast30Days,
 } from "../firestore/workout.js";
 import { db } from "../lib/firebaseAdmin.js";
@@ -55,6 +63,7 @@ export async function handleCompleteWorkout(
 
     const weekId = handleGetWeekId(now.toDate(), homeTimezone);
     const localDateKey = handleGetLocalDateKey(now.toDate(), homeTimezone);
+    const monthId = dayjs(localDateKey).format("YYYY-MM");
 
     const isOfficialWeek =
       dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
@@ -71,6 +80,8 @@ export async function handleCompleteWorkout(
     const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
     const weekAggregateExists = weekAggregate.exists;
 
+    let streakStatus = weekAggregateExists ? weekAggregate.get("streakStatus") : "inactive";
+
     // If weekAgreggate doc exists and there is no workout logged for today, increment activeDaysThisWeek. Else do nothing
     const activeDaysThisWeek = weekAggregateExists
       ? !dayMarkerExists
@@ -79,7 +90,17 @@ export async function handleCompleteWorkout(
       : 1;
     const metTargetThisWeek = weekAggregateExists ? activeDaysThisWeek >= weeklyTargetDays : false;
     const isDeloadWeek = weekAggregateExists ? weekAggregate.get("isDeloadWeek") : false;
-    const streakWeeks = weekAggregateExists ? weekAggregate.get("streakWeeks") : 0;
+    // If weekAgreggate doc exits, there is no workout and target is met increment streak. Else do nothing
+    let streakWeeks = 0;
+    if (weekAggregateExists) {
+      if (metTargetThisWeek && streakStatus === "inactive") {
+        streakWeeks = weekAggregate.get("streakWeeks") + 1;
+        streakStatus = "active";
+      } else {
+        streakWeeks = weekAggregate.get("streakWeeks");
+      }
+    }
+
     const modeScore = isOfficialWeek
       ? calculateModeScore({
           weeklyTarget: weeklyTargetDays,
@@ -89,7 +110,6 @@ export async function handleCompleteWorkout(
         }).modeScore
       : null;
 
-    const streakStatus = weekAggregateExists ? weekAggregate.get("streakStatus") : false;
     let modeScoreDifference = 0;
     if (weekAggregateExists && modeScore) {
       modeScoreDifference = modeScore - (weekAggregate.data()?.modeScore ?? 0);
@@ -99,6 +119,39 @@ export async function handleCompleteWorkout(
         modeScoreDifference = modeScore - (leaderboardEntry.data()?.modeScore ?? 0);
       }
     }
+
+    const monthAggregate = await getUserMonthAggregate(tx, uid, monthId);
+    const monthAggregateExists = monthAggregate.exists;
+
+    const totalWorkoutsInMonth = monthAggregateExists
+      ? monthAggregate.data()?.totalWorkouts + 1
+      : 1;
+    let workoutCountByDate: Record<string, number> = { [localDateKey]: 1 };
+    if (monthAggregateExists) {
+      if (monthAggregate.data()?.workoutCountByDate[localDateKey]) {
+        workoutCountByDate = {
+          ...monthAggregate.data()?.workoutCountByDate,
+          [localDateKey]: monthAggregate.data()?.workoutCountByDate[localDateKey] + 1,
+        };
+      } else {
+        workoutCountByDate = {
+          ...monthAggregate.data()?.workoutCountByDate,
+          [localDateKey]: 1,
+        };
+      }
+    }
+    const activeDaysInMonth = monthAggregateExists
+      ? await getTotalActiveDaysInMonth(tx, uid, localDateKey)
+      : 0;
+    const activeDaysCount = dayMarkerExists ? activeDaysInMonth : activeDaysInMonth + 1;
+
+    const userStats = await getUserStats(tx, uid);
+    const userStatsExists = userStats.exists;
+
+    const bestWeekStreak = userStatsExists
+      ? Math.max(streakWeeks, userStats.data()?.bestWeekStreak ?? 0)
+      : 0;
+    const totalWorkoutsLogged = userStatsExists ? userStats.data()?.totalWorkoutsLogged + 1 : 1;
 
     const workoutDoc: Workout = {
       sessionId,
@@ -140,6 +193,16 @@ export async function handleCompleteWorkout(
       isDeloadWeek,
     };
 
+    const userMonthAggregateDoc: UserMonthAggregate = {
+      uid,
+      monthId,
+      totalWorkouts: totalWorkoutsInMonth,
+      activeDaysCount,
+      workoutCountByDate,
+      createdAt: now,
+      updatedAt: now,
+    };
+
     const updatedLeaderboardEntry: Partial<LeaderboardEntry> = {
       uid,
       modeScore: modeScore === null ? 0 : modeScore,
@@ -149,9 +212,20 @@ export async function handleCompleteWorkout(
       isRanked: isOfficialWeek,
     };
 
+    const userStatsDoc: UserStats = {
+      currentWeekStreak: streakWeeks,
+      bestWeekStreak,
+      modeScore: modeScore,
+      totalWorkoutsLogged,
+      weeklyTargetDays,
+      updatedAt: now,
+    };
+
     createCompleteWorkout(tx, workoutDoc);
     createDayMarker(tx, dayMarkerDoc);
     createUserWeekAggregate(tx, uid, weekId, userWeekAggregateDoc);
+    createUserMonthAggregates(tx, uid, monthId, userMonthAggregateDoc);
+    createUserStats(tx, uid, userStatsDoc);
     updateLeaderboardEntry(tx, updatedLeaderboardEntry);
 
     return {

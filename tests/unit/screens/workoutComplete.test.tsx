@@ -1,4 +1,5 @@
 import WorkoutComplete from "@/app/(protected)/workoutComplete";
+import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { fireEvent, render } from "@testing-library/react-native";
 import React from "react";
@@ -43,12 +44,27 @@ describe("workoutComplete", () => {
       activeWorkoutDraft: makeActiveWorkoutDraft() as any,
     });
 
+    useUserStore.setState({
+      user: {
+        uid: "123",
+        username: "djcade32",
+        goal: "BUILD MUSCLE",
+        metrics: undefined,
+        displayName: "Norman",
+        avatarUrl: undefined,
+        homeTimezone: "America, NY",
+        officialStartWeekId: "2026-05-18",
+        weeklyTargetDays: 5,
+        isPracticeWeek: false,
+      },
+    });
+
     const { getByText } = render(<WorkoutComplete />);
 
     expect(getByText("Workout Complete")).toBeTruthy();
     expect(getByText("01:01:11")).toBeTruthy();
     expect(getByText("82")).toBeTruthy();
-    expect(getByText("3 / 4")).toBeTruthy();
+    expect(getByText("3")).toBeTruthy();
     expect(getByText("Bench Press")).toBeTruthy();
     expect(getByText("Pull Ups")).toBeTruthy();
     expect(getByText("Keep showing up.")).toBeTruthy();
