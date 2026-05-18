@@ -13,6 +13,8 @@ const PerformanceSnapshotWidget = () => {
 
   const uid = user?.uid;
 
+  const monthId = user ? getMonthId(new Date(), user.homeTimezone) : "";
+
   const {
     data: userStatsData,
     isLoading: userStatsIsLoading,
@@ -29,9 +31,9 @@ const PerformanceSnapshotWidget = () => {
     isLoading: monthAggregateIsLoading,
     error: monthAggregateError,
   } = useQuery({
-    queryKey: ["user-month-aggregate", user ? getMonthId(new Date(), user.homeTimezone) : ""],
+    queryKey: ["user-month-aggregate", uid, monthId],
     queryFn: fetchUserMonthAggregate,
-    params: { uid: uid ?? "", monthId: user ? getMonthId(new Date(), user.homeTimezone) : "" },
+    params: { uid: uid ?? "", monthId },
     enabled: !!user,
   });
 

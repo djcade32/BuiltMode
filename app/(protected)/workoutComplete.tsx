@@ -44,7 +44,8 @@ const workoutComplete = () => {
   };
 
   const isTrainingTargetMet =
-    completeWorkoutResponse?.activeDaysThisWeek === completeWorkoutResponse?.weeklyTargetDays;
+    (completeWorkoutResponse?.activeDaysThisWeek ?? 0) >=
+    (completeWorkoutResponse?.weeklyTargetDays ?? 0);
 
   if (!completeWorkoutResponse) return <Redirect href={"/(protected)/(tabs)/(workout)/log"} />;
 
@@ -96,7 +97,7 @@ const workoutComplete = () => {
                   color: Colors.gray,
                 }}
               >
-                This workout is saved, but it won't affect your Mode Score or Week Streak yet.
+                This workout is saved, but it won&apos;t affect your Mode Score or Week Streak yet.
               </ThemedText>
               <ThemedText
                 style={{
@@ -263,9 +264,12 @@ const workoutComplete = () => {
                     height: 6,
                     width: `${
                       completeWorkoutResponse.weeklyTargetDays > 0
-                        ? (completeWorkoutResponse.activeDaysThisWeek /
-                            completeWorkoutResponse.weeklyTargetDays) *
-                          100
+                        ? Math.min(
+                            100,
+                            (completeWorkoutResponse.activeDaysThisWeek /
+                              completeWorkoutResponse.weeklyTargetDays) *
+                              100,
+                          )
                         : 0
                     }%`,
                     borderRadius: 3,

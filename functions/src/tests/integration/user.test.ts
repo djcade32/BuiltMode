@@ -13,7 +13,7 @@ describe("handleCreateUserProfile", () => {
   beforeEach(async () => {
     await clearFirestore();
     await clearAuth();
-    const unique = Date.now().toString();
+    const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     uid = `test-user-${unique}`;
     uid2 = `other-user-${unique}`;

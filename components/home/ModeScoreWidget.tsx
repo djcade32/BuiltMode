@@ -62,7 +62,7 @@ const ModeScoreWidget = () => {
 
           <View style={styles.infoTextContainer}>
             <ThemedText style={styles.modeScoreNumber}>{data.modeScore}</ThemedText>
-            {!!lastWeek ? (
+            {!!lastWeek && getModeScoreDiffNumber !== "" ? (
               <ThemedText
                 testID="mode-score-diff"
                 style={{
