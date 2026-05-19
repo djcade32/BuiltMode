@@ -27,7 +27,7 @@ export type User = {
   displayName: string;
   avatarUrl?: string;
   goal: Goal;
-  metrics?: Metrics;
+  metrics?: Metrics | null;
 
   // Discipline / eligibility
   homeTimezone: HomeTimezone;
@@ -132,14 +132,4 @@ export type UpdateHomeTimezoneRequest = {
 export type UpdateHomeTimezoneResponse = {
   homeTimezone: HomeTimezone;
   effectiveWeekId: string;
-};
-
-export type FriendRequestStatus = "pending" | "accepted" | "blocked";
-
-export type FriendSummary = {
-  uid: string;
-  username: string;
-  displayName: string;
-  avatarUrl?: string;
-  status: FriendRequestStatus;
 };

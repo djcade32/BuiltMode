@@ -12,7 +12,7 @@ export type UserDoc = {
   displayName: string;
   avatarUrl?: string;
   goal: Goal;
-  metrics?: Metrics;
+  metrics?: Metrics | null;
 
   // Time & eligibility
   homeTimezone: string;

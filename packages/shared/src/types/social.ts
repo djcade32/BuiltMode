@@ -17,7 +17,7 @@ export type FriendRequest = {
 
   createdAt: firestoreTimestamp;
   updatedAt: firestoreTimestamp;
-  respondedAt?: firestoreTimestamp;
+  respondedAt?: firestoreTimestamp | null;
 };
 
 export type FeedItem = {

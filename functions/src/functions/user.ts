@@ -53,7 +53,7 @@ export async function handleCreateUserProfile(
       usernameLower,
       displayName: displayName.trim(),
       goal,
-      metrics: metrics ?? undefined,
+      metrics: metrics ?? null,
       avatarUrl: avatarUrl ?? "",
       homeTimezone: homeTimezone,
       officialStartWeekId,

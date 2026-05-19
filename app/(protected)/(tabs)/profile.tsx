@@ -1,14 +1,30 @@
 import { Colors } from "@/constants/theme";
+import { sendFriendRequest } from "@/services/social-service";
 import { useAuthStore } from "@/stores/auth-store";
+import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { Button, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const profile = () => {
   const { signout } = useAuthStore();
+
+  const { mutate: sendFriendRequestFunc, isPending } = useMutation({
+    mutationFn: async (id: string) => {
+      const result = await sendFriendRequest(id);
+      if (!result.success) {
+        throw new Error(result.message ?? "Failed to send friend request.");
+      }
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Button title="Sign out" onPress={signout} />
+      <Button
+        title="Send Friend Request"
+        onPress={() => sendFriendRequestFunc("G5TXMZMdhcSy7c8RriJe5VBdwTLC")}
+      />
     </SafeAreaView>
   );
 };
