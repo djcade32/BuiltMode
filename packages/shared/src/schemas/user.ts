@@ -105,16 +105,6 @@ export const updateHomeTimezoneResponseSchema = z.object({
   effectiveWeekId: z.string().min(1),
 });
 
-export const friendRequestStatusSchema = z.enum(["pending", "accepted", "blocked"]);
-
-export const friendSummarySchema = z.object({
-  uid: z.string().min(1),
-  username: usernameSchema,
-  displayName: displayNameSchema,
-  avatarUrl: avatarUrlSchema,
-  status: friendRequestStatusSchema,
-});
-
 export const userStatsSchema = z.object({
   currentWeekStreak: z.number().nonnegative(),
   bestWeekStreak: z.number().nonnegative(),
@@ -146,7 +136,5 @@ export type UpdateWeeklyTargetRequest = z.infer<typeof updateWeeklyTargetRequest
 export type UpdateWeeklyTargetResponse = z.infer<typeof updateWeeklyTargetResponseSchema>;
 export type UpdateHomeTimezoneRequest = z.infer<typeof updateHomeTimezoneRequestSchema>;
 export type UpdateHomeTimezoneResponse = z.infer<typeof updateHomeTimezoneResponseSchema>;
-export type FriendRequestStatus = z.infer<typeof friendRequestStatusSchema>;
-export type FriendSummary = z.infer<typeof friendSummarySchema>;
 export type UserStats = z.infer<typeof userStatsSchema>;
 export type UserMonthAggregate = z.infer<typeof userMonthAggregateSchema>;
