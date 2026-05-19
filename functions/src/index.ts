@@ -15,7 +15,7 @@ import { CreateUserProfileRequest } from "@builtmode/shared/types/user";
 import { CompleteWorkoutRequest } from "@builtmode/shared/types/workout";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
-import { handleSendFriendRequest } from "./functions/social.js";
+import { handleRespondToFriendRequest, handleSendFriendRequest } from "./functions/social.js";
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
 import { handleCreateUserProfile } from "./functions/user.js";
 import { handleCompleteWorkout } from "./functions/workout.js";
@@ -126,3 +126,22 @@ export const sendFriendRequest = onCall(async (request: CallableRequest<{ id: st
 
   return await handleSendFriendRequest(request.auth.uid, id);
 });
+
+export const respondToFriendRequest = onCall(
+  async (request: CallableRequest<{ requestId: string; action: "accepted" | "declined" }>) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "User must be signed in.");
+    }
+
+    const { requestId, action } = request.data;
+
+    if (!requestId || typeof requestId !== "string") {
+      throw new HttpsError("invalid-argument", "Invalid respondToFriendRequest payload.");
+    }
+    if (!action && action !== "accepted" && action !== "declined") {
+      throw new HttpsError("invalid-argument", "Invalid action for respondToFriendRequest.");
+    }
+
+    return await handleRespondToFriendRequest(request.auth.uid, requestId, action);
+  },
+);
