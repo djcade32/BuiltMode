@@ -5,6 +5,7 @@ import {
   createFriendRequest,
   getFriendRequest,
   getUserFriend,
+  removeFriend,
   updateFriendRequest,
 } from "../firestore/social.js";
 import { getUserByUid } from "../firestore/user.js";
@@ -17,11 +18,19 @@ export async function handleSendFriendRequest(fromUid: string, toUid: string): P
   }
 
   return await db.runTransaction(async (tx) => {
-    const requestId = `${fromUid}_${toUid}`;
-    const friendRequest = await getFriendRequest(tx, requestId);
+    const forwardRequestId = `${fromUid}_${toUid}`;
+    const reverseRequestId = `${toUid}_${fromUid}`;
 
-    if (friendRequest) {
-      console.error("Failed to send request to user. Request already exist: ", requestId);
+    const forwardRequest = await getFriendRequest(tx, forwardRequestId);
+    const reverseRequest = await getFriendRequest(tx, reverseRequestId);
+
+    if (forwardRequest || reverseRequest) {
+      console.error("Failed to send request to user. Request already exists.");
+      return false;
+    }
+
+    if (forwardRequest) {
+      console.error("Failed to send request to user. Request already exist: ", forwardRequestId);
       return false;
     }
 
@@ -46,7 +55,7 @@ export async function handleSendFriendRequest(fromUid: string, toUid: string): P
       const now = Timestamp.now();
 
       const doc: FriendRequest = {
-        requestId,
+        requestId: forwardRequestId,
         fromUid,
         toUid,
 
@@ -86,6 +95,13 @@ export async function handleRespondToFriendRequest(
     }
     if (friendRequest.toUid !== uid) {
       console.error("Failed to respond to friend request. Denied access: ", requestId);
+      return false;
+    }
+    if (friendRequest.status !== "pending") {
+      console.error(
+        "Failed to respond to friend request. Can only respond to pending requests: ",
+        requestId,
+      );
       return false;
     }
     const now = Timestamp.now();
@@ -147,6 +163,14 @@ export async function handleCancelFriendRequest(uid: string, requestId: string):
     };
 
     updateFriendRequest(tx, friendRequestDoc);
+    return true;
+  });
+}
+
+export async function handleRemoveFriend(uid: string, friendUid: string): Promise<boolean> {
+  return await db.runTransaction(async (tx) => {
+    removeFriend(tx, uid, friendUid);
+    removeFriend(tx, friendUid, uid);
     return true;
   });
 }
