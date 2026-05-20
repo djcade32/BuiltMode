@@ -57,3 +57,29 @@ export const respondToFriendRequest = async (
     };
   }
 };
+
+export const cancelFriendRequest = async (requestId: string): Promise<SocialResult> => {
+  const cancelFriendRequestFunction = httpsCallable<{ requestId: string }, boolean>(
+    functions,
+    "cancelFriendRequest",
+  );
+
+  if (!requestId.trim()) {
+    return { success: false, message: "requestId is required." };
+  }
+
+  try {
+    const response = await cancelFriendRequestFunction({ requestId });
+    return response.data
+      ? { success: true }
+      : { success: false, message: `Error canceling friend request: ${requestId}.` };
+  } catch (err) {
+    return {
+      success: false,
+      message:
+        err instanceof globalThis.Error
+          ? err.message
+          : `Error canceling friend request: ${requestId}.`,
+    };
+  }
+};
