@@ -17,6 +17,7 @@ import { setGlobalOptions } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
 import {
   handleCancelFriendRequest,
+  handleRemoveFriend,
   handleRespondToFriendRequest,
   handleSendFriendRequest,
 } from "./functions/social.js";
@@ -165,3 +166,17 @@ export const cancelFriendRequest = onCall(
     return await handleCancelFriendRequest(request.auth.uid, requestId);
   },
 );
+
+export const removeFriend = onCall(async (request: CallableRequest<{ friendUid: string }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+
+  const { friendUid } = request.data;
+
+  if (!friendUid || typeof friendUid !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid removeFriend payload.");
+  }
+
+  return await handleRemoveFriend(request.auth.uid, friendUid);
+});

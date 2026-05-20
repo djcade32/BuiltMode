@@ -5,6 +5,7 @@ import {
   createFriendRequest,
   getFriendRequest,
   getUserFriend,
+  removeFriend,
   updateFriendRequest,
 } from "../firestore/social.js";
 import { getUserByUid } from "../firestore/user.js";
@@ -147,6 +148,14 @@ export async function handleCancelFriendRequest(uid: string, requestId: string):
     };
 
     updateFriendRequest(tx, friendRequestDoc);
+    return true;
+  });
+}
+
+export async function handleRemoveFriend(uid: string, friendUid: string): Promise<boolean> {
+  return await db.runTransaction(async (tx) => {
+    removeFriend(tx, uid, friendUid);
+    removeFriend(tx, friendUid, uid);
     return true;
   });
 }

@@ -26,3 +26,8 @@ export const addFriendToUserList = (tx: Transaction, uid: string, friendDoc: Fri
   const ref = db.collection(`users/${uid}/friends`).doc(friendDoc.uid);
   tx.set(ref, friendDoc);
 };
+
+export const removeFriend = async (tx: Transaction, uid: string, friendUid: string) => {
+  const doc = db.collection(`users/${uid}/friends`).doc(friendUid);
+  tx.delete(doc);
+};
