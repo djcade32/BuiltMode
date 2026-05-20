@@ -1,5 +1,9 @@
 import { Colors } from "@/constants/theme";
-import { respondToFriendRequest, sendFriendRequest } from "@/services/social-service";
+import {
+  cancelFriendRequest,
+  respondToFriendRequest,
+  sendFriendRequest,
+} from "@/services/social-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
@@ -36,6 +40,18 @@ const profile = () => {
     },
   });
 
+  const { mutate: cancelFriendRequestFunc } = useMutation({
+    mutationFn: async (requestId: string) => {
+      const result = await cancelFriendRequest(requestId);
+
+      if (!result.success) {
+        throw new Error(result.message ?? "Failed to cancel friend request.");
+      }
+
+      return result;
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Button title="Sign out" onPress={signout} />
@@ -50,6 +66,12 @@ const profile = () => {
             requestId: "bAJ35fKo1TggwvdVdISZugWBGtEc_G5TXMZMdhcSy7c8RriJe5VBdwTLC",
             action: "accepted",
           })
+        }
+      />
+      <Button
+        title="Cancel Friend Request"
+        onPress={() =>
+          cancelFriendRequestFunc("bAJ35fKo1TggwvdVdISZugWBGtEc_G5TXMZMdhcSy7c8RriJe5VBdwTLC")
         }
       />
     </SafeAreaView>

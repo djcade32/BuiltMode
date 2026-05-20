@@ -17,7 +17,7 @@ export const getUserFriend = async (tx: Transaction, userUid: string, friendUid:
   return (await tx.get(docRef)).data();
 };
 
-export const respondToFriendRequest = (tx: Transaction, friendRequestDoc: FriendRequest) => {
+export const updateFriendRequest = (tx: Transaction, friendRequestDoc: FriendRequest) => {
   const ref = db.collection("friendRequests").doc(friendRequestDoc.requestId);
   tx.update(ref, friendRequestDoc);
 };

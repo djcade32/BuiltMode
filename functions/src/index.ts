@@ -15,7 +15,11 @@ import { CreateUserProfileRequest } from "@builtmode/shared/types/user";
 import { CompleteWorkoutRequest } from "@builtmode/shared/types/workout";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
-import { handleRespondToFriendRequest, handleSendFriendRequest } from "./functions/social.js";
+import {
+  handleCancelFriendRequest,
+  handleRespondToFriendRequest,
+  handleSendFriendRequest,
+} from "./functions/social.js";
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
 import { handleCreateUserProfile } from "./functions/user.js";
 import { handleCompleteWorkout } from "./functions/workout.js";
@@ -143,5 +147,21 @@ export const respondToFriendRequest = onCall(
     }
 
     return await handleRespondToFriendRequest(request.auth.uid, requestId, action);
+  },
+);
+
+export const cancelFriendRequest = onCall(
+  async (request: CallableRequest<{ requestId: string }>) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "User must be signed in.");
+    }
+
+    const { requestId } = request.data;
+
+    if (!requestId || typeof requestId !== "string") {
+      throw new HttpsError("invalid-argument", "Invalid cancelFriendRequest payload.");
+    }
+
+    return await handleCancelFriendRequest(request.auth.uid, requestId);
   },
 );
