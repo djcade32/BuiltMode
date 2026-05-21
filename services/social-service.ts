@@ -100,7 +100,8 @@ export const searchUserByUsername = async (username: string): Promise<SearchUser
     const response = await SearchUserByUsernameFunction({ username });
     return response.data;
   } catch (err) {
-    console.error(`Error searching for user by username: ${username}.`);
-    return null;
+    throw err instanceof globalThis.Error
+      ? err
+      : new Error(`Error searching for user by username: ${username}.`);
   }
 };
