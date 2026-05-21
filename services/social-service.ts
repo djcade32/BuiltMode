@@ -1,4 +1,5 @@
 import { functions } from "@/lib/firebase";
+import { SearchUserResult } from "@builtmode/shared";
 import { httpsCallable } from "firebase/functions";
 
 type SocialResult = {
@@ -81,5 +82,25 @@ export const cancelFriendRequest = async (requestId: string): Promise<SocialResu
           ? err.message
           : `Error canceling friend request: ${requestId}.`,
     };
+  }
+};
+
+export const searchUserByUsername = async (username: string): Promise<SearchUserResult | null> => {
+  const SearchUserByUsernameFunction = httpsCallable<{ username: string }, SearchUserResult | null>(
+    functions,
+    "searchUserByUsername",
+  );
+
+  if (!username.trim()) {
+    console.error("username is required");
+    return null;
+  }
+
+  try {
+    const response = await SearchUserByUsernameFunction({ username });
+    return response.data;
+  } catch (err) {
+    console.error(`Error searching for user by username: ${username}.`);
+    return null;
   }
 };

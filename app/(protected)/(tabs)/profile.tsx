@@ -2,11 +2,12 @@ import { Colors } from "@/constants/theme";
 import {
   cancelFriendRequest,
   respondToFriendRequest,
+  searchUserByUsername,
   sendFriendRequest,
 } from "@/services/social-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMutation } from "@tanstack/react-query";
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -51,6 +52,18 @@ const profile = () => {
       return result;
     },
   });
+
+  const { mutate: searchUserByUsernameFunc } = useMutation({
+    mutationFn: async (username: string) => {
+      const result = await searchUserByUsername(username);
+      console.log("result: ", result);
+      return result;
+    },
+  });
+
+  useEffect(() => {
+    console.log("user: ", searchUserByUsernameFunc("joeyd"));
+  }, []);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
