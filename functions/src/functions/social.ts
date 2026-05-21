@@ -1,4 +1,4 @@
-import { Friend, FriendRequest } from "@builtmode/shared/types/social";
+import { Friend, FriendRequest, SearchUserResult } from "@builtmode/shared/types/social";
 import { Timestamp } from "firebase-admin/firestore";
 import {
   addFriendToUserList,
@@ -164,6 +164,78 @@ export async function handleCancelFriendRequest(uid: string, requestId: string):
 
     updateFriendRequest(tx, friendRequestDoc);
     return true;
+  });
+}
+
+export async function handleSearchUserByUsername(
+  requesterUid: string,
+  username: string,
+): Promise<SearchUserResult | null> {
+  const usernameLower = username.trim().toLowerCase();
+
+  if (!usernameLower) {
+    return null;
+  }
+  return await db.runTransaction(async (tx) => {
+    const usernameSnap = await tx.get(db.doc(`usernames/${usernameLower}`));
+
+    if (!usernameSnap.exists) {
+      return null;
+    }
+
+    const usernameData = usernameSnap.data();
+    if (!usernameData?.uid) {
+      return null;
+    }
+
+    const foundUid = usernameData.uid;
+
+    const userSnap = await getUserByUid(tx, foundUid);
+
+    if (!userSnap.exists) {
+      return null;
+    }
+
+    const foundUser = userSnap.data();
+
+    let relationshipStatus: SearchUserResult["relationshipStatus"] = "none";
+    let requestId: string | undefined;
+
+    if (foundUid === requesterUid) {
+      relationshipStatus = "self";
+    } else {
+      const friendDoc = await getUserFriend(tx, requesterUid, foundUid);
+
+      if (friendDoc) {
+        relationshipStatus = "friends";
+      } else {
+        const sentRequestId = `${requesterUid}_${foundUid}`;
+        const receivedRequestId = `${foundUid}_${requesterUid}`;
+
+        const [sentRequest, receivedRequest] = await Promise.all([
+          getFriendRequest(tx, sentRequestId),
+          getFriendRequest(tx, receivedRequestId),
+        ]);
+
+        if (sentRequest?.status === "pending") {
+          relationshipStatus = "request_sent";
+          requestId = sentRequestId;
+        } else if (receivedRequest?.status === "pending") {
+          relationshipStatus = "request_received";
+          requestId = receivedRequestId;
+        }
+      }
+    }
+
+    return {
+      uid: foundUid,
+      username: foundUser?.username,
+      usernameLower: foundUser?.usernameLower,
+      displayName: foundUser?.displayName,
+      avatarUrl: foundUser?.avatarUrl,
+      relationshipStatus,
+      ...(requestId ? { requestId } : {}),
+    };
   });
 }
 

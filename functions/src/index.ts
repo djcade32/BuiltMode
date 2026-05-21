@@ -19,6 +19,7 @@ import {
   handleCancelFriendRequest,
   handleRemoveFriend,
   handleRespondToFriendRequest,
+  handleSearchUserByUsername,
   handleSendFriendRequest,
 } from "./functions/social.js";
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
@@ -164,6 +165,22 @@ export const cancelFriendRequest = onCall(
     }
 
     return await handleCancelFriendRequest(request.auth.uid, requestId);
+  },
+);
+
+export const searchUserByUsername = onCall(
+  async (request: CallableRequest<{ username: string }>) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "User must be signed in.");
+    }
+
+    const { username } = request.data;
+
+    if (!username || typeof username !== "string") {
+      throw new HttpsError("invalid-argument", "Invalid searchUserByUsername payload.");
+    }
+
+    return await handleSearchUserByUsername(request.auth.uid, username);
   },
 );
 

@@ -3,11 +3,12 @@ import {
   cancelFriendRequest,
   removeFriend,
   respondToFriendRequest,
+  searchUserByUsername,
   sendFriendRequest,
 } from "@/services/social-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMutation } from "@tanstack/react-query";
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -53,6 +54,13 @@ const profile = () => {
     },
   });
 
+  const { mutate: searchUserByUsernameFunc } = useMutation({
+    mutationFn: async (username: string) => {
+      const result = await searchUserByUsername(username);
+      console.log("result: ", result);
+    },
+  });
+
   const { mutate: removeFriedFunc } = useMutation({
     mutationFn: async (friendUid: string) => {
       const result = await removeFriend(friendUid);
@@ -64,6 +72,10 @@ const profile = () => {
       return result;
     },
   });
+
+  useEffect(() => {
+    console.log("user: ", searchUserByUsernameFunc("joeyd"));
+  }, []);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
