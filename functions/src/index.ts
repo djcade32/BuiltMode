@@ -17,6 +17,7 @@ import { setGlobalOptions } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
 import {
   handleCancelFriendRequest,
+  handleRemoveFriend,
   handleRespondToFriendRequest,
   handleSearchUserByUsername,
   handleSendFriendRequest,
@@ -182,3 +183,17 @@ export const searchUserByUsername = onCall(
     return await handleSearchUserByUsername(request.auth.uid, username);
   },
 );
+
+export const removeFriend = onCall(async (request: CallableRequest<{ friendUid: string }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+
+  const { friendUid } = request.data;
+
+  if (!friendUid || typeof friendUid !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid removeFriend payload.");
+  }
+
+  return await handleRemoveFriend(request.auth.uid, friendUid);
+});

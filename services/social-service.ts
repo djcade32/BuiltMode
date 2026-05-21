@@ -105,3 +105,27 @@ export const searchUserByUsername = async (username: string): Promise<SearchUser
       : new Error(`Error searching for user by username: ${username}.`);
   }
 };
+
+export const removeFriend = async (friendUid: string): Promise<SocialResult> => {
+  const removeFriendFunction = httpsCallable<{ friendUid: string }, boolean>(
+    functions,
+    "removeFriend",
+  );
+
+  if (!friendUid.trim()) {
+    return { success: false, message: "friendUid is required." };
+  }
+
+  try {
+    const response = await removeFriendFunction({ friendUid });
+    return response.data
+      ? { success: true }
+      : { success: false, message: `Error removing friend: ${friendUid}.` };
+  } catch (err) {
+    return {
+      success: false,
+      message:
+        err instanceof globalThis.Error ? err.message : `Error removing friend: ${friendUid}.`,
+    };
+  }
+};

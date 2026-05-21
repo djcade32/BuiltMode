@@ -1,6 +1,7 @@
 import { Colors } from "@/constants/theme";
 import {
   cancelFriendRequest,
+  removeFriend,
   respondToFriendRequest,
   searchUserByUsername,
   sendFriendRequest,
@@ -57,6 +58,17 @@ const profile = () => {
     mutationFn: async (username: string) => {
       const result = await searchUserByUsername(username);
       console.log("result: ", result);
+    },
+  });
+
+  const { mutate: removeFriedFunc } = useMutation({
+    mutationFn: async (friendUid: string) => {
+      const result = await removeFriend(friendUid);
+
+      if (!result.success) {
+        throw new Error(result.message ?? "Failed to remove friend.");
+      }
+
       return result;
     },
   });
@@ -86,6 +98,10 @@ const profile = () => {
         onPress={() =>
           cancelFriendRequestFunc("bAJ35fKo1TggwvdVdISZugWBGtEc_G5TXMZMdhcSy7c8RriJe5VBdwTLC")
         }
+      />
+      <Button
+        title="Remove Friend"
+        onPress={() => removeFriedFunc("G5TXMZMdhcSy7c8RriJe5VBdwTLC")}
       />
     </SafeAreaView>
   );
