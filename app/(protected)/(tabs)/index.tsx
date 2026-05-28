@@ -202,9 +202,10 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#15181c49",
+    justifyContent: "center",
+    height: 65,
   },
   builtmodeText: {
     fontSize: 20,

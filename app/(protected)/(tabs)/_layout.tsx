@@ -40,7 +40,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="feed"
+        name="(feed)"
         options={{
           title: "Feed",
           tabBarIcon: ({ color }) => <MaterialIcons name="rss-feed" size={24} color={color} />,

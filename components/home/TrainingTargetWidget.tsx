@@ -88,7 +88,7 @@ const TrainingTargetWidget = () => {
                     color: data?.metTargetThisWeek ? Colors.accent.primary : Colors.text.primary,
                   }}
                 >
-                  {data?.activeDaysThisWeek}
+                  {data?.activeDaysThisWeek ?? 0}
                 </ThemedText>{" "}
                 /{user.weeklyTargetDays}
               </ThemedText>

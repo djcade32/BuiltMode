@@ -1,5 +1,14 @@
-import { functions } from "@/lib/firebase";
-import { SearchUserResult } from "@builtmode/shared";
+import { db, functions } from "@/lib/firebase";
+import { FriendRequest, SearchUserResult } from "@builtmode/shared";
+import {
+  collection,
+  DocumentData,
+  getDocs,
+  orderBy,
+  query,
+  QueryDocumentSnapshot,
+  where,
+} from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
 type SocialResult = {
@@ -128,4 +137,52 @@ export const removeFriend = async (friendUid: string): Promise<SocialResult> => 
         err instanceof globalThis.Error ? err.message : `Error removing friend: ${friendUid}.`,
     };
   }
+};
+
+type FriendRequestsCursor = QueryDocumentSnapshot<DocumentData>;
+
+export const getIncomingFriendRequests = async ({
+  params,
+}: {
+  params: { uid: string };
+}): Promise<FriendRequest[]> => {
+  const requestsRef = collection(db, "friendRequests");
+
+  const requestsQuery = query(
+    requestsRef,
+    where("toUid", "==", params.uid),
+    where("status", "==", "pending"),
+    orderBy("updatedAt", "desc"),
+  );
+
+  const snapshot = await getDocs(requestsQuery);
+
+  const items: FriendRequest[] = snapshot.docs.map((doc) => ({
+    ...(doc.data() as FriendRequest),
+  }));
+
+  return items;
+};
+
+export const getSentFriendRequests = async ({
+  params,
+}: {
+  params: { uid: string };
+}): Promise<FriendRequest[]> => {
+  const requestsRef = collection(db, "friendRequests");
+
+  const requestsQuery = query(
+    requestsRef,
+    where("fromUid", "==", params.uid),
+    where("status", "==", "pending"),
+    orderBy("updatedAt", "desc"),
+  );
+
+  const snapshot = await getDocs(requestsQuery);
+
+  const items: FriendRequest[] = snapshot.docs.map((doc) => ({
+    ...(doc.data() as FriendRequest),
+  }));
+
+  return items;
 };

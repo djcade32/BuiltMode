@@ -31,3 +31,8 @@ export const removeFriend = async (tx: Transaction, uid: string, friendUid: stri
   const doc = db.collection(`users/${uid}/friends`).doc(friendUid);
   tx.delete(doc);
 };
+
+export const removeFriendRequest = async (tx: Transaction, requestId: string) => {
+  const doc = db.collection("friendRequests").doc(requestId);
+  tx.delete(doc);
+};
