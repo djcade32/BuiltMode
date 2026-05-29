@@ -134,7 +134,7 @@ const FriendCard = ({
         )}
       </View>
     );
-  }, [relationshipStatus, isPending, user]);
+  }, [relationshipStatus, isPending, user, uid, onAccept, onCancel, onDecline, onRemove, onSend]);
 
   return (
     <View style={[styles.cardContainer, styles.container]}>

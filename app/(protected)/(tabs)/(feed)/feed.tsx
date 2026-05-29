@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { FontAwesome6 } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,9 +27,9 @@ export default function Feed() {
 
         <TouchableOpacity
           style={styles.iconContainer}
-          onPress={() => router.push("/(protected)/(tabs)/(feed)/findFriends")}
+          onPress={() => router.push("/(protected)/(tabs)/(feed)/friendsList")}
         >
-          <FontAwesome6 name="user-plus" size={14} color={Colors.gray} />
+          <FontAwesome5 name="user-friends" size={14} color={Colors.gray} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>

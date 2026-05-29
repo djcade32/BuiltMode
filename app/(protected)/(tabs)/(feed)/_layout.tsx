@@ -6,6 +6,7 @@ const FeedLayout = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
         <Stack.Screen name="feed" />
+        <Stack.Screen name="friendsList" />
         <Stack.Screen name="findFriends" />
       </Stack>
     </GestureHandlerRootView>

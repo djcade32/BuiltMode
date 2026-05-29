@@ -1,15 +1,9 @@
 import FriendCard from "@/components/feed/findFriends/FriendCard";
-import FriendRequestsSheet from "@/components/feed/findFriends/FriendRequestsSheet";
-import IncomingRequestsButton from "@/components/feed/findFriends/IncomingRequestsButton";
-import SentRequestsButton from "@/components/feed/findFriends/SentRequestsButton";
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/ui/Input";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { useQuery } from "@/hooks/useQuery";
 import {
   cancelFriendRequest,
-  getIncomingFriendRequests,
-  getSentFriendRequests,
   removeFriend,
   respondToFriendRequest,
   searchUserByUsername,
@@ -17,7 +11,7 @@ import {
 } from "@/services/social-service";
 import { useUserStore } from "@/stores/user-store";
 import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -30,22 +24,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type RequestTab = "incoming" | "sent";
-
 const findFriends = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useUserStore();
-
   const uid = user?.uid ?? "";
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [requestsSheetVisible, setRequestsSheetVisible] = useState(false);
-  const [requestsSheetTab, setRequestsSheetTab] = useState<RequestTab>("incoming");
-
-  const handleOpenRequestsSheet = (tab: RequestTab) => {
-    setRequestsSheetTab(tab);
-    setRequestsSheetVisible(true);
-  };
 
   const {
     mutate: searchUserByUsernameFunc,
@@ -69,8 +54,8 @@ const findFriends = () => {
       return result;
     },
     onSuccess: () => {
-      refetchSentRequests();
       searchQuery && searchUserByUsernameFunc(searchQuery);
+      queryClient.invalidateQueries({ queryKey: ["sent-friend-requests", uid] });
     },
   });
 
@@ -90,7 +75,7 @@ const findFriends = () => {
     },
     onSuccess: () => {
       searchQuery && searchUserByUsernameFunc(searchQuery);
-      refetchIncomingRequests();
+      queryClient.invalidateQueries({ queryKey: ["incoming-friend-requests", uid] });
     },
   });
 
@@ -120,30 +105,8 @@ const findFriends = () => {
     },
     onSuccess: () => {
       searchQuery && searchUserByUsernameFunc(searchQuery);
-      refetchSentRequests();
+      queryClient.invalidateQueries({ queryKey: ["sent-friend-requests", uid] });
     },
-  });
-
-  const {
-    data: incomingRequests,
-    isLoading: isLoadingIncomingRequests,
-    refetch: refetchIncomingRequests,
-  } = useQuery({
-    queryKey: ["incoming-friend-requests", uid],
-    queryFn: getIncomingFriendRequests,
-    params: { uid },
-    enabled: !!uid,
-  });
-
-  const {
-    data: sentRequests,
-    isLoading: isLoadingSentRequests,
-    refetch: refetchSentRequests,
-  } = useQuery({
-    queryKey: ["sent-friend-requests", uid],
-    queryFn: getSentFriendRequests,
-    params: { uid },
-    enabled: !!uid,
   });
 
   const handleSearchForUserButtonPress = () => {
@@ -252,43 +215,7 @@ const findFriends = () => {
               </>
             )}
           </View>
-
-          {/* FRIEND REQUESTS */}
-          <View>
-            <ThemedText style={styles.friendRequestsTitle}>FRIEND REQUESTS</ThemedText>
-            <IncomingRequestsButton
-              onPress={() => handleOpenRequestsSheet("incoming")}
-              count={incomingRequests?.length ?? 0}
-            />
-            <SentRequestsButton
-              onPress={() => handleOpenRequestsSheet("sent")}
-              count={sentRequests?.length ?? 0}
-            />
-          </View>
         </View>
-        <FriendRequestsSheet
-          visible={requestsSheetVisible}
-          initialTab={requestsSheetTab}
-          incomingRequests={incomingRequests ?? []}
-          sentRequests={sentRequests ?? []}
-          isLoading={isLoadingIncomingRequests || isLoadingSentRequests}
-          onClose={() => setRequestsSheetVisible(false)}
-          onAccept={(requestId) => {
-            respondToFriendRequestFunc({
-              requestId,
-              action: "accepted",
-            });
-          }}
-          onDecline={(requestId) => {
-            respondToFriendRequestFunc({
-              requestId,
-              action: "declined",
-            });
-          }}
-          onCancel={(requestId) => {
-            cancelFriendRequestFunc(requestId);
-          }}
-        />
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -382,44 +309,5 @@ const styles = StyleSheet.create({
   searchEmptyStateText: {
     fontSize: 12,
     color: Colors.icon,
-  },
-
-  friendRequestsTitle: {
-    fontFamily: Typography.family.primary.bold,
-    fontSize: 14,
-    letterSpacing: 0.35,
-    marginBottom: 16,
-    color: Colors.icon,
-  },
-
-  friendRequestsIcon: {
-    borderRadius: Border.radius.md,
-    height: 40,
-    width: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  friendRequestsCardTitle: {
-    fontFamily: Typography.family.primary.semibold,
-    fontSize: 14,
-  },
-  friendRequestsCardSubtitle: {
-    fontSize: 12,
-    color: Colors.icon,
-    marginTop: 5,
-  },
-  friendRequestsCardNotification: {
-    height: 24,
-    width: 24,
-    backgroundColor: Colors.accent.primary,
-    borderRadius: Border.radius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  friendRequestsCardNotificationText: {
-    color: Colors.background.secondary,
-    fontSize: 12,
-    fontFamily: Typography.family.primary.bold,
   },
 });
