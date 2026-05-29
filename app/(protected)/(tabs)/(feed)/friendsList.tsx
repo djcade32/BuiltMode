@@ -5,7 +5,6 @@ import SentRequestsButton from "@/components/feed/friendsList/SentRequestsButton
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/ui/Input";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { useKeyboard } from "@/hooks/useKeyboard";
 import { useQuery } from "@/hooks/useQuery";
 import {
   cancelFriendRequest,
@@ -25,7 +24,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -37,7 +35,6 @@ type RequestTab = "incoming" | "sent";
 const friendsList = () => {
   const router = useRouter();
   const { user } = useUserStore();
-  const isUsingKeyboard = useKeyboard();
   const uid = user?.uid ?? "";
 
   const [requestsSheetVisible, setRequestsSheetVisible] = useState(false);
@@ -45,6 +42,7 @@ const friendsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [totalFriends, setTotalFriends] = useState(0);
+  const [removeFriendUid, setRemoveFriendUid] = useState<string | null>(null);
 
   const isSearching = submittedSearch.trim().length > 0;
 
@@ -123,12 +121,15 @@ const friendsList = () => {
     },
   });
 
-  const { mutate: removeFriedFunc, isPending: isPendingRemove } = useMutation({
+  const { mutate: removeFriendFunc } = useMutation({
     mutationFn: async (friendUid: string) => {
+      setRemoveFriendUid(friendUid);
       const result = await removeFriend(friendUid);
       if (!result.success) {
+        setRemoveFriendUid(null);
         throw new Error(result.message ?? "Failed to remove friend.");
       }
+      setRemoveFriendUid(null);
       return result;
     },
     onSuccess: () => {
@@ -186,12 +187,13 @@ const friendsList = () => {
             <FontAwesome6 name="user-plus" size={14} color={Colors.gray} />
           </TouchableOpacity>
         </View>
-        <ScrollView
+        {/* <ScrollView
           contentContainerStyle={{ paddingVertical: 16, gap: 24, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           scrollEnabled={isUsingKeyboard}
-        >
+        > */}
+        <View style={{ paddingVertical: 16, gap: 24, flexGrow: 1 }}>
           {/* REQUESTS */}
           <View style={{ paddingHorizontal: 24 }}>
             <ThemedText style={styles.sectionTitle}>FRIEND REQUESTS</ThemedText>
@@ -205,96 +207,94 @@ const friendsList = () => {
             />
           </View>
 
-          {/* SEARCH FRIENDS */}
           <View style={{ flex: 1 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                paddingHorizontal: 24,
-              }}
-            >
-              <ThemedText style={styles.sectionTitle}>YOUR CIRCLE</ThemedText>
-              <ThemedText style={styles.friendCount}>
-                {totalFriends} {totalFriends > 1 ? "friends" : "friend"}
-              </ThemedText>
-            </View>
-            <View style={styles.usernameSearchInputAndButton}>
-              <Input
-                selectTextOnFocus
-                placeholder="Search exact username"
-                placeholderTextColor={Colors.icon}
-                value={searchQuery}
-                onChangeText={(e) => {
-                  if (e === "" && submittedSearch !== "") {
-                    setSubmittedSearch("");
-                  }
-                  setSearchQuery(e);
+            {isLoadingFriends ? (
+              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator />
+              </View>
+            ) : friendsError ? (
+              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ThemedText style={styles.searchEmptyStateText}>Error loading friends.</ThemedText>
+              </View>
+            ) : (
+              <FlatList
+                keyboardShouldPersistTaps="handled"
+                data={friends?.friends ?? []}
+                keyExtractor={(item) => item.uid}
+                renderItem={({ item }) => (
+                  <FriendsListCard
+                    avatarUrl={item.avatarUrl}
+                    displayName={item.displayName}
+                    username={item.usernameLower}
+                    removeFriend={() => removeFriendFunc(item.uid)}
+                    isPending={removeFriendUid === item.uid}
+                  />
+                )}
+                ListEmptyComponent={
+                  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                    <ThemedText style={styles.searchEmptyStateText}>
+                      {isSearching ? "No friend found with that username." : "No friends yet."}
+                    </ThemedText>
+                  </View>
+                }
+                contentContainerStyle={{
+                  paddingTop: 16,
+                  paddingHorizontal: 24,
+                  gap: 16,
                 }}
-                containerStyle={{
-                  borderColor: Colors.inputBorder,
-                  flex: 1,
-                }}
-                preIcon={{
-                  familyIcon: MaterialIcons,
-                  name: "alternate-email",
-                }}
-              />
-              <TouchableOpacity
-                style={[
-                  styles.usernameSearchButton,
-                  { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 },
-                ]}
-                onPress={handleSearchForUserButtonPress}
-                disabled={!isValidUsername(searchQuery)}
-              >
-                <MaterialIcons name="search" size={24} color={Colors.background.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ flex: 1, marginTop: 10 }}>
-              {isLoadingFriends ? (
-                <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                  <ActivityIndicator />
-                </View>
-              ) : friendsError ? (
-                <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                  <ThemedText style={styles.searchEmptyStateText}>
-                    Error loading friends.
-                  </ThemedText>
-                </View>
-              ) : (
-                <FlatList
-                  data={friends?.friends ?? []}
-                  keyExtractor={(item) => item.uid}
-                  renderItem={({ item }) => (
-                    <FriendsListCard
-                      avatarUrl={item.avatarUrl}
-                      displayName={item.displayName}
-                      username={item.usernameLower}
-                      removeFriend={() => removeFriedFunc(item.uid)}
-                      isPending={isPendingRemove}
-                    />
-                  )}
-                  ListEmptyComponent={
-                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                      <ThemedText style={styles.searchEmptyStateText}>
-                        {isSearching ? "No friend found with that username." : "No friends yet."}
+                ListHeaderComponent={() => (
+                  <View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <ThemedText style={styles.sectionTitle}>YOUR CIRCLE</ThemedText>
+                      <ThemedText style={styles.friendCount}>
+                        {totalFriends} {totalFriends === 1 ? "friend" : "friends"}
                       </ThemedText>
                     </View>
-                  }
-                  contentContainerStyle={{
-                    paddingTop: 16,
-                    flex: 1,
-                    paddingHorizontal: 24,
-                    gap: 16,
-                  }}
-                />
-              )}
-            </View>
+                    <View style={styles.usernameSearchInputAndButton}>
+                      <Input
+                        selectTextOnFocus
+                        placeholder="Search exact username"
+                        placeholderTextColor={Colors.icon}
+                        value={searchQuery}
+                        onChangeText={(e) => {
+                          if (e === "" && submittedSearch !== "") {
+                            setSubmittedSearch("");
+                          }
+                          setSearchQuery(e);
+                        }}
+                        containerStyle={{
+                          borderColor: Colors.inputBorder,
+                          flex: 1,
+                        }}
+                        preIcon={{
+                          familyIcon: MaterialIcons,
+                          name: "alternate-email",
+                        }}
+                      />
+                      <TouchableOpacity
+                        style={[
+                          styles.usernameSearchButton,
+                          { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 },
+                        ]}
+                        onPress={handleSearchForUserButtonPress}
+                        disabled={!isValidUsername(searchQuery)}
+                      >
+                        <MaterialIcons name="search" size={24} color={Colors.background.primary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              />
+            )}
           </View>
-        </ScrollView>
+        </View>
+        {/* </ScrollView> */}
 
         <FriendRequestsSheet
           visible={requestsSheetVisible}
@@ -392,7 +392,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 12,
-    paddingHorizontal: 24,
   },
 
   searchEmptyStateText: {

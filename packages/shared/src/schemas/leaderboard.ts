@@ -3,7 +3,6 @@ import { firestoreTimestampSchema } from "./firestore.js";
 
 export const leaderboardEntrySchema = z.object({
   uid: z.string().min(1),
-  username: z.string().min(1),
   usernameLower: z.string().min(1),
   displayName: z.string().min(1),
   avatarUrl: z.string().optional(),

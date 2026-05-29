@@ -14,14 +14,7 @@ import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const findFriends = () => {
@@ -119,105 +112,100 @@ const findFriends = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.background.primary }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <SafeAreaView style={styles.container} edges={["top"]}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.iconContainer} onPress={() => router.back()}>
-            <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
-          </TouchableOpacity>
-          <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
-            <ThemedText style={styles.headerText}>FIND FRIENDS</ThemedText>
-            <ThemedText style={styles.headerSubtitle}>BUILD YOUR TRAINING CIRCLE</ThemedText>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => router.back()}>
+          <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
+        </TouchableOpacity>
+        <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
+          <ThemedText style={styles.headerText}>FIND FRIENDS</ThemedText>
+          <ThemedText style={styles.headerSubtitle}>BUILD YOUR TRAINING CIRCLE</ThemedText>
+        </View>
+      </View>
+
+      <View style={{ paddingHorizontal: 24, paddingVertical: 16, gap: 24 }}>
+        {/* SEARCH BAR */}
+        <View style={styles.cardContainer}>
+          <ThemedText style={styles.usernameSearchTitle}>USERNAME SEARCH</ThemedText>
+          <View style={styles.usernameSearchInputAndButton}>
+            <Input
+              selectTextOnFocus
+              placeholder="Enter exact username"
+              placeholderTextColor={Colors.icon}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              containerStyle={{
+                backgroundColor: Colors.input,
+                borderColor: Colors.inputBorder,
+                flex: 1,
+              }}
+              preIcon={{
+                familyIcon: MaterialIcons,
+                name: "alternate-email",
+              }}
+            />
+            <TouchableOpacity
+              style={[
+                styles.usernameSearchButton,
+                { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 },
+              ]}
+              onPress={handleSearchForUserButtonPress}
+              disabled={!isValidUsername(searchQuery)}
+            >
+              <MaterialIcons name="search" size={24} color={Colors.background.primary} />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingTop: 12 }}>
+            <FontAwesome5 name="info-circle" size={12} color={Colors.accent.secondary} />
+            <ThemedText style={styles.usernameSearchInfoText}>
+              Search requires exact username match.{" "}
+            </ThemedText>
           </View>
         </View>
 
-        <View style={{ paddingHorizontal: 24, paddingVertical: 16, gap: 24 }}>
-          {/* SEARCH BAR */}
-          <View style={styles.cardContainer}>
-            <ThemedText style={styles.usernameSearchTitle}>USERNAME SEARCH</ThemedText>
-            <View style={styles.usernameSearchInputAndButton}>
-              <Input
-                selectTextOnFocus
-                placeholder="Enter exact username"
-                placeholderTextColor={Colors.icon}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                containerStyle={{
-                  backgroundColor: Colors.input,
-                  borderColor: Colors.inputBorder,
-                  flex: 1,
-                }}
-                preIcon={{
-                  familyIcon: MaterialIcons,
-                  name: "alternate-email",
-                }}
-              />
-              <TouchableOpacity
-                style={[
-                  styles.usernameSearchButton,
-                  { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 },
-                ]}
-                onPress={handleSearchForUserButtonPress}
-                disabled={!isValidUsername(searchQuery)}
-              >
-                <MaterialIcons name="search" size={24} color={Colors.background.primary} />
-              </TouchableOpacity>
-            </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingTop: 12 }}>
-              <FontAwesome5 name="info-circle" size={12} color={Colors.accent.secondary} />
-              <ThemedText style={styles.usernameSearchInfoText}>
-                Search requires exact username match.{" "}
-              </ThemedText>
-            </View>
-          </View>
-
-          {/* SEARCH RESULTS */}
-          <View style={styles.searchResults}>
-            {isPending ? (
-              <ActivityIndicator />
-            ) : (
-              <>
-                {data === undefined ? (
-                  <ThemedText style={styles.searchEmptyStateText}>
-                    Find people you train with.
-                  </ThemedText>
-                ) : data === null && searchQuery ? (
-                  <ThemedText style={styles.searchEmptyStateText}>User not found.</ThemedText>
-                ) : (
-                  data !== null && (
-                    <FriendCard
-                      data={data}
-                      isPending={
-                        isPendingCancel || isPendingSent || isPendingResponse || isPendingRemove
-                      }
-                      onAccept={(requestId) =>
-                        respondToFriendRequestFunc({
-                          requestId,
-                          action: "accepted",
-                        })
-                      }
-                      onDecline={(requestId) =>
-                        respondToFriendRequestFunc({
-                          requestId,
-                          action: "declined",
-                        })
-                      }
-                      onCancel={(requestId) => cancelFriendRequestFunc(requestId)}
-                      onRemove={(uid) => removeFriedFunc(uid)}
-                      onSend={(uid) => sendFriendRequestFunc(uid)}
-                    />
-                  )
-                )}
-              </>
-            )}
-          </View>
+        {/* SEARCH RESULTS */}
+        <View style={styles.searchResults}>
+          {isPending ? (
+            <ActivityIndicator />
+          ) : (
+            <>
+              {data === undefined ? (
+                <ThemedText style={styles.searchEmptyStateText}>
+                  Find people you train with.
+                </ThemedText>
+              ) : data === null && searchQuery ? (
+                <ThemedText style={styles.searchEmptyStateText}>User not found.</ThemedText>
+              ) : (
+                data !== null && (
+                  <FriendCard
+                    data={data}
+                    isPending={
+                      isPendingCancel || isPendingSent || isPendingResponse || isPendingRemove
+                    }
+                    onAccept={(requestId) =>
+                      respondToFriendRequestFunc({
+                        requestId,
+                        action: "accepted",
+                      })
+                    }
+                    onDecline={(requestId) =>
+                      respondToFriendRequestFunc({
+                        requestId,
+                        action: "declined",
+                      })
+                    }
+                    onCancel={(requestId) => cancelFriendRequestFunc(requestId)}
+                    onRemove={(uid) => removeFriedFunc(uid)}
+                    onSend={(uid) => sendFriendRequestFunc(uid)}
+                  />
+                )
+              )}
+            </>
+          )}
         </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+      </View>
+    </SafeAreaView>
   );
 };
 
