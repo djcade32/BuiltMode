@@ -114,7 +114,7 @@ const ViewHistory = () => {
             placeholderTextColor={Colors.icon}
             value={query}
             onChangeText={setQuery}
-            containerStyle={{ marginBottom: 16 }}
+            containerStyle={{ marginBottom: 16, borderColor: Colors.inputBorder }}
             preIcon={{
               familyIcon: MaterialIcons,
               name: "search",

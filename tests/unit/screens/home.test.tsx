@@ -16,6 +16,7 @@ let mockQueryResponses: any = {
       currentWeekStreak: 4,
       bestWeekStreak: 7,
       totalWorkoutsLogged: 42,
+      modeScore: 72,
     },
     isLoading: false,
     error: null,
@@ -195,6 +196,7 @@ describe("HomeScreen", () => {
           currentWeekStreak: 4,
           bestWeekStreak: 7,
           totalWorkoutsLogged: 42,
+          modeScore: 72,
         },
         isLoading: false,
         error: null,
@@ -251,8 +253,8 @@ describe("HomeScreen", () => {
     expect(screen.getByText("Progress 80%")).toBeTruthy();
 
     expect(screen.getByText("MODE SCORE")).toBeTruthy();
-    expect(screen.getByText("84")).toBeTruthy();
-    expect(screen.getByTestId("mode-score-diff")).toHaveTextContent("arrow-up +6 This Week");
+    expect(screen.getByText("72")).toBeTruthy();
+    expect(screen.getByTestId("mode-score-diff")).toHaveTextContent("arrow-down -6 This Week");
     expect(screen.getByText("This Week")).toBeTruthy();
 
     expect(screen.getByText("PERFORMANCE SNAPSHOT")).toBeTruthy();
@@ -366,11 +368,11 @@ describe("HomeScreen", () => {
   });
 
   it("renders a negative mode score change from last week", () => {
-    mockQueryResponses.currentWeekAggregate = {
+    mockQueryResponses.userStats = {
       data: {
-        weekId: "2026-05-11",
-        activeDaysThisWeek: 3,
-        metTargetThisWeek: false,
+        currentWeekStreak: 4,
+        bestWeekStreak: 7,
+        totalWorkoutsLogged: 42,
         modeScore: 72,
       },
       isLoading: false,

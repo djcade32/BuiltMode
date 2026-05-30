@@ -6,6 +6,7 @@ import {
   getFriendRequest,
   getUserFriend,
   removeFriend,
+  removeFriendRequest,
   updateFriendRequest,
 } from "../firestore/social.js";
 import { getUserByUid } from "../firestore/user.js";
@@ -24,13 +25,8 @@ export async function handleSendFriendRequest(fromUid: string, toUid: string): P
     const forwardRequest = await getFriendRequest(tx, forwardRequestId);
     const reverseRequest = await getFriendRequest(tx, reverseRequestId);
 
-    if (forwardRequest || reverseRequest) {
+    if (forwardRequest?.status === "pending" || reverseRequest?.status === "pending") {
       console.error("Failed to send request to user. Request already exists.");
-      return false;
-    }
-
-    if (forwardRequest) {
-      console.error("Failed to send request to user. Request already exist: ", forwardRequestId);
       return false;
     }
 
@@ -243,6 +239,8 @@ export async function handleRemoveFriend(uid: string, friendUid: string): Promis
   return await db.runTransaction(async (tx) => {
     removeFriend(tx, uid, friendUid);
     removeFriend(tx, friendUid, uid);
+    removeFriendRequest(tx, `${uid}_${friendUid}`);
+    removeFriendRequest(tx, `${friendUid}_${uid}`);
     return true;
   });
 }

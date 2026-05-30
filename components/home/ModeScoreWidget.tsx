@@ -1,6 +1,6 @@
 import { Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
-import { fetchUserWeekAggregate } from "@/services/user-service";
+import { fetchUserStats, fetchUserWeekAggregate } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -35,10 +35,17 @@ const ModeScoreWidget = () => {
     enabled: !!user,
   });
 
+  const { data: userStats } = useQuery({
+    queryKey: ["user-stats", uid],
+    queryFn: fetchUserStats,
+    params: { uid: uid ?? "" },
+    enabled: !!uid,
+  });
+
   const getModeScoreDiffNumber = useMemo(() => {
-    if (lastWeek?.modeScore == null || data?.modeScore == null) return "";
-    return `${data.modeScore > lastWeek.modeScore ? "+" : ""}${data.modeScore - lastWeek.modeScore}`;
-  }, [lastWeek?.modeScore, data?.modeScore]);
+    if (lastWeek?.modeScore == null || userStats?.modeScore == null) return "";
+    return `${userStats.modeScore > lastWeek.modeScore ? "+" : ""}${userStats.modeScore - lastWeek.modeScore}`;
+  }, [lastWeek?.modeScore, userStats?.modeScore]);
 
   if (!user?.weeklyTargetDays) return null;
 
@@ -48,7 +55,7 @@ const ModeScoreWidget = () => {
         <View style={styles.loading}>
           <ActivityIndicator />
         </View>
-      ) : error || !data ? (
+      ) : error ? (
         <View style={styles.loading}>
           <ThemedText style={{ color: Colors.icon, fontSize: 12 }}>
             Error loading mode score
@@ -61,7 +68,7 @@ const ModeScoreWidget = () => {
           </View>
 
           <View style={styles.infoTextContainer}>
-            <ThemedText style={styles.modeScoreNumber}>{data.modeScore}</ThemedText>
+            <ThemedText style={styles.modeScoreNumber}>{userStats?.modeScore ?? 0}</ThemedText>
             {!!lastWeek && getModeScoreDiffNumber !== "" ? (
               <ThemedText
                 testID="mode-score-diff"
