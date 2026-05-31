@@ -1,3 +1,4 @@
+import { FeedItem } from "@builtmode/shared/types/social";
 import { UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
 import { CompleteWorkoutRequest, CompleteWorkoutResponse } from "@builtmode/shared/types/workout";
 import dayjs from "dayjs";
@@ -26,6 +27,7 @@ import { db } from "../lib/firebaseAdmin.js";
 import { LeaderboardEntry } from "../types/leaderboard.js";
 import { DayMarker, UserWeekAggregate, Workout } from "../types/workout.js";
 import { handleGetLocalDateKey, handleGetWeekId } from "../utils/weekId.js";
+import { createWorkoutCompletedFeedItem, fanoutFeedItemToFriends } from "./social.js";
 
 /** 
   Completes workout.
@@ -50,8 +52,9 @@ export async function handleCompleteWorkout(
   const lockedAt = now.toDate();
   lockedAt.setMinutes(lockedAt.getMinutes() + 5);
   const lockedAtTimestamp = Timestamp.fromDate(lockedAt);
+  let feedItemToFanout: FeedItem | null = null;
 
-  return await db.runTransaction(async (tx) => {
+  const result = await db.runTransaction(async (tx) => {
     const user = await getUserByUid(tx, uid);
     if (!user.exists) {
       throw new HttpsError("not-found", "User not found.");
@@ -227,6 +230,33 @@ export async function handleCompleteWorkout(
     createUserMonthAggregates(tx, uid, monthId, userMonthAggregateDoc);
     createUserStats(tx, uid, userStatsDoc);
     updateLeaderboardEntry(tx, updatedLeaderboardEntry);
+    feedItemToFanout = createWorkoutCompletedFeedItem({
+      tx,
+      uid,
+      user: {
+        username: user.get("username"),
+        displayName: user.get("displayName"),
+        avatarUrl: user.get("avatarUrl"),
+        weeklyTargetDays: user.get("weeklyTargetDays"),
+      },
+      workout: {
+        sessionId: workoutDoc.sessionId,
+        workoutType: workoutDoc.workoutType,
+        name: workoutDoc.name,
+        durationSeconds: workoutDoc.duration,
+        exercises: workoutDoc.exercises,
+        weekId: workoutDoc.weekId,
+        localDateKey: workoutDoc.localDateKey,
+        caption: "",
+      },
+      weekAggregate: {
+        activeDaysThisWeek: userWeekAggregateDoc.activeDaysThisWeek,
+        modeScore: userWeekAggregateDoc.modeScore,
+      },
+      userStats: {
+        currentWeekStreak: userStatsDoc.currentWeekStreak,
+      },
+    });
 
     return {
       activeDaysThisWeek,
@@ -239,4 +269,18 @@ export async function handleCompleteWorkout(
       lockedAt: dayjs(lockedAtTimestamp.toDate()).tz(homeTimezone).toString(),
     } as CompleteWorkoutResponse;
   });
+
+  if (feedItemToFanout) {
+    try {
+      await fanoutFeedItemToFriends(uid, feedItemToFanout);
+    } catch (error) {
+      console.error("Failed to fanout workout feed item", {
+        uid,
+        feedItemId: feedItemToFanout,
+        error,
+      });
+    }
+  }
+
+  return result;
 }

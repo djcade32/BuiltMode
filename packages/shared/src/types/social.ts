@@ -26,7 +26,7 @@ export type FeedItem = {
   actorUid: string;
   actorUsername: string;
   actorDisplayName: string;
-  actorAvatarUrl?: string;
+  actorAvatarUrl: string | null;
 
   type:
     | "workout_completed"
@@ -38,21 +38,20 @@ export type FeedItem = {
   visibility: "friends";
 
   workoutId?: string;
-  workoutType?: string;
-  workoutName?: string;
-  durationSeconds?: number;
-  exerciseCount?: number;
-  completedAt?: firestoreTimestamp;
+  workoutType: string | null;
+  workoutName: string | null;
+  durationSeconds: number | null;
+  exerciseCount: number | null;
 
-  weekId?: string;
-  localDateKey?: string;
+  weekId: string;
+  localDateKey: string | null;
 
-  modeScore?: number;
-  weeklyTargetDays?: number;
-  weeklyProgress?: number;
-  currentWeekStreak?: number;
+  modeScore: number | null;
+  weeklyTargetDays: number | null;
+  weeklyProgress: number | null;
+  currentWeekStreak: number | null;
 
-  caption?: string;
+  caption: string | null;
 
   createdAt: firestoreTimestamp;
   updatedAt: firestoreTimestamp;

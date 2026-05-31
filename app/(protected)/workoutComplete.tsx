@@ -2,8 +2,10 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
+import { useQuery } from "@/hooks/useQuery";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { ExerciseMetricType } from "@/packages/shared/src";
+import { fetchUserStats } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, useRouter } from "expo-router";
@@ -14,7 +16,16 @@ const workoutComplete = () => {
   const router = useRouter();
   const { duration, completeWorkoutResponse, clearWorkout, activeWorkoutDraft } = useWorkoutStore();
   const { user } = useUserStore();
+
+  const uid = user?.uid;
   const isPracticeWeek = user?.isPracticeWeek;
+
+  const { data: userStats } = useQuery({
+    queryKey: ["user-stats", uid],
+    queryFn: fetchUserStats,
+    params: { uid: uid ?? "" },
+    enabled: !!uid,
+  });
 
   const durationStr = useMemo(() => {
     if (!duration) return "00:00:00";
@@ -178,7 +189,7 @@ const workoutComplete = () => {
                       lineHeight: 36,
                     }}
                   >
-                    3
+                    {userStats?.totalWorkoutsLogged ?? 0}
                   </ThemedText>
                 </View>
 

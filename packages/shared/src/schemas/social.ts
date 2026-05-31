@@ -41,7 +41,49 @@ export const searchUserResultSchema = z.object({
   relationshipStatus: relationshipStatusSchema,
 });
 
+export const feedItemTypeSchema = z.enum([
+  "workout_completed",
+  "weekly_target_met",
+  "week_streak_milestone",
+  "mode_score_milestone",
+  "deload_declared",
+]);
+
+export const feedVisibilitySchema = z.enum(["friends"]);
+
+export const feedItemSchema = z.object({
+  feedItemId: z.string(),
+
+  actorUid: z.string(),
+  actorUsername: z.string(),
+  actorDisplayName: z.string(),
+  actorAvatarUrl: z.string().optional(),
+
+  type: feedItemTypeSchema,
+  visibility: feedVisibilitySchema,
+
+  workoutId: z.string().optional(),
+  workoutType: z.string().optional(),
+  workoutName: z.string().optional(),
+  durationSeconds: z.number().optional(),
+  exerciseCount: z.number().optional(),
+
+  weekId: z.string().optional(),
+  localDateKey: z.string().optional(),
+
+  modeScore: z.number().optional(),
+  weeklyTargetDays: z.number().optional(),
+  weeklyProgress: z.number().optional(),
+  currentWeekStreak: z.number().optional(),
+
+  caption: z.string().optional(),
+
+  createdAt: firestoreTimestampSchema,
+  updatedAt: firestoreTimestampSchema,
+});
+
 export type Friend = z.infer<typeof friendSchema>;
 export type FriendListItem = z.infer<typeof friendListItemSchema>;
 export type SearchUserResult = z.infer<typeof searchUserResultSchema>;
 export type RelationshipStatus = z.infer<typeof relationshipStatusSchema>;
+export type FeedItem = z.infer<typeof feedItemSchema>;

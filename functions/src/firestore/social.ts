@@ -1,5 +1,5 @@
-import { Friend, FriendRequest } from "@builtmode/shared/types/social";
-import { Transaction } from "firebase-admin/firestore";
+import { FeedItem, Friend, FriendRequest } from "@builtmode/shared/types/social";
+import { Transaction, WriteBatch } from "firebase-admin/firestore";
 import { db } from "../lib/firebaseAdmin.js";
 
 export const createFriendRequest = (tx: Transaction, friendRequestDoc: FriendRequest) => {
@@ -35,4 +35,14 @@ export const removeFriend = async (tx: Transaction, uid: string, friendUid: stri
 export const removeFriendRequest = async (tx: Transaction, requestId: string) => {
   const doc = db.collection("friendRequests").doc(requestId);
   tx.delete(doc);
+};
+
+export const createFeedItem = (tx: Transaction, feedItem: FeedItem) => {
+  const ref = db.doc(`feedItems/${feedItem.feedItemId}`);
+  tx.set(ref, feedItem);
+};
+
+export const addFeedItemToUserFeed = (batch: WriteBatch, viewerUid: string, feedItem: FeedItem) => {
+  const ref = db.doc(`userFeeds/${viewerUid}/items/${feedItem.feedItemId}`);
+  batch.set(ref, feedItem);
 };
