@@ -57,26 +57,26 @@ export const feedItemSchema = z.object({
   actorUid: z.string(),
   actorUsername: z.string(),
   actorDisplayName: z.string(),
-  actorAvatarUrl: z.string().optional(),
+  actorAvatarUrl: z.string().nullable(),
 
   type: feedItemTypeSchema,
   visibility: feedVisibilitySchema,
 
   workoutId: z.string().optional(),
-  workoutType: z.string().optional(),
-  workoutName: z.string().optional(),
-  durationSeconds: z.number().optional(),
-  exerciseCount: z.number().optional(),
+  workoutType: z.string().nullable(),
+  workoutName: z.string().nullable(),
+  durationSeconds: z.number().nullable(),
+  exerciseCount: z.number().nullable(),
 
-  weekId: z.string().optional(),
-  localDateKey: z.string().optional(),
+  weekId: z.string(),
+  localDateKey: z.string().nullable(),
 
-  modeScore: z.number().optional(),
-  weeklyTargetDays: z.number().optional(),
-  weeklyProgress: z.number().optional(),
-  currentWeekStreak: z.number().optional(),
+  modeScore: z.number().nullable(),
+  weeklyTargetDays: z.number().nullable(),
+  weeklyProgress: z.number().nullable(),
+  currentWeekStreak: z.number().nullable(),
 
-  caption: z.string().optional(),
+  caption: z.string().nullable(),
 
   createdAt: firestoreTimestampSchema,
   updatedAt: firestoreTimestampSchema,

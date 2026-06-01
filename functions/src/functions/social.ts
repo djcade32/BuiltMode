@@ -307,16 +307,16 @@ export function createWorkoutCompletedFeedItem({
     workoutType: workout.workoutType ?? null,
     workoutName: workout.name ?? null,
     durationSeconds: workout.durationSeconds ?? null,
-    exerciseCount: workout.exercises?.length ?? 0,
+    exerciseCount: workout.exercises ? workout.exercises.length : null,
     caption: workout.caption ?? null,
 
     weekId: workout.weekId,
     localDateKey: workout.localDateKey,
 
-    modeScore: weekAggregate.modeScore ?? 0,
+    modeScore: weekAggregate.modeScore ?? null,
     weeklyTargetDays: user.weeklyTargetDays,
     weeklyProgress: weekAggregate.activeDaysThisWeek,
-    currentWeekStreak: userStats?.currentWeekStreak ?? 0,
+    currentWeekStreak: userStats?.currentWeekStreak ?? null,
 
     createdAt: now,
     updatedAt: now,

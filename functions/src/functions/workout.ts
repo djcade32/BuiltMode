@@ -274,6 +274,7 @@ export async function handleCompleteWorkout(
     try {
       await fanoutFeedItemToFriends(uid, feedItemToFanout);
     } catch (error) {
+      // TODO: Implement retry logic here
       console.error("Failed to fanout workout feed item", {
         uid,
         feedItemId: feedItemToFanout,
