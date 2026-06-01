@@ -1,7 +1,9 @@
-import { Friend, FriendRequest, SearchUserResult } from "@builtmode/shared/types/social";
+import { FeedItem, Friend, FriendRequest, SearchUserResult } from "@builtmode/shared/types/social";
 import { Timestamp } from "firebase-admin/firestore";
 import {
+  addFeedItemToUserFeed,
   addFriendToUserList,
+  createFeedItem,
   createFriendRequest,
   getFriendRequest,
   getUserFriend,
@@ -243,4 +245,110 @@ export async function handleRemoveFriend(uid: string, friendUid: string): Promis
     removeFriendRequest(tx, `${friendUid}_${uid}`);
     return true;
   });
+}
+
+type CreateWorkoutCompletedFeedItemParams = {
+  tx: FirebaseFirestore.Transaction;
+
+  uid: string;
+
+  user: {
+    username: string;
+    displayName: string;
+    avatarUrl?: string | null;
+    weeklyTargetDays: number;
+  };
+
+  workout: {
+    sessionId: string;
+    workoutType?: string | null;
+    name?: string | null;
+    durationSeconds?: number | null;
+    exercises?: unknown[];
+    weekId: string;
+    localDateKey: string;
+    caption: string | null;
+  };
+
+  weekAggregate: {
+    activeDaysThisWeek: number;
+    modeScore?: number | null;
+  };
+
+  userStats?: {
+    currentWeekStreak?: number;
+  };
+};
+
+export function createWorkoutCompletedFeedItem({
+  tx,
+  uid,
+  user,
+  workout,
+  weekAggregate,
+  userStats,
+}: CreateWorkoutCompletedFeedItemParams) {
+  const now = Timestamp.now();
+
+  const feedItemId = `workout_${uid}_${workout.sessionId}`;
+
+  const feedItem = {
+    feedItemId,
+
+    actorUid: uid,
+    actorUsername: user.username,
+    actorDisplayName: user.displayName,
+    actorAvatarUrl: user.avatarUrl ?? null,
+
+    type: "workout_completed" as const,
+    visibility: "friends" as const,
+
+    workoutId: workout.sessionId,
+    workoutType: workout.workoutType ?? null,
+    workoutName: workout.name ?? null,
+    durationSeconds: workout.durationSeconds ?? null,
+    exerciseCount: workout.exercises?.length ?? 0,
+    caption: workout.caption ?? null,
+
+    weekId: workout.weekId,
+    localDateKey: workout.localDateKey,
+
+    modeScore: weekAggregate.modeScore ?? 0,
+    weeklyTargetDays: user.weeklyTargetDays,
+    weeklyProgress: weekAggregate.activeDaysThisWeek,
+    currentWeekStreak: userStats?.currentWeekStreak ?? 0,
+
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  createFeedItem(tx, feedItem);
+
+  return feedItem;
+}
+
+const MAX_BATCH_WRITES = 450;
+
+export async function fanoutFeedItemToFriends(actorUid: string, feedItem: FeedItem) {
+  const friendsSnap = await db.collection(`users/${actorUid}/friends`).get();
+
+  const viewerUids = [actorUid, ...friendsSnap.docs.map((doc) => doc.id)];
+
+  let batch = db.batch();
+  let writeCount = 0;
+
+  for (const viewerUid of viewerUids) {
+    addFeedItemToUserFeed(batch, viewerUid, feedItem);
+    writeCount += 1;
+
+    if (writeCount >= MAX_BATCH_WRITES) {
+      await batch.commit();
+      batch = db.batch();
+      writeCount = 0;
+    }
+  }
+
+  if (writeCount > 0) {
+    await batch.commit();
+  }
 }
