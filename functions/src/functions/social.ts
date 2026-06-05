@@ -1,4 +1,5 @@
 import { FeedItem, Friend, FriendRequest, SearchUserResult } from "@builtmode/shared/types/social";
+import { Exercise } from "@builtmode/shared/types/workout";
 import { Timestamp } from "firebase-admin/firestore";
 import {
   addFeedItemToUserFeed,
@@ -264,10 +265,12 @@ type CreateWorkoutCompletedFeedItemParams = {
     workoutType?: string | null;
     name?: string | null;
     durationSeconds?: number | null;
-    exercises?: unknown[];
+    exercises?: Exercise[];
     weekId: string;
     localDateKey: string;
     caption: string | null;
+    isPracticeWeek: boolean;
+    completedAt: Timestamp;
   };
 
   weekAggregate: {
@@ -292,7 +295,7 @@ export function createWorkoutCompletedFeedItem({
 
   const feedItemId = `workout_${uid}_${workout.sessionId}`;
 
-  const feedItem = {
+  const feedItem: FeedItem = {
     feedItemId,
 
     actorUid: uid,
@@ -306,8 +309,14 @@ export function createWorkoutCompletedFeedItem({
     workoutId: workout.sessionId,
     workoutType: workout.workoutType ?? null,
     workoutName: workout.name ?? null,
+    totalSets: workout.exercises
+      ? workout.exercises.reduce((total, exercise) => total + (exercise.sets?.length ?? 0), 0)
+      : null,
+    isPracticeWeek: workout.isPracticeWeek,
+
     durationSeconds: workout.durationSeconds ?? null,
     exerciseCount: workout.exercises ? workout.exercises.length : null,
+    completedAt: workout.completedAt ?? now,
     caption: workout.caption ?? null,
 
     weekId: workout.weekId,

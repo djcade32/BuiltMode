@@ -247,6 +247,8 @@ export async function handleCompleteWorkout(
         exercises: workoutDoc.exercises,
         weekId: workoutDoc.weekId,
         localDateKey: workoutDoc.localDateKey,
+        completedAt: now,
+        isPracticeWeek: !isOfficialWeek,
         caption: "",
       },
       weekAggregate: {

@@ -117,11 +117,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
 
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.65,
-    shadowRadius: 6,
-    elevation: 6,
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.65,
+    // shadowRadius: 6,
+    // elevation: 6,
   },
   header: {
     marginBottom: 4,

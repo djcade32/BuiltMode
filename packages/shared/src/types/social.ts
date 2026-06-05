@@ -20,6 +20,13 @@ export type FriendRequest = {
   respondedAt?: firestoreTimestamp | null;
 };
 
+export type FeedItemType =
+  | "workout_completed"
+  | "weekly_target_met"
+  | "week_streak_milestone"
+  | "mode_score_milestone"
+  | "deload_declared";
+
 export type FeedItem = {
   feedItemId: string;
 
@@ -28,12 +35,7 @@ export type FeedItem = {
   actorDisplayName: string;
   actorAvatarUrl: string | null;
 
-  type:
-    | "workout_completed"
-    | "weekly_target_met"
-    | "week_streak_milestone"
-    | "mode_score_milestone"
-    | "deload_declared";
+  type: FeedItemType;
 
   visibility: "friends";
 
@@ -42,6 +44,9 @@ export type FeedItem = {
   workoutName: string | null;
   durationSeconds: number | null;
   exerciseCount: number | null;
+  totalSets: number | null;
+  isPracticeWeek: boolean;
+  completedAt: firestoreTimestamp;
 
   weekId: string;
   localDateKey: string | null;

@@ -6,7 +6,7 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { Workout } from "@/functions/src/types/workout";
 import { useQuery } from "@/hooks/useQuery";
 import { breakdownSeconds } from "@/lib/utils/conversions";
-import { formatFirestoreDateTime, getFirestoreDayLabel } from "@/lib/utils/date";
+import { formatFirestoreDateTimeString, getFirestoreDayLabel } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { getWorkoutBySessionId } from "@/services/workout-service";
 import { useUserStore } from "@/stores/user-store";
@@ -74,7 +74,7 @@ const WorkoutHistoryDetails = () => {
 
   const dateInfo = () => {
     return data?.completedAt
-      ? `${getFirestoreDayLabel(data.completedAt)} • ${formatFirestoreDateTime(data.completedAt)}`
+      ? `${getFirestoreDayLabel(data.completedAt)} • ${formatFirestoreDateTimeString(data.completedAt)}`
       : "";
   };
 

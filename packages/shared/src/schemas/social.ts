@@ -67,6 +67,9 @@ export const feedItemSchema = z.object({
   workoutName: z.string().nullable(),
   durationSeconds: z.number().nullable(),
   exerciseCount: z.number().nullable(),
+  totalSets: z.number().nullable(),
+  isPracticeWeek: z.boolean(),
+  completedAt: firestoreTimestampSchema,
 
   weekId: z.string(),
   localDateKey: z.string().nullable(),
