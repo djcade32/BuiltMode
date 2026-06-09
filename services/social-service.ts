@@ -1,9 +1,11 @@
+import { InfinitePage } from "@/hooks/useInfiniteQuery";
 import { db, functions } from "@/lib/firebase";
 import { chunkArray } from "@/lib/utils/chunk";
-import { FriendRequest, SearchUserResult } from "@builtmode/shared";
+import { FeedItem, FriendRequest, SearchUserResult } from "@builtmode/shared";
 import {
   collection,
   doc,
+  DocumentData,
   documentId,
   DocumentSnapshot,
   getDoc,
@@ -11,6 +13,7 @@ import {
   limit,
   orderBy,
   query,
+  QueryDocumentSnapshot,
   startAfter,
   where,
 } from "firebase/firestore";
@@ -188,6 +191,39 @@ export const getSentFriendRequests = async ({
   }));
 
   return items;
+};
+
+type FeedCursor = QueryDocumentSnapshot<DocumentData>;
+
+export const getUserFeed = async ({
+  pageParam,
+  params,
+  limit: pageSize,
+}: {
+  pageParam?: FeedCursor | null;
+  params: { uid: string };
+  limit: number;
+}): Promise<InfinitePage<FeedItem, FeedCursor>> => {
+  const feedRef = collection(db, `userFeeds/${params.uid}/items`);
+
+  const feedQuery = pageParam
+    ? query(feedRef, orderBy("createdAd", "desc"), startAfter(pageParam), limit(pageSize))
+    : query(feedRef, orderBy("createdAt", "desc"), limit(pageSize));
+
+  const snapshot = await getDocs(feedQuery);
+
+  const items: FeedItem[] = snapshot.docs.map((doc) => ({
+    ...(doc.data() as FeedItem),
+  }));
+
+  const hasMore = snapshot.docs.length === pageSize;
+  const nextCursor = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+  return {
+    items,
+    nextCursor,
+    hasMore,
+  };
 };
 
 const FRIENDS_PAGE_SIZE = 20;

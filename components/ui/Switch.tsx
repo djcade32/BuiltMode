@@ -1,15 +1,16 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import React, { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { ThemedText } from "../themed-text";
 
 type props = {
   options: string[];
   onChange: (value: string) => void;
   defaultIndex?: number;
+  optionContainerStyle?: StyleProp<ViewStyle>;
 };
 
-const Switch = ({ options, onChange, defaultIndex = 0 }: props) => {
+const Switch = ({ options, onChange, defaultIndex = 0, optionContainerStyle }: props) => {
   const [selected, setSelected] = useState(options[defaultIndex] ?? options[0]);
 
   const handleOnPress = (option: string) => {
@@ -27,6 +28,7 @@ const Switch = ({ options, onChange, defaultIndex = 0 }: props) => {
             {
               backgroundColor: selected === option ? Colors.accent.primary : "transparent",
             },
+            optionContainerStyle,
           ]}
         >
           <ThemedText

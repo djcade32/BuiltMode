@@ -161,7 +161,7 @@ export default function HomeScreen() {
             fontSize={Typography.size.sm}
             onPress={() => {
               setInitialWorkout(null);
-              router.push("/(protected)/(tabs)/(workout)/buildWorkout");
+              router.push("/(protected)/(tabs)/(workout)/log");
             }}
           />
           <PerformanceSnapshotWidget />
@@ -245,11 +245,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.65,
-    shadowRadius: 6,
-    elevation: 6,
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.65,
+    // shadowRadius: 6,
+    // elevation: 6,
     flexDirection: "row",
     gap: 12,
   },

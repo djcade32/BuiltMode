@@ -247,6 +247,8 @@ export async function handleCompleteWorkout(
         exercises: workoutDoc.exercises,
         weekId: workoutDoc.weekId,
         localDateKey: workoutDoc.localDateKey,
+        completedAt: now,
+        isPracticeWeek: !isOfficialWeek,
         caption: "",
       },
       weekAggregate: {
@@ -274,6 +276,7 @@ export async function handleCompleteWorkout(
     try {
       await fanoutFeedItemToFriends(uid, feedItemToFanout);
     } catch (error) {
+      // TODO: Implement retry logic here
       console.error("Failed to fanout workout feed item", {
         uid,
         feedItemId: feedItemToFanout,

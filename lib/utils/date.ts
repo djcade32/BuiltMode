@@ -12,10 +12,19 @@ export const formatFirestoreTime = (timestamp?: { seconds: number; nanoseconds: 
   return dayjs.unix(timestamp.seconds).format("h:mm A");
 };
 
-export const formatFirestoreDateTime = (timestamp?: { seconds: number; nanoseconds: number }) => {
+export const formatFirestoreDateTimeString = (timestamp?: {
+  seconds: number;
+  nanoseconds: number;
+}) => {
   if (!timestamp) return "";
 
   return dayjs.unix(timestamp.seconds).format("MMM DD, YYYY • h:mm A");
+};
+
+export const formatFirestoreDateTime = (timestamp?: { seconds: number; nanoseconds: number }) => {
+  if (!timestamp) return "";
+
+  return dayjs.unix(timestamp.seconds).format("YYYY-MM-DD[T]HH:mm:ssZ");
 };
 
 export const getFirestoreMonthSectionLabel = (timestamp?: {
