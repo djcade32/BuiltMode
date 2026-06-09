@@ -21,7 +21,10 @@ export const formatFirestoreDateTimeString = (timestamp?: {
   return dayjs.unix(timestamp.seconds).format("MMM DD, YYYY • h:mm A");
 };
 
-export const formatFirestoreDateTime = (timestamp?: { seconds: number; nanoseconds: number }) => {
+export const formatFirestoreDateTimeISO = (timestamp?: {
+  seconds: number;
+  nanoseconds: number;
+}) => {
   if (!timestamp) return "";
 
   return dayjs.unix(timestamp.seconds).format("YYYY-MM-DD[T]HH:mm:ssZ");

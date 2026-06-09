@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { Colors, Typography } from "@/constants/theme";
-import { formatFirestoreDateTime } from "@/lib/utils/date";
+import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
@@ -27,7 +27,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     isPracticeWeek: isPractice,
   } = feedItem;
 
-  const createdAtDayjs = dayjs(formatFirestoreDateTime(completedAt));
+  const createdAtDayjs = dayjs(formatFirestoreDateTimeISO(completedAt));
   const targetMet = weeklyProgress === weeklyTargetDays && !isPractice;
 
   return (
@@ -64,28 +64,27 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
               <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
                 {actorDisplayName}
               </ThemedText>
-              {targetMet ||
-                (isPractice && (
-                  <View
+              {(targetMet || isPractice) && (
+                <View
+                  style={[
+                    styles.targetMetContainer,
+                    {
+                      backgroundColor: isPractice ? "#4a6c8c3a" : "#c6a34a38",
+                      borderWidth: 1,
+                      borderColor: isPractice ? Colors.accent.secondary : Colors.accent.primary,
+                    },
+                  ]}
+                >
+                  <ThemedText
                     style={[
-                      styles.targetMetContainer,
-                      {
-                        backgroundColor: isPractice ? "#4a6c8c3a" : "#c6a34a38",
-                        borderWidth: 1,
-                        borderColor: isPractice ? Colors.accent.secondary : Colors.accent.primary,
-                      },
+                      styles.targetMetText,
+                      { color: isPractice ? Colors.accent.secondary : Colors.accent.primary },
                     ]}
                   >
-                    <ThemedText
-                      style={[
-                        styles.targetMetText,
-                        { color: isPractice ? Colors.accent.secondary : Colors.accent.primary },
-                      ]}
-                    >
-                      {isPractice ? "PRACTICE WEEK" : "TARGET MET"}
-                    </ThemedText>
-                  </View>
-                ))}
+                    {isPractice ? "PRACTICE WEEK" : "TARGET MET"}
+                  </ThemedText>
+                </View>
+              )}
             </View>
 
             <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
@@ -131,7 +130,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
               {weeklyProgress} of {weeklyTargetDays} days
             </ThemedText>
           </View>
-          {weeklyProgress && weeklyTargetDays && (
+          {weeklyProgress != null && weeklyTargetDays != null && (
             <WeeklyProgressBar
               weeklyProgress={weeklyProgress}
               weeklyTarget={weeklyTargetDays}

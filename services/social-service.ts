@@ -207,7 +207,7 @@ export const getUserFeed = async ({
   const feedRef = collection(db, `userFeeds/${params.uid}/items`);
 
   const feedQuery = pageParam
-    ? query(feedRef, orderBy("createdAd", "desc"), startAfter(pageParam), limit(pageSize))
+    ? query(feedRef, orderBy("createdAt", "desc"), startAfter(pageParam), limit(pageSize))
     : query(feedRef, orderBy("createdAt", "desc"), limit(pageSize));
 
   const snapshot = await getDocs(feedQuery);
