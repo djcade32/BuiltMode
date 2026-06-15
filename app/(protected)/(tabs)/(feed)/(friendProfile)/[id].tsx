@@ -306,12 +306,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     fontFamily: Typography.family.primary.semibold,
   },
-  headerSubtitle: {
-    fontSize: 10,
-    lineHeight: 15,
-    letterSpacing: 0.5,
-    color: Colors.icon,
-  },
   iconContainer: {
     width: 40,
     height: 40,

@@ -6,8 +6,8 @@ import { getWeekId } from "@builtmode/shared";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import WeeklyProgressBar from "../feed/feedItems/WeeklyProgressBar";
 import { ThemedText } from "../themed-text";
-import Progressbar from "../ui/Progressbar";
 
 const TrainingTargetWidget = () => {
   const { user } = useUserStore();
@@ -113,7 +113,11 @@ const TrainingTargetWidget = () => {
             </ThemedText>
           ) : (
             <View>
-              <Progressbar percentage={getPercentage()} />
+              <WeeklyProgressBar
+                weeklyProgress={data?.activeDaysThisWeek ?? 0}
+                weeklyTarget={user?.weeklyTargetDays ?? 5}
+                isPractice={false}
+              />
               {data?.metTargetThisWeek ? (
                 <ThemedText
                   style={{
@@ -171,7 +175,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 15,
   },
   targetDaysText: {
     fontFamily: Typography.family.primary.bold,

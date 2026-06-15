@@ -28,8 +28,11 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     totalSets,
     weeklyTargetDays,
     weeklyProgress,
+    workoutId,
     isPracticeWeek: isPractice,
   } = feedItem;
+
+  const hasWorkoutId = Boolean(workoutId);
 
   const createdAtDayjs = dayjs(formatFirestoreDateTimeISO(completedAt));
   const targetMet = weeklyProgress === weeklyTargetDays && !isPractice;
@@ -156,7 +159,20 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
         )}
       </View>
       <View style={{ paddingHorizontal: 20, paddingVertical: 12, alignItems: "flex-end" }}>
-        <TouchableOpacity style={{ alignItems: "center", flexDirection: "row", gap: 5 }}>
+        <TouchableOpacity
+          disabled={!hasWorkoutId}
+          style={{ alignItems: "center", flexDirection: "row", gap: 5 }}
+          onPress={() =>
+            workoutId &&
+            router.push({
+              pathname: "/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]",
+              params: {
+                sessionId: workoutId,
+                returnTo: `/(protected)/(tabs)/(feed)/feed`,
+              },
+            })
+          }
+        >
           <ThemedText style={styles.viewDetailsButton}>VIEW DETAILS</ThemedText>
           <FontAwesome6 name="arrow-right" size={10} color={Colors.accent.primary} />
         </TouchableOpacity>

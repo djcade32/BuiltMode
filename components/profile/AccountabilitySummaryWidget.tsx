@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     fontFamily: Typography.family.secondary.bold,
     fontSize: 52,
     textAlign: "center",
+    color: Colors.accent.primary,
   },
   progressbarTextContainer: {
     flexDirection: "row",

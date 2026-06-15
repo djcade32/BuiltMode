@@ -10,6 +10,7 @@ import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
@@ -56,19 +57,7 @@ export default function Feed() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
       <View style={styles.header}>
-        <ThemedText style={styles.builtmodeText}>
-          BUILT
-          <ThemedText
-            style={[
-              styles.builtmodeText,
-              {
-                color: Colors.accent.primary,
-              },
-            ]}
-          >
-            MODE
-          </ThemedText>
-        </ThemedText>
+        <Image source={require("@/assets/images/full_logo.png")} style={styles.logo} />
 
         <TouchableOpacity
           style={styles.iconContainer}
@@ -159,5 +148,10 @@ const styles = StyleSheet.create({
   feedList: {
     paddingVertical: 10,
     gap: 15,
+  },
+  logo: {
+    height: 20,
+    width: 120,
+    objectFit: "contain",
   },
 });
