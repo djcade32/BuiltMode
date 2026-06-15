@@ -1,4 +1,4 @@
-import WorkoutHistoryDetails from "@/app/(protected)/(tabs)/(workout)/workoutHistoryDetails/[sessionId]";
+import WorkoutHistoryDetails from "@/app/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import React from "react";
 

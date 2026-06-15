@@ -1,14 +1,14 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useUserFeedInfinite } from "@/hooks/social/useUserFeedInfinite";
-import { formatFirestoreDateTime } from "@/lib/utils/date";
+import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
 import { useUserStore } from "@/stores/user-store";
-import { FeedItem } from "@builtmode/shared";
 import { FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../themed-text";
+import Avatar from "../ui/Avatar";
 
 const RecentFriendActivityWidget = () => {
   const router = useRouter();
@@ -18,39 +18,25 @@ const RecentFriendActivityWidget = () => {
 
   const { data, error, isLoading, hasNextPage, fetchNextPage } = useUserFeedInfinite(uid);
 
-  // Filter out current user activity
   const feedItems = useMemo(() => {
-    const getDataWithoutCurrentUser = (
-      selectedDataArray: FeedItem[],
-      allData: FeedItem[],
-      index = 0,
-    ) => {
-      if (selectedDataArray.length === 3) return selectedDataArray;
-      if (index >= allData.length) {
-        if (hasNextPage) {
-          fetchNextPage();
-          return [];
-        }
-        return selectedDataArray;
-      }
-
-      const array = selectedDataArray;
-
-      if (allData[index].actorUid !== uid) {
-        array.push(allData[index]);
-        getDataWithoutCurrentUser(array, allData, index + 1);
-      } else {
-        getDataWithoutCurrentUser(array, allData, index + 1);
-      }
-    };
     const allData = data?.pages.flatMap((page) => page.items) ?? [];
+    return allData.filter((item) => item.actorUid !== uid).slice(0, 3);
+  }, [data, uid]);
 
-    return getDataWithoutCurrentUser(
-      allData.filter((item) => item.actorUid !== uid),
-      [],
-      0,
-    );
-  }, [data]);
+  const navigateToFriendProfile = (uid: string) =>
+    router.push({
+      pathname: "/(protected)/(tabs)/(feed)/(friendProfile)/[id]",
+      params: {
+        id: uid,
+        returnTo: "/(protected)/(tabs)",
+      },
+    });
+
+  useEffect(() => {
+    if (feedItems.length < 3 && !isLoading && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [feedItems]);
 
   return (
     <View style={styles.container}>
@@ -60,20 +46,23 @@ const RecentFriendActivityWidget = () => {
 
       <View>
         {feedItems?.map((item) => {
-          const createdAtDayjs = dayjs(formatFirestoreDateTime(item.completedAt));
+          const createdAtDayjs = dayjs(formatFirestoreDateTimeISO(item.completedAt));
 
           return (
             <View style={styles.activityRow} key={item.feedItemId}>
-              {item.actorAvatarUrl ? (
-                <Image source={{ uri: item.actorAvatarUrl }} style={styles.avatarPic} />
-              ) : (
-                <View></View>
-              )}
+              <Avatar
+                avatarUrl={item.actorAvatarUrl}
+                displayName={item.actorDisplayName}
+                onPress={() => navigateToFriendProfile(item.actorUid)}
+              />
               <View>
-                <View style={{ marginBottom: 5 }}>
+                <TouchableOpacity
+                  style={{ marginBottom: 5 }}
+                  onPress={() => navigateToFriendProfile(item.actorUid)}
+                >
                   <ThemedText style={styles.friendName}>{item.actorDisplayName}</ThemedText>
                   <ThemedText style={styles.activitySummary}>@{item.actorUsername}</ThemedText>
-                </View>
+                </TouchableOpacity>
                 <ThemedText style={styles.activitySummary}>
                   {item.exerciseCount} exercises · {item.workoutName}
                 </ThemedText>
@@ -136,10 +125,26 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     gap: 12,
   },
+  avatarContainer: {
+    borderRadius: 12,
+    backgroundColor: "rgba(211, 174, 75, 0.14)",
+    height: 40,
+    width: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    borderColor: Colors.inputBorder,
+    borderWidth: 1,
+  },
   avatarPic: {
     width: 40,
     height: 40,
     borderRadius: Border.radius.md,
+  },
+  avatarText: {
+    color: Colors.accent.primary,
+    fontSize: 18,
+    fontFamily: Typography.family.primary.bold,
   },
   friendName: {
     fontFamily: Typography.family.primary.semibold,

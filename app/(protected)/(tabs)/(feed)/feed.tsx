@@ -27,7 +27,16 @@ export default function Feed() {
 
   const [feedFilter, setFeedFilter] = useState(FeedFilterOptions[0]);
 
-  const { data, error, isLoading, isPending, refetch } = useUserFeedInfinite(uid);
+  const {
+    data,
+    error,
+    isLoading,
+    isPending,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useUserFeedInfinite(uid);
 
   const feedItems = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
@@ -105,6 +114,12 @@ export default function Feed() {
                 tintColor={Colors.icon}
               />
             }
+            onEndReachedThreshold={0.5}
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+              }
+            }}
           />
         )}
       </View>

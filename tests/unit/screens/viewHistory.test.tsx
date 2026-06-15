@@ -246,7 +246,7 @@ describe("ViewHistory", () => {
 
     fireEvent.press(screen.getByText("Push Day"));
 
-    expect(mockPush).toHaveBeenCalledWith("/workoutHistoryDetails/session-123");
+    expect(mockPush).toHaveBeenCalledWith("/(workoutHistoryDetails)/session-123");
   });
 
   it("opens month jump modal when jump to month is pressed", () => {

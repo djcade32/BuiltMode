@@ -13,7 +13,7 @@ import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -33,6 +33,8 @@ const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
 
 const WorkoutHistoryDetails = () => {
   const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: RelativePathString }>();
+
   const { user } = useUserStore();
   const queryClient = useQueryClient();
 
@@ -132,6 +134,15 @@ const WorkoutHistoryDetails = () => {
     showToast("Workout copied");
   };
 
+  const handleBack = () => {
+    if (returnTo) {
+      router.replace(returnTo);
+      return;
+    }
+
+    router.back();
+  };
+
   function ErrorAlert() {
     return Alert.alert("Oops", "There was an error saving workout as template.", [
       { text: "Try again", onPress: handleSaveAsTemplate },
@@ -159,7 +170,7 @@ const WorkoutHistoryDetails = () => {
         />
       )}
       <View style={styles.headerContainer}>
-        <Pressable testID="workout-details-back-button" onPress={() => router.back()} hitSlop={15}>
+        <Pressable testID="workout-details-back-button" onPress={handleBack} hitSlop={15}>
           <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
         </Pressable>
         <ThemedText style={styles.headerTitle}>WORKOUT</ThemedText>

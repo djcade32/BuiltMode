@@ -93,3 +93,12 @@ export async function handleCreateUserProfile(
     isPracticeWeek,
   };
 }
+
+export async function handleFetchingUserHomeTimezone(userId: string): Promise<string | null> {
+  return await db.runTransaction(async (tx) => {
+    const user = await getUserByUid(tx, userId);
+    if (!user.exists) return null;
+    const homeTimezone = user.data()?.homeTimezone;
+    return typeof homeTimezone === "string" ? homeTimezone : null;
+  });
+}

@@ -187,12 +187,7 @@ const friendsList = () => {
             <FontAwesome6 name="user-plus" size={14} color={Colors.gray} />
           </TouchableOpacity>
         </View>
-        {/* <ScrollView
-          contentContainerStyle={{ paddingVertical: 16, gap: 24, flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          scrollEnabled={isUsingKeyboard}
-        > */}
+
         <View style={{ paddingVertical: 16, gap: 24, flexGrow: 1 }}>
           {/* REQUESTS */}
           <View style={{ paddingHorizontal: 24 }}>
@@ -223,6 +218,7 @@ const friendsList = () => {
                 keyExtractor={(item) => item.uid}
                 renderItem={({ item }) => (
                   <FriendsListCard
+                    uid={item.uid}
                     avatarUrl={item.avatarUrl}
                     displayName={item.displayName}
                     username={item.usernameLower}
@@ -294,8 +290,6 @@ const friendsList = () => {
             )}
           </View>
         </View>
-        {/* </ScrollView> */}
-
         <FriendRequestsSheet
           visible={requestsSheetVisible}
           initialTab={requestsSheetTab}

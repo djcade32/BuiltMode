@@ -23,7 +23,7 @@ import {
   handleSendFriendRequest,
 } from "./functions/social.js";
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
-import { handleCreateUserProfile } from "./functions/user.js";
+import { handleCreateUserProfile, handleFetchingUserHomeTimezone } from "./functions/user.js";
 import { handleCompleteWorkout } from "./functions/workout.js";
 import { assertValidTimezone } from "./utils/time.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekId.js";
@@ -196,4 +196,18 @@ export const removeFriend = onCall(async (request: CallableRequest<{ friendUid: 
   }
 
   return await handleRemoveFriend(request.auth.uid, friendUid);
+});
+
+export const fetchUsersHomeTimezone = onCall(async (request: CallableRequest<{ uid: string }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+
+  const data = request.data;
+  if (!data || typeof data.uid !== "string" || !data.uid.trim()) {
+    throw new HttpsError("invalid-argument", "Invalid fetchUsersHomeTimezone payload.");
+  }
+  const uid = data.uid.trim();
+
+  return await handleFetchingUserHomeTimezone(uid);
 });

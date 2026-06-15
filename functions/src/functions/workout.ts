@@ -19,6 +19,8 @@ import {
   createCompleteWorkout,
   createDayMarker,
   getDayMarker,
+  getLastFourWeekAggregates,
+  getLastFourWeeksAdherenceRate,
   getTotalActiveDaysInMonth,
   getUserLeaderboardEntry,
   getWorkoutsWithinLast30Days,
@@ -83,6 +85,9 @@ export async function handleCompleteWorkout(
     const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
     const weekAggregateExists = weekAggregate.exists;
 
+    const last4WeekAggregates = await getLastFourWeekAggregates(tx, uid, weekId);
+    const lastFourWeeksAdherenceRate = getLastFourWeeksAdherenceRate(last4WeekAggregates);
+
     let streakStatus = weekAggregateExists ? weekAggregate.get("streakStatus") : "inactive";
 
     // If weekAgreggate doc exists and there is no workout logged for today, increment activeDaysThisWeek. Else do nothing
@@ -104,14 +109,16 @@ export async function handleCompleteWorkout(
       }
     }
 
-    const modeScore = isOfficialWeek
-      ? calculateModeScore({
-          weeklyTarget: weeklyTargetDays,
-          completedWorkoutsLast30Days,
-          weeklyAdherenceStreak: streakWeeks,
-          completedWorkoutsThisWeek: activeDaysThisWeek,
-        }).modeScore
-      : null;
+    const calculatedStats = calculateModeScore({
+      weeklyTarget: weeklyTargetDays,
+      completedWorkoutsLast30Days,
+      weeklyAdherenceStreak: streakWeeks,
+      completedWorkoutsThisWeek: activeDaysThisWeek,
+    });
+
+    const modeScore = isOfficialWeek ? calculatedStats.modeScore : null;
+
+    const activity30DayRate = isOfficialWeek ? calculatedStats.activity30DayScore : 0;
 
     let modeScoreDifference = 0;
     if (weekAggregateExists && modeScore) {
@@ -155,6 +162,15 @@ export async function handleCompleteWorkout(
       ? Math.max(streakWeeks, userStats.data()?.bestWeekStreak ?? 0)
       : 0;
     const totalWorkoutsLogged = userStatsExists ? userStats.data()?.totalWorkoutsLogged + 1 : 1;
+    const previousTotalTargetsMet = userStatsExists ? (userStats.data()?.totalTargetsMet ?? 0) : 0;
+    const newlyMetTargetThisWeek =
+      isOfficialWeek &&
+      metTargetThisWeek &&
+      !(weekAggregateExists && weekAggregate.get("metTargetThisWeek"));
+
+    const totalTargetsMet = newlyMetTargetThisWeek
+      ? previousTotalTargetsMet + 1
+      : previousTotalTargetsMet;
 
     const workoutDoc: Workout = {
       sessionId,
@@ -219,6 +235,9 @@ export async function handleCompleteWorkout(
       currentWeekStreak: streakWeeks,
       bestWeekStreak,
       modeScore: modeScore,
+      last30DayWeeklyAdherenceRate: lastFourWeeksAdherenceRate.adherenceRate,
+      activity30DayRate,
+      totalTargetsMet,
       totalWorkoutsLogged,
       weeklyTargetDays,
       updatedAt: now,

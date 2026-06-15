@@ -13,7 +13,7 @@ import { durationTimeString } from "@/lib/utils/time";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome6, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { Link, useRouter } from "expo-router";
+import { Link, RelativePathString, useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
@@ -90,6 +90,10 @@ const Log = () => {
   const { setInitialWorkout } = useWorkoutStore();
 
   const uid = user?.uid ?? "";
+  const hasUid = Boolean(uid);
+  const historyHref = hasUid
+    ? `/(protected)/(tabs)/(workout)/(viewHistory)/${uid}`
+    : "/(protected)/(tabs)/(workout)/log";
 
   const {
     data: fetchedTemplates,
@@ -287,7 +291,7 @@ const Log = () => {
                   <WorkoutHistoryCard
                     key={workout.sessionId}
                     workout={workout}
-                    onPress={() => router.push(`/workoutHistoryDetails/${workout.sessionId}`)}
+                    onPress={() => router.push(`/(workoutHistoryDetails)/${workout.sessionId}`)}
                   />
                 ))}
               </View>
@@ -295,8 +299,8 @@ const Log = () => {
           </View>
         </View>
 
-        <Link href={"/(protected)/(tabs)/(workout)/viewHistory"} asChild style={{ marginTop: 24 }}>
-          <TouchableOpacity style={styles.viewHistoryButtonContainer}>
+        <Link href={historyHref as RelativePathString} asChild style={{ marginTop: 24 }}>
+          <TouchableOpacity style={styles.viewHistoryButtonContainer} disabled={!hasUid}>
             <ThemedText style={styles.viewHistoryButton}>VIEW ALL HISTORY</ThemedText>
           </TouchableOpacity>
         </Link>

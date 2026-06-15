@@ -1,13 +1,14 @@
 import { ThemedText } from "@/components/themed-text";
+import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
 import { useUserStore } from "@/stores/user-store";
 import { SearchUserResult } from "@builtmode/shared";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   StyleProp,
   StyleSheet,
   TouchableOpacity,
@@ -35,7 +36,9 @@ const FriendCard = ({
   onSend,
 }: FriendCardProps) => {
   const { user } = useUserStore();
+  const router = useRouter();
   const { displayName, avatarUrl, username, relationshipStatus, uid } = data;
+  const navigateToFriendProfile = (uid: string) => router.push(`/(friendProfile)/${uid}`);
 
   const RequestButton = useMemo(() => {
     if (!user) return null;
@@ -139,23 +142,19 @@ const FriendCard = ({
   return (
     <View style={[styles.cardContainer, styles.container]}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-        <View style={styles.avatarContainer}>
-          {avatarUrl ? (
-            <Image src={avatarUrl} height={46} width={46} />
-          ) : (
-            <ThemedText style={styles.avatarText}>
-              {displayName?.[0]?.toUpperCase() ?? "?"}
-            </ThemedText>
-          )}
-        </View>
-        <View>
+        <Avatar
+          avatarUrl={avatarUrl}
+          displayName={displayName ?? "?"}
+          onPress={() => navigateToFriendProfile(uid)}
+        />
+        <TouchableOpacity onPress={() => navigateToFriendProfile(uid)}>
           <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
             {displayName}
           </ThemedText>
           <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
             @{username}
           </ThemedText>
-        </View>
+        </TouchableOpacity>
       </View>
       {RequestButton}
     </View>

@@ -1,9 +1,12 @@
 import { ThemedText } from "@/components/themed-text";
+import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
+import { useRouter } from "expo-router";
 import React from "react";
-import { ActivityIndicator, Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 
 type Props = {
+  uid: string;
   avatarUrl: string;
   displayName: string;
   username: string;
@@ -11,27 +14,32 @@ type Props = {
   isPending: boolean;
 };
 
-const FriendsListCard = ({ avatarUrl, displayName, username, removeFriend, isPending }: Props) => {
+const FriendsListCard = ({
+  uid,
+  avatarUrl,
+  displayName,
+  username,
+  removeFriend,
+  isPending,
+}: Props) => {
+  const router = useRouter();
+  const navigateToFriendProfile = (uid: string) => router.push(`/(friendProfile)/${uid}`);
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-        <View style={styles.avatarContainer}>
-          {avatarUrl ? (
-            <Image src={avatarUrl} height={46} width={46} />
-          ) : (
-            <ThemedText style={styles.avatarText}>
-              {displayName?.[0]?.toUpperCase() ?? "?"}
-            </ThemedText>
-          )}
-        </View>
-        <View>
+        <Avatar
+          avatarUrl={avatarUrl}
+          displayName={displayName}
+          onPress={() => navigateToFriendProfile(uid)}
+        />
+        <TouchableOpacity onPress={() => navigateToFriendProfile(uid)}>
           <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
             {displayName}
           </ThemedText>
           <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
             @{username}
           </ThemedText>
-        </View>
+        </TouchableOpacity>
       </View>
       <TouchableOpacity style={styles.button} onPress={removeFriend} disabled={isPending}>
         {isPending ? (

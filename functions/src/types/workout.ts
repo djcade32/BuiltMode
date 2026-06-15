@@ -66,3 +66,16 @@ export type ModeScoreBreakdown = {
   activity30DayScore: number;
   activeDaysLast30: number;
 };
+
+export type WeeklyAdherenceResult = {
+  adherenceRate: number;
+  completedDays: number;
+  targetDays: number;
+  weeksIncluded: number;
+  weeks: Array<{
+    weekId: string;
+    completedDays: number;
+    targetDays: number;
+    adherenceRate: number;
+  }>;
+};

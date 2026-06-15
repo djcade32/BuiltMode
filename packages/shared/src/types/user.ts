@@ -59,7 +59,10 @@ export type UserWeekAggregate = {
 export type UserStats = {
   currentWeekStreak: number;
   bestWeekStreak: number;
+  last30DayWeeklyAdherenceRate: number; // Percentage
+  activity30DayRate: number; // Percentage
   totalWorkoutsLogged: number;
+  totalTargetsMet: number;
   modeScore: number | null;
   weeklyTargetDays: number;
   updatedAt: firestoreTimestamp;
