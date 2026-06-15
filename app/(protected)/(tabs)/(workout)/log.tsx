@@ -287,7 +287,7 @@ const Log = () => {
                   <WorkoutHistoryCard
                     key={workout.sessionId}
                     workout={workout}
-                    onPress={() => router.push(`/workoutHistoryDetails/${workout.sessionId}`)}
+                    onPress={() => router.push(`/(workoutHistoryDetails)/${workout.sessionId}`)}
                   />
                 ))}
               </View>
@@ -295,7 +295,11 @@ const Log = () => {
           </View>
         </View>
 
-        <Link href={"/(protected)/(tabs)/(workout)/viewHistory"} asChild style={{ marginTop: 24 }}>
+        <Link
+          href={`/(protected)/(tabs)/(workout)/(viewHistory)/${uid}`}
+          asChild
+          style={{ marginTop: 24 }}
+        >
           <TouchableOpacity style={styles.viewHistoryButtonContainer}>
             <ThemedText style={styles.viewHistoryButton}>VIEW ALL HISTORY</ThemedText>
           </TouchableOpacity>

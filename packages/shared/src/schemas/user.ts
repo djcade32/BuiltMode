@@ -108,7 +108,10 @@ export const updateHomeTimezoneResponseSchema = z.object({
 export const userStatsSchema = z.object({
   currentWeekStreak: z.number().nonnegative(),
   bestWeekStreak: z.number().nonnegative(),
+  last30DayWeeklyAdherenceRate: z.number().nonnegative(),
+  activity30DayRate: z.number().nonnegative(),
   totalWorkoutsLogged: z.number().nonnegative(),
+  totalTargetsMet: z.number().nonnegative(),
   modeScore: z.number().nullable(),
   weeklyTargetDays: z.number().nonnegative(),
   updatedAt: firestoreTimestampSchema,

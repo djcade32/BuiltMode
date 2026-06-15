@@ -16,7 +16,7 @@ const ModeScoreWidget = () => {
   const homeTimezone = user?.homeTimezone;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["user-week-aggregate", getWeekId(Date(), homeTimezone ?? "")],
+    queryKey: ["user-week-aggregate", getWeekId(Date(), homeTimezone ?? ""), uid],
     queryFn: fetchUserWeekAggregate,
     params: { uid: uid ?? "", weekId: getWeekId(Date(), homeTimezone ?? "") },
     enabled: !!uid,

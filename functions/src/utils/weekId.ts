@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
-import { assertValidTimezone } from "./time.js";
+import { assertValidTimezone, subtractWeeks } from "./time.js";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -45,4 +45,8 @@ export function handleGetLocalDateKey(date: Date | string, homeTimezone: string)
   assertValidTimezone(homeTimezone);
   const localDateKey = dayjs(date).tz(homeTimezone);
   return localDateKey.format("YYYY-MM-DD");
+}
+
+export function getLastFiveWeekIds(weekId: string): string[] {
+  return Array.from({ length: 5 }, (_, index) => subtractWeeks(weekId, index));
 }

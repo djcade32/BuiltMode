@@ -6,8 +6,9 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo } from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../themed-text";
+import Avatar from "../ui/Avatar";
 
 const RecentFriendActivityWidget = () => {
   const router = useRouter();
@@ -21,6 +22,15 @@ const RecentFriendActivityWidget = () => {
     const allData = data?.pages.flatMap((page) => page.items) ?? [];
     return allData.filter((item) => item.actorUid !== uid).slice(0, 3);
   }, [data, uid]);
+
+  const navigateToFriendProfile = (uid: string) =>
+    router.push({
+      pathname: "/(protected)/(tabs)/(feed)/(friendProfile)/[id]",
+      params: {
+        id: uid,
+        returnTo: "/(protected)/(tabs)",
+      },
+    });
 
   useEffect(() => {
     if (feedItems.length < 3 && !isLoading && hasNextPage) {
@@ -40,20 +50,19 @@ const RecentFriendActivityWidget = () => {
 
           return (
             <View style={styles.activityRow} key={item.feedItemId}>
-              <View style={styles.avatarContainer}>
-                {item.actorAvatarUrl ? (
-                  <Image source={{ uri: item.actorAvatarUrl }} style={styles.avatarPic} />
-                ) : (
-                  <ThemedText style={styles.avatarText}>
-                    {item.actorDisplayName?.[0]?.toUpperCase() ?? "?"}
-                  </ThemedText>
-                )}
-              </View>
+              <Avatar
+                avatarUrl={item.actorAvatarUrl}
+                displayName={item.actorDisplayName}
+                onPress={() => navigateToFriendProfile(item.actorUid)}
+              />
               <View>
-                <View style={{ marginBottom: 5 }}>
+                <TouchableOpacity
+                  style={{ marginBottom: 5 }}
+                  onPress={() => navigateToFriendProfile(item.actorUid)}
+                >
                   <ThemedText style={styles.friendName}>{item.actorDisplayName}</ThemedText>
                   <ThemedText style={styles.activitySummary}>@{item.actorUsername}</ThemedText>
-                </View>
+                </TouchableOpacity>
                 <ThemedText style={styles.activitySummary}>
                   {item.exerciseCount} exercises · {item.workoutName}
                 </ThemedText>

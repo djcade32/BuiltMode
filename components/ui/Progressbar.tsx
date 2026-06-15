@@ -4,11 +4,12 @@ import { StyleSheet, View } from "react-native";
 
 type Props = {
   percentage: number;
+  height?: number;
 };
 
-const Progressbar = ({ percentage = 0 }: Props) => {
+const Progressbar = ({ percentage = 0, height = 8 }: Props) => {
   return (
-    <View style={styles.progressbarOuter}>
+    <View style={[styles.progressbarOuter, { height }]}>
       <View
         style={[
           styles.progressbarInner,
@@ -28,7 +29,6 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 9999,
     backgroundColor: Colors.cardBorder,
-    height: 8,
   },
   progressbarInner: {
     backgroundColor: Colors.accent.primary,

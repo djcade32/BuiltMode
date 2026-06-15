@@ -1,4 +1,4 @@
-import { Redirect, Tabs } from "expo-router";
+import { Redirect, Tabs, useRouter } from "expo-router";
 import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
@@ -8,6 +8,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   const { user, isUserHydrated } = useUserStore();
+  const router = useRouter();
 
   if (!isUserHydrated) {
     return null;
@@ -45,6 +46,12 @@ export default function TabLayout() {
           title: "Feed",
           tabBarIcon: ({ color }) => <MaterialIcons name="rss-feed" size={24} color={color} />,
         }}
+        listeners={{
+          tabPress: (event) => {
+            event.preventDefault();
+            router.navigate("/(protected)/(tabs)/(feed)/feed");
+          },
+        }}
       />
 
       <Tabs.Screen
@@ -52,6 +59,12 @@ export default function TabLayout() {
         options={{
           title: "Log",
           tabBarIcon: ({ color }) => <MaterialIcons name="add-circle" size={24} color={color} />,
+        }}
+        listeners={{
+          tabPress: (event) => {
+            event.preventDefault();
+            router.navigate("/(protected)/(tabs)/(workout)/log");
+          },
         }}
       />
       <Tabs.Screen

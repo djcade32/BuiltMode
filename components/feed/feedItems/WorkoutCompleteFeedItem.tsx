@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
+import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
 import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
@@ -6,14 +7,17 @@ import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { useRouter } from "expo-router";
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import WeeklyProgressBar from "./WeeklyProgressBar";
 
 dayjs.extend(relativeTime);
 
 const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
+  const router = useRouter();
   const {
+    actorUid,
     actorAvatarUrl,
     actorDisplayName,
     actorUsername,
@@ -29,6 +33,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
 
   const createdAtDayjs = dayjs(formatFirestoreDateTimeISO(completedAt));
   const targetMet = weeklyProgress === weeklyTargetDays && !isPractice;
+  const navigateToFriendProfile = (uid: string) => router.push(`/(friendProfile)/${uid}`);
 
   return (
     <View
@@ -44,15 +49,11 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
         style={{ gap: 3, borderBottomWidth: 1, borderBottomColor: Colors.cardBorder, padding: 20 }}
       >
         <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-          <View style={styles.avatarContainer}>
-            {actorAvatarUrl ? (
-              <Image src={actorAvatarUrl} height={46} width={46} />
-            ) : (
-              <ThemedText style={styles.avatarText}>
-                {actorDisplayName?.[0]?.toUpperCase() ?? "?"}
-              </ThemedText>
-            )}
-          </View>
+          <Avatar
+            avatarUrl={actorAvatarUrl}
+            displayName={actorDisplayName}
+            onPress={() => navigateToFriendProfile(actorUid)}
+          />
           <View style={{ flex: 1 }}>
             <View
               style={{
@@ -61,9 +62,11 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
                 alignItems: "center",
               }}
             >
-              <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
-                {actorDisplayName}
-              </ThemedText>
+              <TouchableOpacity onPress={() => navigateToFriendProfile(actorUid)}>
+                <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
+                  {actorDisplayName}
+                </ThemedText>
+              </TouchableOpacity>
               {(targetMet || isPractice) && (
                 <View
                   style={[
@@ -86,10 +89,14 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
                 </View>
               )}
             </View>
-
-            <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
-              @{actorUsername} · {createdAtDayjs.fromNow()}
-            </ThemedText>
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity onPress={() => navigateToFriendProfile(actorUid)}>
+                <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
+                  @{actorUsername}
+                </ThemedText>
+              </TouchableOpacity>
+              <ThemedText style={styles.username}> · {createdAtDayjs.fromNow()}</ThemedText>
+            </View>
           </View>
         </View>
         <View style={{ marginTop: 15 }}>

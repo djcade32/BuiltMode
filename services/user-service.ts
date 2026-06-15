@@ -3,12 +3,14 @@ import {
   CreateUserProfileRequest,
   CreateUserProfileResponse,
   Goal,
+  LeaderboardEntry,
   User,
   UserMonthAggregate,
   UserStats,
   UserWeekAggregate,
   WeeklyTargetDays,
-} from "@/packages/shared/src";
+} from "@builtmode/shared";
+
 import { httpsCallable } from "firebase/functions";
 
 import { doc, getDoc, Timestamp } from "firebase/firestore";
@@ -173,6 +175,42 @@ export const fetchUserStats = async ({
     }
 
     return snapshot.data() as UserStats;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+export const fetchUsersHomeTimezone = async ({
+  params,
+}: {
+  params: { uid: string };
+}): Promise<string | null> => {
+  try {
+    const fetchUsersHomeTimezoneFunction = httpsCallable<{ uid: string }, string>(
+      functions,
+      "fetchUsersHomeTimezone",
+    );
+    const response = await fetchUsersHomeTimezoneFunction({ uid: params.uid });
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+export const fetchUserLeaderboardEntry = async ({
+  params,
+}: {
+  params: { uid: string };
+}): Promise<LeaderboardEntry | null> => {
+  const { uid } = params;
+  try {
+    const leaderboardEntriesDoc = doc(db, `leaderboardEntries/${uid}`);
+    const snapshot = await getDoc(leaderboardEntriesDoc);
+    if (!snapshot.exists()) {
+      return null;
+    }
+
+    return snapshot.data() as LeaderboardEntry;
   } catch (error: any) {
     throw error;
   }

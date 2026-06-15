@@ -1,8 +1,16 @@
+import { UserWeekAggregate } from "@builtmode/shared/types/user";
 import dayjs from "dayjs";
 import { Transaction } from "firebase-admin/firestore";
 import { db } from "../lib/firebaseAdmin.js";
-import { DayMarker, ModeScoreBreakdown, ModeScoreInput, Workout } from "../types/workout.js";
+import {
+  DayMarker,
+  ModeScoreBreakdown,
+  ModeScoreInput,
+  WeeklyAdherenceResult,
+  Workout,
+} from "../types/workout.js";
 import { clamp, roundToNearestInt } from "../utils/math.js";
+import { getLastFiveWeekIds } from "../utils/weekId.js";
 
 export const createCompleteWorkout = (tx: Transaction, workout: Workout) => {
   const ref = db.collection("workouts").doc(workout.sessionId);
@@ -59,6 +67,90 @@ export const calculateModeScore = (input: ModeScoreInput): ModeScoreBreakdown =>
     activeDaysLast30: numOfdaysWorkedout,
   };
 };
+
+export const getLastFourWeekAggregates = async (
+  tx: Transaction,
+  uid: string,
+  weekId: string,
+): Promise<UserWeekAggregate[]> => {
+  if (!uid.trim()) {
+    throw new Error("uid is required.");
+  }
+
+  let weekIds = getLastFiveWeekIds(weekId);
+  //Omit current weekId
+  weekIds = weekIds.filter((id) => id !== weekId);
+  const weekRefs = weekIds.map((id) => {
+    const aggregateId = `${uid}_${id}`;
+
+    return db.collection("userWeekAggregates").doc(aggregateId);
+  });
+
+  const snapshots = await tx.getAll(...weekRefs);
+
+  return snapshots.flatMap((snapshot, index) => {
+    if (!snapshot.exists) {
+      return [];
+    }
+
+    const data = snapshot.data();
+
+    if (!data) {
+      return [];
+    }
+
+    return [
+      {
+        ...data,
+        weekId: weekIds[index],
+      } as UserWeekAggregate,
+    ];
+  });
+};
+
+export function getLastFourWeeksAdherenceRate(
+  weekRecords: UserWeekAggregate[],
+): WeeklyAdherenceResult {
+  const eligibleWeeks = weekRecords
+    .filter((week) => {
+      return (
+        week.metTargetThisWeek &&
+        !week.isOfficialWeek &&
+        !week.isDeloadWeek &&
+        week.weeklyTargetDays > 0
+      );
+    })
+    .sort((a, b) => b.weekId.localeCompare(a.weekId))
+    .slice(0, 4);
+
+  const normalizedWeeks = eligibleWeeks.map((week) => {
+    // Extra workout days do not increase adherence above 100%.
+    const completedDays = Math.min(week.activeDaysThisWeek, week.weeklyTargetDays);
+
+    const adherenceRate = Math.round((completedDays / week.weeklyTargetDays) * 100);
+
+    return {
+      weekId: week.weekId,
+      completedDays,
+      targetDays: week.weeklyTargetDays,
+      adherenceRate,
+    };
+  });
+
+  const completedDays = normalizedWeeks.reduce((total, week) => total + week.completedDays, 0);
+
+  const targetDays = normalizedWeeks.reduce((total, week) => total + week.targetDays, 0);
+
+  const adherenceRate = targetDays === 0 ? 0 : Math.round((completedDays / targetDays) * 100);
+
+  return {
+    adherenceRate,
+    completedDays,
+    targetDays,
+    weeksIncluded: normalizedWeeks.length,
+    weeks: normalizedWeeks,
+  };
+}
 // Helper functions
 
 export const getLast30DayDateKeys = (todayLocalDateKey: string): Set<string> => {

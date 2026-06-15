@@ -8,9 +8,8 @@ import { Workout } from "@/functions/src/types/workout";
 import { useUserWorkoutsInfinite } from "@/hooks/workouts/useUserWorkoutsInfinite";
 import { getFirestoreMonthSectionLabel } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
-import { useUserStore } from "@/stores/user-store";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -30,17 +29,17 @@ type WorkoutHistorySection = {
 };
 
 const ViewHistory = () => {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useUserStore();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: RelativePathString }>();
+
   const [query, setQuery] = useState("");
   const [isMonthJumpModalVisible, setIsMonthJumpModalVisible] = useState(false);
 
   const sectionListRef = useRef<SectionList<Workout, WorkoutHistorySection>>(null);
 
-  const uid = user?.uid ?? "";
-
   const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useUserWorkoutsInfinite(uid, 20);
+    useUserWorkoutsInfinite(id, 20);
 
   const workouts = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
@@ -93,7 +92,16 @@ const ViewHistory = () => {
     setIsMonthJumpModalVisible(false);
   };
 
-  if (!uid) return null;
+  const handleBack = () => {
+    if (returnTo) {
+      router.replace(returnTo);
+      return;
+    }
+
+    router.back();
+  };
+
+  if (!id) return null;
 
   return (
     <KeyboardAvoidingView
@@ -102,7 +110,7 @@ const ViewHistory = () => {
     >
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.headerContainer}>
-          <Pressable onPress={() => router.back()} hitSlop={15}>
+          <Pressable onPress={handleBack} hitSlop={15}>
             <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
           </Pressable>
           <ThemedText style={styles.headerTitle}>WORKOUT HISTORY</ThemedText>
@@ -156,7 +164,7 @@ const ViewHistory = () => {
               <WorkoutHistoryCard
                 workout={item}
                 onPress={(workout) => {
-                  router.push(`/workoutHistoryDetails/${workout.sessionId}`);
+                  router.push(`/(workoutHistoryDetails)/${workout.sessionId}`);
                 }}
               />
             )}
