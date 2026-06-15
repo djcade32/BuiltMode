@@ -162,10 +162,15 @@ export async function handleCompleteWorkout(
       ? Math.max(streakWeeks, userStats.data()?.bestWeekStreak ?? 0)
       : 0;
     const totalWorkoutsLogged = userStatsExists ? userStats.data()?.totalWorkoutsLogged + 1 : 1;
-    const totalTargetsMet =
-      userStatsExists && metTargetThisWeek && isOfficialWeek
-        ? userStats.data()?.totalTargetsMet + 1
-        : 0;
+    const previousTotalTargetsMet = userStatsExists ? (userStats.data()?.totalTargetsMet ?? 0) : 0;
+    const newlyMetTargetThisWeek =
+      isOfficialWeek &&
+      metTargetThisWeek &&
+      !(weekAggregateExists && weekAggregate.get("metTargetThisWeek"));
+
+    const totalTargetsMet = newlyMetTargetThisWeek
+      ? previousTotalTargetsMet + 1
+      : previousTotalTargetsMet;
 
     const workoutDoc: Workout = {
       sessionId,

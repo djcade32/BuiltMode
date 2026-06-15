@@ -98,6 +98,7 @@ export async function handleFetchingUserHomeTimezone(userId: string): Promise<st
   return await db.runTransaction(async (tx) => {
     const user = await getUserByUid(tx, userId);
     if (!user.exists) return null;
-    return user.data()?.homeTimezone;
+    const homeTimezone = user.data()?.homeTimezone;
+    return typeof homeTimezone === "string" ? homeTimezone : null;
   });
 }

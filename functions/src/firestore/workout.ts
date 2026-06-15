@@ -113,12 +113,7 @@ export function getLastFourWeeksAdherenceRate(
 ): WeeklyAdherenceResult {
   const eligibleWeeks = weekRecords
     .filter((week) => {
-      return (
-        week.metTargetThisWeek &&
-        !week.isOfficialWeek &&
-        !week.isDeloadWeek &&
-        week.weeklyTargetDays > 0
-      );
+      return week.isOfficialWeek && !week.isDeloadWeek && week.weeklyTargetDays > 0;
     })
     .sort((a, b) => b.weekId.localeCompare(a.weekId))
     .slice(0, 4);

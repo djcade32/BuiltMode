@@ -203,11 +203,11 @@ export const fetchUsersHomeTimezone = onCall(async (request: CallableRequest<{ u
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
 
-  const { uid } = request.data;
-
-  if (!uid || typeof uid !== "string") {
+  const data = request.data;
+  if (!data || typeof data.uid !== "string" || !data.uid.trim()) {
     throw new HttpsError("invalid-argument", "Invalid fetchUsersHomeTimezone payload.");
   }
+  const uid = data.uid.trim();
 
   return await handleFetchingUserHomeTimezone(uid);
 });

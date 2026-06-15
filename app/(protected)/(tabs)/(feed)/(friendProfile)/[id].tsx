@@ -135,8 +135,6 @@ const FriendProfile = () => {
     isLoadingUserWeekAggregate ||
     isLoadingRecentWorkouts;
 
-  if (!userInfo) return null;
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
@@ -155,6 +153,10 @@ const FriendProfile = () => {
       {isLoadingData ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator color={Colors.icon} />
+        </View>
+      ) : !userInfo ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ThemedText style={{ color: Colors.icon, fontSize: 12 }}>Profile unavailable</ThemedText>
         </View>
       ) : (
         <ScrollView>
