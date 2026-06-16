@@ -15,14 +15,7 @@ import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome6, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Link, RelativePathString, useRouter } from "expo-router";
 import React, { useMemo } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -144,9 +137,9 @@ const Log = () => {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <Image source={require("@/assets/images/full_logo.png")} style={styles.logo} />
-      </View>
+      </View> */}
       <ScrollView
         contentContainerStyle={{ paddingBottom: 15 }}
         showsVerticalScrollIndicator={false}
@@ -337,7 +330,7 @@ const styles = StyleSheet.create({
   logo: {
     height: 20,
     width: 120,
-    objectFit: "contain",
+    resizeMode: "contain",
   },
   titleContainer: {
     paddingTop: 10,

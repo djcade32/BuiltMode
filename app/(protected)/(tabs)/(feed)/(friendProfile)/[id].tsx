@@ -144,7 +144,7 @@ const FriendProfile = () => {
         </TouchableOpacity>
 
         <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
-          <ThemedText style={styles.headerText}>FRIEND PROFILE</ThemedText>
+          <ThemedText style={styles.headerText}>{userInfo?.usernameLower ?? ""}</ThemedText>
         </View>
 
         {/* BUTTON PLACEHOLDER */}

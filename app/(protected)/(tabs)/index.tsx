@@ -248,6 +248,6 @@ const styles = StyleSheet.create({
   logo: {
     height: 20,
     width: 120,
-    objectFit: "contain",
+    resizeMode: "contain",
   },
 });
