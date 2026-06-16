@@ -11,7 +11,12 @@ import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { getWorkoutBySessionId } from "@/services/workout-service";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
-import { FontAwesome, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
+import {
+  FontAwesome,
+  FontAwesome6,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
@@ -19,7 +24,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Pressable,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -169,12 +173,14 @@ const WorkoutHistoryDetails = () => {
           }}
         />
       )}
-      <View style={styles.headerContainer}>
-        <Pressable testID="workout-details-back-button" onPress={handleBack} hitSlop={15}>
-          <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
-        </Pressable>
-        <ThemedText style={styles.headerTitle}>WORKOUT</ThemedText>
-        <TouchableOpacity style={styles.moreButtonContainer}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.iconContainer} onPress={handleBack}>
+          <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
+        </TouchableOpacity>
+
+        <ThemedText style={styles.headerText}>WORKOUT</ThemedText>
+        <TouchableOpacity style={styles.iconContainer}>
           <DropdownMenu
             onOpen={() => setIsDropdownOpened(true)}
             onClose={() => setIsDropdownOpened(false)}
@@ -282,16 +288,30 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.primary,
     flex: 1,
   },
-  headerContainer: {
-    paddingHorizontal: 24,
+  header: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
     justifyContent: "space-between",
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "#15181c49",
+    alignItems: "center",
+    height: 65,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: Typography.family.primary.bold,
+  headerText: {
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: 0.4,
+    fontFamily: Typography.family.primary.semibold,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    backgroundColor: Colors.background.secondary,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+    borderRadius: Border.radius.md,
+    justifyContent: "center",
+    alignItems: "center",
   },
   workoutInfoContainer: {
     paddingHorizontal: 24,
@@ -339,14 +359,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
     flex: 1,
-  },
-  moreButtonContainer: {
-    backgroundColor: Colors.background.secondary,
-    borderRadius: Border.radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    height: 32,
-    width: 32,
   },
 
   // Dropdown

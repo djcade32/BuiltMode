@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Image, ScrollView, StyleSheet, View } from "react-native";
 
 import ModeScoreWidget from "@/components/home/ModeScoreWidget";
 import PerformanceSnapshotWidget from "@/components/home/PerformanceSnapshotWidget";
@@ -40,19 +40,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
       <View style={styles.header}>
-        <ThemedText style={styles.builtmodeText}>
-          BUILT
-          <ThemedText
-            style={[
-              styles.builtmodeText,
-              {
-                color: Colors.accent.primary,
-              },
-            ]}
-          >
-            MODE
-          </ThemedText>
-        </ThemedText>
+        <Image source={require("@/assets/images/full_logo.png")} style={styles.logo} />
       </View>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 15 }}
@@ -207,10 +195,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: 65,
   },
-  builtmodeText: {
-    fontSize: 20,
-    fontFamily: Typography.family.tertiary.regular,
-  },
   weekStreakNumber: {
     fontFamily: Typography.family.tertiary.regular,
     fontSize: 120,
@@ -260,5 +244,10 @@ const styles = StyleSheet.create({
     borderRadius: Border.radius.md,
     justifyContent: "center",
     alignItems: "center",
+  },
+  logo: {
+    height: 20,
+    width: 120,
+    objectFit: "contain",
   },
 });

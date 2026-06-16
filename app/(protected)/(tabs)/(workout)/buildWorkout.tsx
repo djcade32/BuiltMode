@@ -18,7 +18,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -249,14 +248,17 @@ const BuildWorkout = () => {
         />
       )}
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.headerContainer}>
-          <Pressable onPress={handleBackPress} hitSlop={15}>
-            <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
-          </Pressable>
-          <ThemedText style={styles.headerTitle}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.iconContainer} onPress={handleBackPress}>
+            <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
+          </TouchableOpacity>
+
+          <ThemedText style={styles.headerText}>
             {workoutName ? workoutName : `${firstLetterToUpperCase(workoutType)} Workout`}
           </ThemedText>
-          <TouchableOpacity style={styles.moreButtonContainer}>
+
+          <TouchableOpacity style={styles.iconContainer}>
             <DropdownMenu
               onClose={() => setIsDropdownOpened((prev) => !prev)}
               renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
@@ -264,69 +266,70 @@ const BuildWorkout = () => {
             />
           </TouchableOpacity>
         </View>
-
-        <View style={{ marginTop: 24, gap: 5 }}>
-          <ThemedText style={styles.workoutTypeLabel}>WORKOUT TYPE</ThemedText>
-          <Switch
-            options={OPTIONS.map((option) => option.toLocaleUpperCase())}
-            onChange={(value) => setWorkoutType(value.toLocaleLowerCase() as WorkoutType)}
-            defaultIndex={getWorkoutType()}
-          />
-        </View>
-
-        <View style={{ flex: 1, marginTop: 15, marginBottom: 10 }}>
-          {exercises.length ? (
-            <DraggableFlatList
-              ref={listRef}
-              data={exercises}
-              onDragEnd={({ data }) => handleDragEnd(data)}
-              keyExtractor={(item) => item.id}
-              renderItem={renderItem}
-              contentContainerStyle={{ gap: 16 }}
-              showsVerticalScrollIndicator={false}
-              containerStyle={{ flex: 1 }}
-              onContentSizeChange={() => {
-                if (addedExerciseOrSet) {
-                  listRef.current?.scrollToEnd({ animated: true });
-                  setAddedExerciseOrSet(false);
-                }
-              }}
-              keyboardShouldPersistTaps="handled"
+        <View style={{ paddingHorizontal: 24, flex: 1 }}>
+          <View style={{ marginTop: 24, gap: 5 }}>
+            <ThemedText style={styles.workoutTypeLabel}>WORKOUT TYPE</ThemedText>
+            <Switch
+              options={OPTIONS.map((option) => option.toLocaleUpperCase())}
+              onChange={(value) => setWorkoutType(value.toLocaleLowerCase() as WorkoutType)}
+              defaultIndex={getWorkoutType()}
             />
-          ) : (
-            noExercisesView
-          )}
-        </View>
+          </View>
 
-        <View style={{ gap: 12, paddingBottom: 10 }}>
-          <TouchableOpacity
-            style={styles.addExerciseButton}
-            onPress={() => setIsAddExerciseSheetOpen(true)}
-          >
-            <Entypo name="plus" size={18} color={Colors.icon} />
-            <ThemedText style={styles.addExerciseButtonText}>ADD EXERCISE</ThemedText>
-          </TouchableOpacity>
-          <ThemedButton
-            title="COMPLETE BUILD"
-            fontSize={Typography.size.sm}
-            onPress={handleCompleteBuild}
-            disabled={!exercises[0]?.sets.length}
+          <View style={{ flex: 1, marginTop: 15, marginBottom: 10 }}>
+            {exercises.length ? (
+              <DraggableFlatList
+                ref={listRef}
+                data={exercises}
+                onDragEnd={({ data }) => handleDragEnd(data)}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                contentContainerStyle={{ gap: 16 }}
+                showsVerticalScrollIndicator={false}
+                containerStyle={{ flex: 1 }}
+                onContentSizeChange={() => {
+                  if (addedExerciseOrSet) {
+                    listRef.current?.scrollToEnd({ animated: true });
+                    setAddedExerciseOrSet(false);
+                  }
+                }}
+                keyboardShouldPersistTaps="handled"
+              />
+            ) : (
+              noExercisesView
+            )}
+          </View>
+
+          <View style={{ gap: 12, paddingBottom: 10 }}>
+            <TouchableOpacity
+              style={styles.addExerciseButton}
+              onPress={() => setIsAddExerciseSheetOpen(true)}
+            >
+              <Entypo name="plus" size={18} color={Colors.icon} />
+              <ThemedText style={styles.addExerciseButtonText}>ADD EXERCISE</ThemedText>
+            </TouchableOpacity>
+            <ThemedButton
+              title="COMPLETE BUILD"
+              fontSize={Typography.size.sm}
+              onPress={handleCompleteBuild}
+              disabled={!exercises[0]?.sets.length}
+            />
+          </View>
+
+          <AddExerciseSheet
+            visible={isAddExerciseSheetOpen}
+            onClose={() => setIsAddExerciseSheetOpen(false)}
+            onSelect={handleAddExercise}
+          />
+          <WorkoutNameSheet
+            visible={isWorkoutNameSheetVisible}
+            initialValue={workoutName}
+            onClose={() => setIsWorkoutNameSheetVisible(false)}
+            onSave={(name) => {
+              setWorkoutName(name);
+            }}
           />
         </View>
-
-        <AddExerciseSheet
-          visible={isAddExerciseSheetOpen}
-          onClose={() => setIsAddExerciseSheetOpen(false)}
-          onSelect={handleAddExercise}
-        />
-        <WorkoutNameSheet
-          visible={isWorkoutNameSheetVisible}
-          initialValue={workoutName}
-          onClose={() => setIsWorkoutNameSheetVisible(false)}
-          onSave={(name) => {
-            setWorkoutName(name);
-          }}
-        />
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -336,7 +339,7 @@ export default BuildWorkout;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 24,
+    // paddingHorizontal: 24,
     backgroundColor: Colors.background.primary,
     flex: 1,
   },
@@ -389,24 +392,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Typography.family.tertiary.regular,
   },
-
-  headerContainer: {
+  header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: Typography.family.primary.bold,
-  },
-
-  moreButtonContainer: {
-    backgroundColor: Colors.background.secondary,
-    borderRadius: Border.radius.md,
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "#15181c49",
     alignItems: "center",
+    height: 65,
+  },
+  headerText: {
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: 0.4,
+    fontFamily: Typography.family.primary.semibold,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    backgroundColor: Colors.background.secondary,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+    borderRadius: Border.radius.md,
     justifyContent: "center",
-    height: 32,
-    width: 32,
+    alignItems: "center",
   },
 });

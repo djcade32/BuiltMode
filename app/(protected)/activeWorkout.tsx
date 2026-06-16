@@ -166,7 +166,7 @@ const ActiveWorkout = () => {
               <Animated.View style={[styles.lockedInCircle, animatedStyle]} />
               <ThemedText style={styles.lockedInText}>ACTIVE MODE</ThemedText>
             </View>
-            <TouchableOpacity style={styles.moreButtonContainer}>
+            <TouchableOpacity style={styles.iconContainer}>
               <DropdownMenu
                 onClose={() => setIsDropdownOpened((prev) => !prev)}
                 renderTriggerItem={
@@ -282,13 +282,15 @@ const styles = StyleSheet.create({
     color: Colors.accent.primary,
     letterSpacing: 1.8,
   },
-  moreButtonContainer: {
+  iconContainer: {
+    width: 40,
+    height: 40,
     backgroundColor: Colors.background.secondary,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
     borderRadius: Border.radius.md,
-    alignItems: "center",
     justifyContent: "center",
-    height: 32,
-    width: 32,
+    alignItems: "center",
   },
   timer: {
     fontFamily: Typography.family.secondary.semibold,
