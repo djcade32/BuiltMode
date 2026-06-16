@@ -88,7 +88,9 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
   const handleClose = () => {
     isClosingRef.current = true;
     setQuery("");
-
+    setNewExerciseInput("");
+    setNewExerciseWorkoutType(SECTION_TITLES[0]);
+    setNewExerciseMetric(METRICS[0]);
     setShowAddExerciseView(false);
     onClose();
   };
@@ -264,9 +266,12 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
                     <ThemedButton
                       title="ADD EXERCISE"
                       onPress={() => {
+                        const trimmedName = newExerciseInput.trim();
+                        if (!trimmedName) return;
+
                         handleSelect(
                           {
-                            name: newExerciseInput,
+                            name: trimmedName,
                             type: newExerciseWorkoutType.toLocaleLowerCase() as ExerciseType,
                             metricType: getExerciseMetric(newExerciseMetric),
                           },
