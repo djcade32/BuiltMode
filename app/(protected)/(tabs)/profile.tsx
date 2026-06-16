@@ -10,7 +10,6 @@ import { fetchUserStats, fetchUserWeekAggregate } from "@/services/user-service"
 import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -21,8 +20,6 @@ const profile = () => {
   const uid = user?.uid ?? "";
   const usersHomeTimezone = user?.homeTimezone;
   const router = useRouter();
-
-  const queryClient = useQueryClient();
 
   const { data: userStats, isLoading: isLoadingUserStats } = useQuery({
     queryKey: ["user-stats", uid],
@@ -69,7 +66,7 @@ const profile = () => {
       currentStreakWeek: userWeekAggregate?.streakWeeks || userStats?.currentWeekStreak || 0,
       isPracticeWeek: user?.isPracticeWeek || !userWeekAggregate?.isOfficialWeek || false,
     };
-  }, [userWeekAggregate, userStats]);
+  }, [userWeekAggregate, userStats, user]);
 
   const recentWorkoutsData = useMemo(() => {
     return (recentWorkouts?.pages.flatMap((page) => page.items) ?? []).slice(0, 3);
@@ -85,7 +82,9 @@ const profile = () => {
         <View style={{ width: 40, height: 40 }} />
 
         <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
-          <ThemedText style={styles.headerText}>{user?.username.toLocaleLowerCase()}</ThemedText>
+          <ThemedText style={styles.headerText}>
+            {user?.username?.toLocaleLowerCase() ?? ""}
+          </ThemedText>
         </View>
 
         {/* BUTTON PLACEHOLDER */}
@@ -115,7 +114,7 @@ const profile = () => {
               <View style={{ gap: 3, flex: 1, justifyContent: "center", alignItems: "center" }}>
                 <ThemedText style={styles.displayName}>{user?.displayName}</ThemedText>
                 <ThemedText style={styles.username}>
-                  @{user?.username.toLocaleLowerCase()}
+                  @{user?.username?.toLocaleLowerCase() ?? ""}
                 </ThemedText>
               </View>
               <View style={{ flexDirection: "row", gap: 10 }}>
