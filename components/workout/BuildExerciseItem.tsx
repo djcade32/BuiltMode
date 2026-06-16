@@ -39,14 +39,14 @@ const BuildExerciseItem = ({
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
       {
-        onSelect: () => onDeleteExercise?.(exercise),
-        text: "DELETE",
-        icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
-      },
-      {
         onSelect: () => setIsMetricSheetVisible(true),
         text: "CHANGE METRIC",
         icon: <FontAwesome6 name="ruler" size={10} color={Colors.icon} />,
+      },
+      {
+        onSelect: () => onDeleteExercise?.(exercise),
+        text: "DELETE",
+        icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
       },
     ],
     [onDeleteExercise, exercise],
