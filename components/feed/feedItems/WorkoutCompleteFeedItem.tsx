@@ -3,6 +3,7 @@ import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
 import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
+import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
@@ -15,6 +16,8 @@ import WeeklyProgressBar from "./WeeklyProgressBar";
 dayjs.extend(relativeTime);
 
 const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
+  const { user } = useUserStore();
+  const currentUserUid = user?.uid ?? "";
   const router = useRouter();
   const {
     actorUid,
@@ -36,7 +39,8 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
 
   const createdAtDayjs = dayjs(formatFirestoreDateTimeISO(completedAt));
   const targetMet = weeklyProgress === weeklyTargetDays && !isPractice;
-  const navigateToFriendProfile = (uid: string) => router.push(`/(friendProfile)/${uid}`);
+  const navigateToFriendProfile = (uid: string) =>
+    currentUserUid === uid ? router.push("/profile") : router.push(`/(friendProfile)/${uid}`);
 
   return (
     <View
