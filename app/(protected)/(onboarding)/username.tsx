@@ -102,6 +102,7 @@ const username = () => {
             </View>
             <View style={{ gap: 12, marginTop: 65 }}>
               <FormInput
+                autoCapitalize="none"
                 name="username"
                 control={control}
                 errors={errors.username}

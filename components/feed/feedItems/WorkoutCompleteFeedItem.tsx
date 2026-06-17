@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
-import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
+import { formatFirestoreDateTimeISO, formatFirestoreTimestamp } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
 import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
@@ -37,10 +37,15 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
 
   const hasWorkoutId = Boolean(workoutId);
 
-  const createdAtDayjs = dayjs(formatFirestoreDateTimeISO(completedAt));
+  const createdAt =
+    Math.abs(dayjs(formatFirestoreDateTimeISO(completedAt)).diff(new Date(), "days")) >= 1
+      ? formatFirestoreTimestamp(completedAt)
+      : dayjs(formatFirestoreDateTimeISO(completedAt)).fromNow();
   const targetMet = weeklyProgress === weeklyTargetDays && !isPractice;
   const navigateToFriendProfile = (uid: string) =>
-    currentUserUid === uid ? router.push("/profile") : router.push(`/(friendProfile)/${uid}`);
+    currentUserUid === uid
+      ? router.push("/(profile)/profile")
+      : router.push(`/(friendProfile)/${uid}`);
 
   return (
     <View
@@ -99,10 +104,10 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
             <View style={{ flexDirection: "row" }}>
               <TouchableOpacity onPress={() => navigateToFriendProfile(actorUid)}>
                 <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
-                  @{actorUsername}
+                  @{actorUsername.toLocaleLowerCase()}
                 </ThemedText>
               </TouchableOpacity>
-              <ThemedText style={styles.username}> · {createdAtDayjs.fromNow()}</ThemedText>
+              <ThemedText style={styles.username}> · {createdAt}</ThemedText>
             </View>
           </View>
         </View>

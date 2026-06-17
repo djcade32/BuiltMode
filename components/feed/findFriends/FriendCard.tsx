@@ -152,7 +152,7 @@ const FriendCard = ({
             {displayName}
           </ThemedText>
           <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
-            @{username}
+            @{username.toLocaleLowerCase()}
           </ThemedText>
         </TouchableOpacity>
       </View>

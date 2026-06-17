@@ -2,6 +2,7 @@ import { Goal, Metrics } from "@builtmode/shared/types/user";
 import { Timestamp } from "firebase-admin/firestore";
 
 export type WeeklyTargetDays = 2 | 3 | 4 | 5 | 6 | 7;
+export type OfficialWeekStatus = "practice" | "official";
 
 export type UserDoc = {
   uid: string;
@@ -18,7 +19,10 @@ export type UserDoc = {
   homeTimezone: string;
   officialStartWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
-
+  officialStartAt: Timestamp;
+  officialWeekStatus: OfficialWeekStatus;
+  officialStartedAt: Timestamp | null;
+  currentWeekId: string;
   // Meta
   createdAt: Timestamp;
   updatedAt: Timestamp;

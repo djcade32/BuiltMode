@@ -112,8 +112,10 @@ const Signup = () => {
                 rules={{
                   required: true,
                 }}
+                autoCapitalize="words"
               />
               <FormInput
+                autoCapitalize="none"
                 name="email"
                 control={control}
                 errors={errors.email}

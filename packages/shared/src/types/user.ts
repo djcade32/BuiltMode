@@ -95,6 +95,8 @@ export type CreateUserProfileRequest = {
   displayName: string;
 };
 
+export type OfficialWeekStatus = "practice" | "official";
+
 export type CreateUserProfileResponse = {
   uid: string;
   username: string;
@@ -104,6 +106,9 @@ export type CreateUserProfileResponse = {
   avatarUrl?: string;
   homeTimezone: HomeTimezone;
   officialStartWeekId: string;
+  officialStartAt: firestoreTimestamp;
+  officialWeekStatus: OfficialWeekStatus;
+  currentWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
   isPracticeWeek: boolean;
 };

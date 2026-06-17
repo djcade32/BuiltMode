@@ -9,6 +9,8 @@ export const goalSchema = z.union([
   z.literal("GENERAL DISCIPLINE"),
 ]);
 
+export const officialWeekSchema = z.union([z.literal("practice"), z.literal("official")]);
+
 export const metricsSchema = z
   .object({
     height: z.number().nonnegative().max(131), // in inches
@@ -72,6 +74,9 @@ export const createUserProfileResponseSchema = z.object({
   avatarUrl: avatarUrlSchema,
   homeTimezone: homeTimezoneSchema,
   officialStartWeekId: z.string().min(1),
+  officialStartAt: firestoreTimestampSchema,
+  officialWeekStatus: officialWeekSchema,
+  currentWeekId: z.string().min(1),
   weeklyTargetDays: weeklyTargetDaysSchema,
   isPracticeWeek: z.boolean(),
 });
@@ -129,6 +134,7 @@ export const userMonthAggregateSchema = z.object({
 
 export type WeeklyTargetDays = z.infer<typeof weeklyTargetDaysSchema>;
 export type Goal = z.infer<typeof goalSchema>;
+export type OfficialWeek = z.infer<typeof officialWeekSchema>;
 export type Metrics = z.infer<typeof metricsSchema>;
 export type HomeTimezone = z.infer<typeof homeTimezoneSchema>;
 export type CreateUserProfileRequest = z.infer<typeof createUserProfileRequestSchema>;

@@ -2,6 +2,9 @@ import {
   CreateUserProfileRequest,
   CreateUserProfileResponse,
 } from "@builtmode/shared/schemas/user";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone.js";
+import utc from "dayjs/plugin/utc.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
 import { createInitialEntry } from "../firestore/leaderboard.js";
@@ -16,6 +19,9 @@ import { LeaderboardEntry } from "../types/leaderboard.js";
 import { UserDoc } from "../types/user.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "../utils/weekId.js";
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 /** 
   Create new user profile.
 
@@ -29,12 +35,26 @@ export async function handleCreateUserProfile(
   user: CreateUserProfileRequest,
 ): Promise<CreateUserProfileResponse> {
   const { homeTimezone, username, displayName, avatarUrl, weeklyTargetDays, goal, metrics } = user;
-  const usernameLower = user.username.trim().toLowerCase();
+
+  const usernameLower = username.trim().toLowerCase();
   const now = Timestamp.now();
+
   const currentWeekId = handleGetWeekId(now.toDate(), homeTimezone);
   const officialStartWeekId = handleGetNextOfficialStartWeekId(now.toDate(), homeTimezone);
 
   const isPracticeWeek = currentWeekId < officialStartWeekId;
+
+  /**
+   * This should represent the exact UTC timestamp for:
+   * officialStartWeekId at Monday 4:00 AM in the user's homeTimezone.
+   */
+  const officialStartAt = handleGetOfficialStartAt(officialStartWeekId, homeTimezone);
+
+  const officialWeekStatus: UserDoc["officialWeekStatus"] = isPracticeWeek
+    ? "practice"
+    : "official";
+
+  const officialStartedAt = isPracticeWeek ? null : now;
 
   await db.runTransaction(async (tx) => {
     const existingUser = await getUserByUid(tx, uid);
@@ -55,9 +75,23 @@ export async function handleCreateUserProfile(
       goal,
       metrics: metrics ?? null,
       avatarUrl: avatarUrl ?? "",
-      homeTimezone: homeTimezone,
+      homeTimezone,
+
+      weeklyTargetDays,
+      currentWeekId,
       officialStartWeekId,
-      weeklyTargetDays: weeklyTargetDays,
+      officialStartAt,
+      officialWeekStatus,
+
+      /**
+       * If the user signs up exactly inside their official week,
+       * they are official immediately.
+       *
+       * If they are still in practice week, this stays null until the cron job
+       * promotes them.
+       */
+      officialStartedAt,
+
       createdAt: now,
       updatedAt: now,
       homeTimezoneSetAt: now,
@@ -87,9 +121,12 @@ export async function handleCreateUserProfile(
     avatarUrl: avatarUrl ?? "",
     goal,
     metrics: metrics ?? undefined,
-    homeTimezone: homeTimezone,
+    homeTimezone,
+    currentWeekId,
     officialStartWeekId,
-    weeklyTargetDays: weeklyTargetDays,
+    officialStartAt,
+    officialWeekStatus,
+    weeklyTargetDays,
     isPracticeWeek,
   };
 }
@@ -101,4 +138,52 @@ export async function handleFetchingUserHomeTimezone(userId: string): Promise<st
     const homeTimezone = user.data()?.homeTimezone;
     return typeof homeTimezone === "string" ? homeTimezone : null;
   });
+}
+
+export function handleGetOfficialStartAt(
+  officialStartWeekId: string,
+  homeTimezone: string,
+): Timestamp {
+  if (!officialStartWeekId.trim()) {
+    throw new Error("officialStartWeekId is required.");
+  }
+
+  if (!homeTimezone.trim()) {
+    throw new Error("homeTimezone is required.");
+  }
+
+  const isValidWeekId = /^\d{4}-\d{2}-\d{2}$/.test(officialStartWeekId);
+
+  if (!isValidWeekId) {
+    throw new Error(`Invalid officialStartWeekId: ${officialStartWeekId}. Expected YYYY-MM-DD.`);
+  }
+
+  /**
+   * officialStartWeekId represents the local Monday date.
+   * BuiltMode official weeks begin Monday at 4:00 AM
+   * in the user's home timezone.
+   *
+   * Example:
+   * officialStartWeekId = "2026-06-08"
+   * homeTimezone = "America/New_York"
+   *
+   * Local:
+   * 2026-06-08 04:00:00 America/New_York
+   *
+   * Stored:
+   * Firestore Timestamp in UTC
+   */
+  const officialStartLocal = dayjs.tz(
+    `${officialStartWeekId} 04:00:00`,
+    "YYYY-MM-DD HH:mm:ss",
+    homeTimezone,
+  );
+
+  if (!officialStartLocal.isValid()) {
+    throw new Error(
+      `Unable to calculate officialStartAt for ${officialStartWeekId} in ${homeTimezone}.`,
+    );
+  }
+
+  return Timestamp.fromDate(officialStartLocal.toDate());
 }
