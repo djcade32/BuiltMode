@@ -75,8 +75,6 @@ export async function registerPushToken(): Promise<void> {
       },
       { merge: true },
     );
-
-    console.log("Push token registered.");
   } catch (error) {
     console.warn("Failed to register push token:", error);
   }

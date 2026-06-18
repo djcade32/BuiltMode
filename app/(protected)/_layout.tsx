@@ -35,7 +35,6 @@ const ProtectedLayout = () => {
 
   useEffect(() => {
     if (!user?.uid) return;
-    console.log("Registering Token");
     registerPushToken();
 
     const unsubscribe = subscribeToPushTokenRefresh();

@@ -169,11 +169,9 @@ export const fetchUserStats = async ({
 }): Promise<UserStats | null> => {
   const { uid } = params;
   try {
-    console.log("fetching user stats: ", uid);
     const userStatsDoc = doc(db, `userStats/${uid}`);
     const snapshot = await getDoc(userStatsDoc);
     if (!snapshot.exists()) {
-      console.log("hereee");
       return null;
     }
 

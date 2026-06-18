@@ -15,10 +15,10 @@ import {
   respondToFriendRequest,
 } from "@/services/social-service";
 import { useUserStore } from "@/stores/user-store";
-import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -31,6 +31,42 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type RequestTab = "incoming" | "sent";
+
+const FriendsEmptyState = ({ onFindFriends }: { onFindFriends: () => void }) => {
+  return (
+    <View style={styles.emptyCircleCard}>
+      <View style={styles.emptyCircleIconWrap}>
+        <View style={styles.emptyCircleDashedRing}>
+          <FontAwesome5 name="user-friends" size={34} color={Colors.gray} />
+        </View>
+      </View>
+
+      <ThemedText style={styles.emptyCircleTitle}>Your circle is empty</ThemedText>
+
+      <ThemedText style={styles.emptyCircleBody}>
+        Add friends to see their activity, stay accountable, and compete together.
+      </ThemedText>
+
+      <TouchableOpacity
+        activeOpacity={0.85}
+        style={styles.emptyFindFriendsButton}
+        onPress={onFindFriends}
+      >
+        <FontAwesome6 name="user-plus" size={14} color={Colors.accent.primary} />
+        <ThemedText style={styles.emptyFindFriendsText}>FIND FRIENDS</ThemedText>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const SearchEmptyState = () => {
+  return (
+    <View style={styles.searchEmptyStateContainer}>
+      <ThemedText style={styles.searchEmptyStateTitle}>No match found</ThemedText>
+      <ThemedText style={styles.searchEmptyStateText}>Try another exact username.</ThemedText>
+    </View>
+  );
+};
 
 const friendsList = () => {
   const router = useRouter();
@@ -45,6 +81,11 @@ const friendsList = () => {
   const [removeFriendUid, setRemoveFriendUid] = useState<string | null>(null);
 
   const isSearching = submittedSearch.trim().length > 0;
+
+  const navigateToFindFriends = () => {
+    clearSearch();
+    router.push("/(protected)/(tabs)/(feed)/findFriends");
+  };
 
   const handleOpenRequestsSheet = (tab: RequestTab) => {
     setRequestsSheetTab(tab);
@@ -88,7 +129,7 @@ const friendsList = () => {
     enabled: !!uid,
   });
 
-  const { mutate: cancelFriendRequestFunc, isPending: isPendingCancel } = useMutation({
+  const { mutate: cancelFriendRequestFunc } = useMutation({
     mutationFn: async (requestId: string) => {
       const result = await cancelFriendRequest(requestId);
       if (!result.success) {
@@ -101,7 +142,7 @@ const friendsList = () => {
     },
   });
 
-  const { mutate: respondToFriendRequestFunc, isPending: isPendingResponse } = useMutation({
+  const { mutate: respondToFriendRequestFunc } = useMutation({
     mutationFn: async ({
       requestId,
       action,
@@ -142,8 +183,9 @@ const friendsList = () => {
   }, []);
 
   useEffect(() => {
-    // Needed to prevent total from recalculating
-    submittedSearch === "" && setTotalFriends(friends?.total ?? 0);
+    if (submittedSearch === "") {
+      setTotalFriends(friends?.total ?? 0);
+    }
   }, [friends]);
 
   const isValidUsername = (username: string) => {
@@ -160,6 +202,53 @@ const friendsList = () => {
     setSearchQuery("");
   };
 
+  const listHeaderComponent = useMemo(() => {
+    return (
+      <View>
+        <View style={styles.circleHeader}>
+          <ThemedText style={styles.sectionTitle}>YOUR CIRCLE</ThemedText>
+
+          <ThemedText style={styles.friendCount}>
+            {totalFriends} {totalFriends === 1 ? "friend" : "friends"}
+          </ThemedText>
+        </View>
+
+        <View style={styles.usernameSearchInputAndButton}>
+          <Input
+            selectTextOnFocus
+            placeholder="Search exact username"
+            placeholderTextColor={Colors.icon}
+            value={searchQuery}
+            onChangeText={(e) => {
+              if (e === "" && submittedSearch !== "") {
+                setSubmittedSearch("");
+              }
+
+              setSearchQuery(e);
+            }}
+            containerStyle={styles.searchInput}
+            preIcon={{
+              familyIcon: MaterialIcons,
+              name: "alternate-email",
+            }}
+          />
+
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={[
+              styles.usernameSearchButton,
+              { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 },
+            ]}
+            onPress={handleSearchForUserButtonPress}
+            disabled={!isValidUsername(searchQuery) && !!friends?.total}
+          >
+            <MaterialIcons name="search" size={24} color={Colors.background.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }, [totalFriends, searchQuery, submittedSearch]);
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: Colors.background.primary }}
@@ -168,47 +257,51 @@ const friendsList = () => {
       <SafeAreaView style={styles.container} edges={["top"]}>
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.iconContainer} onPress={() => router.back()}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.iconContainer}
+            onPress={() => router.back()}
+          >
             <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
           </TouchableOpacity>
 
-          <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
+          <View style={styles.headerTitleContainer}>
             <ThemedText style={styles.headerText}>FRIENDS</ThemedText>
             <ThemedText style={styles.headerSubtitle}>YOUR TRAINING CIRCLE</ThemedText>
           </View>
 
           <TouchableOpacity
+            activeOpacity={0.8}
             style={styles.iconContainer}
-            onPress={() => {
-              clearSearch();
-              router.push("/(protected)/(tabs)/(feed)/findFriends");
-            }}
+            onPress={navigateToFindFriends}
           >
             <FontAwesome6 name="user-plus" size={14} color={Colors.gray} />
           </TouchableOpacity>
         </View>
 
-        <View style={{ paddingVertical: 16, gap: 24, flexGrow: 1 }}>
+        <View style={styles.content}>
           {/* REQUESTS */}
-          <View style={{ paddingHorizontal: 24 }}>
+          <View style={styles.requestsSection}>
             <ThemedText style={styles.sectionTitle}>FRIEND REQUESTS</ThemedText>
+
             <IncomingRequestsButton
               onPress={() => handleOpenRequestsSheet("incoming")}
               count={incomingRequests?.length ?? 0}
             />
+
             <SentRequestsButton
               onPress={() => handleOpenRequestsSheet("sent")}
               count={sentRequests?.length ?? 0}
             />
           </View>
 
-          <View style={{ flex: 1 }}>
+          <View style={styles.circleSection}>
             {isLoadingFriends ? (
-              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator />
+              <View style={styles.centerState}>
+                <ActivityIndicator color={Colors.icon} />
               </View>
             ) : friendsError ? (
-              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+              <View style={styles.centerState}>
                 <ThemedText style={styles.searchEmptyStateText}>Error loading friends.</ThemedText>
               </View>
             ) : (
@@ -226,70 +319,21 @@ const friendsList = () => {
                     isPending={removeFriendUid === item.uid}
                   />
                 )}
+                ListHeaderComponent={listHeaderComponent}
                 ListEmptyComponent={
-                  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                    <ThemedText style={styles.searchEmptyStateText}>
-                      {isSearching ? "No friend found with that username." : "No friends yet."}
-                    </ThemedText>
-                  </View>
+                  isSearching ? (
+                    <SearchEmptyState />
+                  ) : (
+                    <FriendsEmptyState onFindFriends={navigateToFindFriends} />
+                  )
                 }
-                contentContainerStyle={{
-                  paddingTop: 16,
-                  paddingHorizontal: 24,
-                  gap: 16,
-                }}
-                ListHeaderComponent={() => (
-                  <View>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <ThemedText style={styles.sectionTitle}>YOUR CIRCLE</ThemedText>
-                      <ThemedText style={styles.friendCount}>
-                        {totalFriends} {totalFriends === 1 ? "friend" : "friends"}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.usernameSearchInputAndButton}>
-                      <Input
-                        selectTextOnFocus
-                        placeholder="Search exact username"
-                        placeholderTextColor={Colors.icon}
-                        value={searchQuery}
-                        onChangeText={(e) => {
-                          if (e === "" && submittedSearch !== "") {
-                            setSubmittedSearch("");
-                          }
-                          setSearchQuery(e);
-                        }}
-                        containerStyle={{
-                          borderColor: Colors.inputBorder,
-                          flex: 1,
-                        }}
-                        preIcon={{
-                          familyIcon: MaterialIcons,
-                          name: "alternate-email",
-                        }}
-                      />
-                      <TouchableOpacity
-                        style={[
-                          styles.usernameSearchButton,
-                          { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 },
-                        ]}
-                        onPress={handleSearchForUserButtonPress}
-                        disabled={!isValidUsername(searchQuery)}
-                      >
-                        <MaterialIcons name="search" size={24} color={Colors.background.primary} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
+                contentContainerStyle={styles.friendsListContent}
+                showsVerticalScrollIndicator={false}
               />
             )}
           </View>
         </View>
+
         <FriendRequestsSheet
           visible={requestsSheetVisible}
           initialTab={requestsSheetTab}
@@ -325,6 +369,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.primary,
     flex: 1,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -334,18 +379,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 65,
   },
+
+  headerTitleContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 2,
+  },
+
   headerText: {
     fontSize: 16,
     lineHeight: 24,
     letterSpacing: 0.4,
     fontFamily: Typography.family.primary.semibold,
   },
+
   headerSubtitle: {
     fontSize: 10,
     lineHeight: 15,
     letterSpacing: 0.5,
     color: Colors.icon,
   },
+
   iconContainer: {
     width: 40,
     height: 40,
@@ -353,6 +407,26 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     borderWidth: 1,
     borderRadius: Border.radius.md,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  content: {
+    paddingVertical: 16,
+    gap: 24,
+    flexGrow: 1,
+  },
+
+  requestsSection: {
+    paddingHorizontal: 24,
+  },
+
+  circleSection: {
+    flex: 1,
+  },
+
+  centerState: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -365,12 +439,29 @@ const styles = StyleSheet.create({
     color: Colors.icon,
   },
 
+  circleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
   friendCount: {
     fontFamily: Typography.family.primary.bold,
     fontSize: 12,
     letterSpacing: 0.35,
     marginBottom: 16,
     color: Colors.accent.primary,
+  },
+
+  usernameSearchInputAndButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  searchInput: {
+    borderColor: Colors.inputBorder,
+    flex: 1,
   },
 
   usernameSearchButton: {
@@ -382,14 +473,97 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  usernameSearchInputAndButton: {
+  friendsListContent: {
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    gap: 16,
+    paddingBottom: 32,
+  },
+
+  emptyCircleCard: {
+    marginTop: 24,
+    backgroundColor: Colors.background.secondary,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+    borderRadius: Border.radius.md,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+
+  emptyCircleIconWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+  },
+
+  emptyCircleDashedRing: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "rgba(255, 255, 255, 0.18)",
+    backgroundColor: "rgba(255, 255, 255, 0.012)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  emptyCircleTitle: {
+    color: "#FFFFFF",
+    fontFamily: Typography.family.primary.bold,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: "center",
+    marginBottom: 12,
+  },
+
+  emptyCircleBody: {
+    color: Colors.gray,
+    fontFamily: Typography.family.primary.medium,
+    fontSize: 14,
+    lineHeight: 24,
+    textAlign: "center",
+    maxWidth: 290,
+    marginBottom: 26,
+  },
+
+  emptyFindFriendsButton: {
+    height: 48,
+    width: "100%",
+    borderRadius: Border.radius.md,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: "rgba(255, 255, 255, 0.008)",
     flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+
+  emptyFindFriendsText: {
+    fontFamily: Typography.family.primary.bold,
+    fontSize: 13,
+    letterSpacing: 1.7,
+    color: Colors.accent.primary,
+  },
+
+  searchEmptyStateContainer: {
+    marginTop: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  searchEmptyStateTitle: {
+    color: "#FFFFFF",
+    fontFamily: Typography.family.primary.semibold,
+    fontSize: 14,
   },
 
   searchEmptyStateText: {
     fontSize: 12,
     color: Colors.icon,
+    textAlign: "center",
   },
 });

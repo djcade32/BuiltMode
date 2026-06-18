@@ -4,33 +4,34 @@ import { fetchUserWeekAggregate } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback } from "react";
+import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import WeeklyProgressBar from "../feed/feedItems/WeeklyProgressBar";
 import { ThemedText } from "../themed-text";
 
-const TrainingTargetWidget = () => {
+const TrainingTargetWidget = ({ isRefreshing }: { isRefreshing?: boolean }) => {
   const { user } = useUserStore();
 
   const uid = user?.uid;
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["user-week-aggregate", user ? getWeekId(new Date(), user.homeTimezone) : "", uid],
     queryFn: fetchUserWeekAggregate,
     params: { uid: uid ?? "", weekId: user ? getWeekId(new Date(), user.homeTimezone) : "" },
     enabled: !!user,
   });
 
-  const getPercentage = useCallback(
-    () => (data && user ? (data.activeDaysThisWeek / user.weeklyTargetDays) * 100 : 0),
-    [user?.weeklyTargetDays, data?.activeDaysThisWeek],
-  );
-
   const getDaysLeft = () => {
     const today = new Date().getDay();
     if (today === 0) return 1;
     return Math.abs(today - 8);
   };
+
+  useEffect(() => {
+    if (isRefreshing) {
+      refetch();
+    }
+  }, [isRefreshing]);
 
   if (!user) return null;
 

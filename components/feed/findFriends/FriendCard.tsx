@@ -142,19 +142,15 @@ const FriendCard = ({
   return (
     <View style={[styles.cardContainer, styles.container]}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-        <Avatar
-          avatarUrl={avatarUrl}
-          displayName={displayName ?? "?"}
-          onPress={() => navigateToFriendProfile(uid)}
-        />
-        <TouchableOpacity onPress={() => navigateToFriendProfile(uid)}>
+        <Avatar avatarUrl={avatarUrl} displayName={displayName ?? "?"} />
+        <View>
           <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
             {displayName}
           </ThemedText>
           <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
             @{username.toLocaleLowerCase()}
           </ThemedText>
-        </TouchableOpacity>
+        </View>
       </View>
       {RequestButton}
     </View>

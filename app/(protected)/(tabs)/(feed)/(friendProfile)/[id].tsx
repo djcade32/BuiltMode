@@ -29,6 +29,23 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const RecentWorkoutsEmptyState = () => {
+  return (
+    <View style={styles.emptyRecentWorkoutCard}>
+      <View style={styles.emptyRecentIconCircle}>
+        <FontAwesome5 name="dumbbell" size={22} color={Colors.accent.primary} />
+      </View>
+
+      <View style={styles.emptyRecentCopy}>
+        <ThemedText style={styles.emptyRecentTitle}>No recent workouts yet</ThemedText>
+        <ThemedText style={styles.emptyRecentBody}>
+          Their completed workouts will appear here.{"\n"}Every session counts.
+        </ThemedText>
+      </View>
+    </View>
+  );
+};
+
 const FriendProfile = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useUserStore();
@@ -54,9 +71,11 @@ const FriendProfile = () => {
   const { mutate: removeFriendFunc, isPending } = useMutation({
     mutationFn: async (friendUid: string) => {
       const result = await removeFriend(friendUid);
+
       if (!result.success) {
         throw new Error(result.message ?? "Failed to remove friend.");
       }
+
       return result;
     },
     onSuccess: () => {
@@ -65,6 +84,7 @@ const FriendProfile = () => {
       } else {
         router.replace("/feed");
       }
+
       queryClient.invalidateQueries({ queryKey: ["user-friends", user?.uid ?? ""] });
     },
   });
@@ -97,6 +117,7 @@ const FriendProfile = () => {
 
   const accountabilitySummaryData = useMemo(() => {
     if (!userStats) return null;
+
     return {
       modeScore: userStats.modeScore ?? 0,
       consistency: userStats.activity30DayRate,
@@ -139,27 +160,31 @@ const FriendProfile = () => {
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconContainer} onPress={handleBack}>
+        <TouchableOpacity activeOpacity={0.8} style={styles.iconContainer} onPress={handleBack}>
           <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
         </TouchableOpacity>
 
-        <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
+        <View style={styles.headerTitleContainer}>
           <ThemedText style={styles.headerText}>{userInfo?.usernameLower ?? ""}</ThemedText>
         </View>
 
         {/* BUTTON PLACEHOLDER */}
-        <View style={{ width: 40, height: 40 }} />
+        <View style={styles.headerPlaceholder} />
       </View>
+
       {isLoadingData ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View style={styles.centerState}>
           <ActivityIndicator color={Colors.icon} />
         </View>
       ) : !userInfo ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ThemedText style={{ color: Colors.icon, fontSize: 12 }}>Profile unavailable</ThemedText>
+        <View style={styles.centerState}>
+          <ThemedText style={styles.unavailableText}>Profile unavailable</ThemedText>
         </View>
       ) : (
-        <ScrollView>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.mainContentContainer}>
             {/* USER INFO */}
             <View style={styles.userInfoContainer}>
@@ -169,12 +194,15 @@ const FriendProfile = () => {
                 size={65}
                 containerStyle={styles.avatar}
               />
-              <View style={{ gap: 3, flex: 1, justifyContent: "center", alignItems: "center" }}>
+
+              <View style={styles.userNameContainer}>
                 <ThemedText style={styles.displayName}>{userInfo?.displayName}</ThemedText>
                 <ThemedText style={styles.username}>@{userInfo?.usernameLower}</ThemedText>
               </View>
-              <View style={{ flexDirection: "row", gap: 10 }}>
+
+              <View style={styles.badgeRow}>
                 <TouchableOpacity
+                  activeOpacity={0.85}
                   style={styles.unfriendButton}
                   onPress={() =>
                     Alert.alert("Are You Sure?", "You will lose access to this user's profile", [
@@ -189,36 +217,24 @@ const FriendProfile = () => {
                   disabled={isPending}
                 >
                   {isPending ? (
-                    <ActivityIndicator color={Colors.accent.primary} size={"small"} />
+                    <ActivityIndicator color={Colors.accent.primary} size="small" />
                   ) : (
-                    <View
-                      style={{
-                        justifyContent: "center",
-                        alignItems: "center",
-                        flexDirection: "row",
-                        gap: 5,
-                      }}
-                    >
+                    <View style={styles.friendBadgeInner}>
                       <FontAwesome5 name="user-check" size={12} color={Colors.accent.primary} />
                       <ThemedText style={styles.unfriendButtonText}>FRIEND</ThemedText>
                     </View>
                   )}
                 </TouchableOpacity>
+
                 {userInfo?.streakWeeks > 0 && (
                   <View style={styles.streakWeekButton}>
-                    <View
-                      style={{
-                        justifyContent: "center",
-                        alignItems: "center",
-                        flexDirection: "row",
-                        gap: 5,
-                      }}
-                    >
+                    <View style={styles.streakBadgeInner}>
                       <FontAwesome5 name="fire-alt" size={12} color={Colors.accent.primary} />
                       <ThemedText style={styles.streakWeekButtonText}>ON STREAK</ThemedText>
                     </View>
                   </View>
                 )}
+
                 {!userInfo?.isRanked && (
                   <View style={styles.practiceWeekBadge}>
                     <ThemedText style={styles.practiceWeekBadgeText}>PRACTICE WEEK</ThemedText>
@@ -229,21 +245,19 @@ const FriendProfile = () => {
 
             {/* ACCOUNTABILITY SUMMARY */}
             <AccountabilitySummaryWidget data={accountabilitySummaryData} />
+
             {/* THIS WEEK */}
             <ThisWeekWidget data={userWeekAggregateData} />
+
             {/* RECENT WORKOUTS */}
-            <View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
+            <View style={styles.recentWorkoutsSection}>
+              <View style={styles.recentWorkoutsHeader}>
                 <ThemedText style={styles.recentWorkoutsTitle}>RECENT WORKOUTS</ThemedText>
+
                 <TouchableOpacity
-                  style={{ alignItems: "center", flexDirection: "row" }}
+                  style={styles.viewAllRecentButton}
                   hitSlop={15}
+                  activeOpacity={0.8}
                   onPress={() =>
                     router.push({
                       pathname: "/(protected)/(tabs)/(workout)/(viewHistory)/[id]",
@@ -258,23 +272,28 @@ const FriendProfile = () => {
                   <FontAwesome6 name="arrow-right" size={9} color={Colors.icon} />
                 </TouchableOpacity>
               </View>
-              <View style={{ gap: 12, marginVertical: 10 }}>
-                {recentWorkoutsData.map((workout) => (
-                  <WorkoutHistoryCard
-                    key={workout.sessionId}
-                    workout={workout}
-                    onPress={() =>
-                      router.push({
-                        pathname:
-                          "/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]",
-                        params: {
-                          sessionId: workout.sessionId,
-                          returnTo: `/(protected)/(tabs)/(feed)/(friendProfile)/${id}`,
-                        },
-                      })
-                    }
-                  />
-                ))}
+
+              <View style={styles.recentWorkoutsList}>
+                {recentWorkoutsData.length ? (
+                  recentWorkoutsData.map((workout) => (
+                    <WorkoutHistoryCard
+                      key={workout.sessionId}
+                      workout={workout}
+                      onPress={() =>
+                        router.push({
+                          pathname:
+                            "/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]",
+                          params: {
+                            sessionId: workout.sessionId,
+                            returnTo: `/(protected)/(tabs)/(feed)/(friendProfile)/${id}`,
+                          },
+                        })
+                      }
+                    />
+                  ))
+                ) : (
+                  <RecentWorkoutsEmptyState />
+                )}
               </View>
             </View>
           </View>
@@ -291,6 +310,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.primary,
     flex: 1,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -300,12 +320,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 65,
   },
+
+  headerTitleContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 2,
+  },
+
   headerText: {
     fontSize: 16,
     lineHeight: 24,
     letterSpacing: 0.4,
     fontFamily: Typography.family.primary.semibold,
   },
+
+  headerPlaceholder: {
+    width: 40,
+    height: 40,
+  },
+
   iconContainer: {
     width: 40,
     height: 40,
@@ -317,32 +350,78 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  centerState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  unavailableText: {
+    color: Colors.icon,
+    fontSize: 12,
+  },
+
+  scrollContent: {
+    paddingBottom: 34,
+  },
+
   mainContentContainer: {
     paddingHorizontal: 24,
     paddingTop: 24,
     gap: 16,
   },
+
   avatar: {
     outlineWidth: 7,
     outlineColor: "#2A2E3534",
     borderWidth: 3,
     borderColor: Colors.inputBorder,
   },
+
   userInfoContainer: {
     justifyContent: "center",
     alignItems: "center",
     gap: 16,
   },
+
+  userNameContainer: {
+    gap: 3,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   displayName: {
     fontFamily: Typography.family.primary.bold,
     fontSize: 22,
     letterSpacing: -0.66,
   },
+
   username: {
     fontFamily: Typography.family.secondary.medium,
     fontSize: 12,
     color: Colors.icon,
   },
+
+  badgeRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  friendBadgeInner: {
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 5,
+  },
+
+  streakBadgeInner: {
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 5,
+  },
+
   unfriendButton: {
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -351,11 +430,13 @@ const styles = StyleSheet.create({
     borderColor: "#c6a34a52",
     borderRadius: 9999,
   },
+
   unfriendButtonText: {
     fontFamily: Typography.family.secondary.semibold,
     fontSize: 12,
     color: Colors.accent.primary,
   },
+
   practiceWeekBadge: {
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -364,11 +445,13 @@ const styles = StyleSheet.create({
     borderColor: "#4A6C8C52",
     borderRadius: 9999,
   },
+
   practiceWeekBadgeText: {
     fontFamily: Typography.family.secondary.semibold,
     fontSize: 12,
     color: Colors.accent.secondary,
   },
+
   streakWeekButton: {
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -377,14 +460,81 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     borderRadius: 9999,
   },
+
   streakWeekButtonText: {
     fontFamily: Typography.family.secondary.semibold,
     fontSize: 12,
   },
+
+  recentWorkoutsSection: {
+    marginTop: 6,
+  },
+
+  recentWorkoutsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  viewAllRecentButton: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 4,
+  },
+
   recentWorkoutsTitle: {
     fontFamily: Typography.family.secondary.semibold,
     fontSize: 9,
     letterSpacing: 1.98,
     color: Colors.icon,
+  },
+
+  recentWorkoutsList: {
+    gap: 12,
+    marginTop: 14,
+    marginBottom: 18,
+  },
+
+  emptyRecentWorkoutCard: {
+    minHeight: 94,
+    borderRadius: Border.radius.md,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "rgba(255, 255, 255, 0.11)",
+    backgroundColor: "rgba(255, 255, 255, 0.012)",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 18,
+    gap: 16,
+  },
+
+  emptyRecentIconCircle: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: "rgba(255, 255, 255, 0.035)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.045)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  emptyRecentCopy: {
+    flex: 1,
+    gap: 6,
+  },
+
+  emptyRecentTitle: {
+    color: "#FFFFFF",
+    fontFamily: Typography.family.primary.bold,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+
+  emptyRecentBody: {
+    color: Colors.gray,
+    fontFamily: Typography.family.primary.medium,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

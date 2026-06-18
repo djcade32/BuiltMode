@@ -55,7 +55,6 @@ export const getUserWorkouts = async ({
   limit: number;
 }): Promise<InfinitePage<Workout, WorkoutCursor>> => {
   try {
-    console.log("querying workouts");
     const workoutsRef = collection(db, "workouts");
 
     const workoutsQuery = pageParam
