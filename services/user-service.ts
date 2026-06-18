@@ -90,6 +90,7 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
 export const isUsernameAvailable = async (username: string): Promise<boolean> => {
   try {
     const usernameDoc = doc(db, `usernames/${username.trim().toLowerCase()}`);
+    const test = await getDoc(usernameDoc);
     return !(await getDoc(usernameDoc)).exists();
   } catch (error: any) {
     throw error;
@@ -168,14 +169,17 @@ export const fetchUserStats = async ({
 }): Promise<UserStats | null> => {
   const { uid } = params;
   try {
+    console.log("fetching user stats: ", uid);
     const userStatsDoc = doc(db, `userStats/${uid}`);
     const snapshot = await getDoc(userStatsDoc);
     if (!snapshot.exists()) {
+      console.log("hereee");
       return null;
     }
 
     return snapshot.data() as UserStats;
   } catch (error: any) {
+    console.error("error: ", error);
     throw error;
   }
 };

@@ -12,6 +12,13 @@
     "target": "es2017"
   },
   "compileOnSave": true,
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/tests", "**/*.test.ts", "**/*.spec.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/tests",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "extends": "expo/tsconfig.base"
 }

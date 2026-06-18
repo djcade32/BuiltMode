@@ -2,6 +2,7 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { sendPushNotificationToUser } from "../services/notificationService.js";
 
 if (!getApps().length) {
   initializeApp();
@@ -19,6 +20,16 @@ type BuiltModeUser = {
   officialStartWeekId?: string;
   officialStartAt?: Timestamp;
 };
+
+type ActivateOfficialWeekResult =
+  | {
+      status: "activated";
+      uid: string;
+      weekId: string;
+    }
+  | {
+      status: "skipped";
+    };
 
 const PAGE_SIZE = 100;
 
@@ -59,8 +70,18 @@ export const activateOfficialWeeks = onSchedule(
 
         const result = await activateUserOfficialWeek(userDoc.ref.path, now);
 
-        if (result === "activated") {
+        if (result.status === "activated") {
           activatedCount += 1;
+          await sendPushNotificationToUser({
+            recipientUid: result.uid,
+            title: "Your official week has started",
+            body: "Your BuiltMode standard is live. Time to build.",
+            type: "official_week_started",
+            data: {
+              weekId: result.weekId,
+              screen: "home",
+            },
+          });
         } else {
           skippedCount += 1;
         }
@@ -87,21 +108,21 @@ export const activateOfficialWeeks = onSchedule(
 async function activateUserOfficialWeek(
   userPath: string,
   now: Timestamp,
-): Promise<"activated" | "skipped"> {
+): Promise<ActivateOfficialWeekResult> {
   const userRef = db.doc(userPath);
 
   return db.runTransaction(async (tx) => {
     const freshUserSnap = await tx.get(userRef);
 
     if (!freshUserSnap.exists) {
-      return "skipped";
+      return { status: "skipped" };
     }
 
     const user = freshUserSnap.data() as BuiltModeUser;
     const uid = freshUserSnap.id;
 
     if (user.officialWeekStatus !== "practice") {
-      return "skipped";
+      return { status: "skipped" };
     }
 
     if (!user.officialStartAt || !user.officialStartWeekId) {
@@ -113,23 +134,16 @@ async function activateUserOfficialWeek(
         updatedAt: FieldValue.serverTimestamp(),
       });
 
-      return "skipped";
+      return { status: "skipped" };
     }
 
     if (user.officialStartAt.toMillis() > now.toMillis()) {
-      return "skipped";
+      return { status: "skipped" };
     }
 
     const weekId = user.officialStartWeekId;
     const weeklyTargetDays = user.weeklyTargetDays ?? 4;
 
-    /**
-     * Your Firestore aggregate path pattern:
-     * /userWeekAggregates/<UID_WeekID>
-     *
-     * Example:
-     * /userWeekAggregates/lSFfy3ap0dUlg8a6coXmuFKII86v_2026-06-08
-     */
     const userWeekAggregateRef = db.doc(`userWeekAggregates/${uid}_${weekId}`);
 
     const aggregateSnap = await tx.get(userWeekAggregateRef);
@@ -138,11 +152,9 @@ async function activateUserOfficialWeek(
       tx.create(userWeekAggregateRef, {
         uid,
         weekId,
-
         weeklyTargetDays,
 
         modeScore: 0,
-
         completedWorkoutCount: 0,
         totalWorkouts: 0,
         activeDaysCount: 0,
@@ -165,14 +177,15 @@ async function activateUserOfficialWeek(
     tx.update(userRef, {
       officialWeekStatus: "official",
       officialStartedAt: FieldValue.serverTimestamp(),
-
       currentWeekId: weekId,
-
       updatedAt: FieldValue.serverTimestamp(),
-
       officialWeekActivationError: FieldValue.delete(),
     });
 
-    return "activated";
+    return {
+      status: "activated",
+      uid,
+      weekId,
+    };
   });
 }

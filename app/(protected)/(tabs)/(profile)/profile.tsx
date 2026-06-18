@@ -62,7 +62,7 @@ const profile = () => {
   const userWeekAggregateData = useMemo(() => {
     return {
       activeDays: userWeekAggregate?.activeDaysThisWeek || 0,
-      targetDays: userWeekAggregate?.weeklyTargetDays || userStats?.weeklyTargetDays || 0,
+      targetDays: userWeekAggregate?.weeklyTargetDays || userStats?.weeklyTargetDays || 5,
       currentStreakWeek: userWeekAggregate?.streakWeeks || userStats?.currentWeekStreak || 0,
       isPracticeWeek: user?.isPracticeWeek || !userWeekAggregate?.isOfficialWeek || false,
     };

@@ -2,6 +2,7 @@ import {
   CreateUserProfileRequest,
   CreateUserProfileResponse,
 } from "@builtmode/shared/schemas/user";
+import { UserStats } from "@builtmode/shared/types/user";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
@@ -11,6 +12,7 @@ import { createInitialEntry } from "../firestore/leaderboard.js";
 import {
   createUser,
   createUsernameIndex,
+  createUserStats,
   getUserByUid,
   getUsernameIndex,
 } from "../firestore/user.js";
@@ -109,9 +111,22 @@ export async function handleCreateUserProfile(
       updatedAt: now,
     };
 
+    const userStatsDoc: UserStats = {
+      currentWeekStreak: 0,
+      bestWeekStreak: 0,
+      modeScore: null,
+      last30DayWeeklyAdherenceRate: 0,
+      activity30DayRate: 0,
+      totalTargetsMet: 0,
+      totalWorkoutsLogged: 0,
+      weeklyTargetDays,
+      updatedAt: now,
+    };
+
     createUser(tx, userDoc);
     createUsernameIndex(tx, usernameLower, uid, now);
     createInitialEntry(tx, leaderboardEntry);
+    createUserStats(tx, uid, userStatsDoc);
   });
 
   return {

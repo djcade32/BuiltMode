@@ -1,3 +1,4 @@
+import { registerPushToken, subscribeToPushTokenRefresh } from "@/services/notification-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, Stack, usePathname, useRouter } from "expo-router";
@@ -6,7 +7,7 @@ import { MenuProvider } from "react-native-popup-menu";
 
 const ProtectedLayout = () => {
   // useWorkoutStore.persist.clearStorage();
-  const { isAuthenticated, isHydrated } = useAuthStore();
+  const { isAuthenticated, isHydrated, user } = useAuthStore();
   const { activeWorkoutDraft } = useWorkoutStore();
 
   const router = useRouter();
@@ -31,6 +32,16 @@ const ProtectedLayout = () => {
       router.replace(targetPath);
     }
   }, [isHydrated, isAuthenticated, activeWorkoutDraft, pathname, router]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    console.log("Registering Token");
+    registerPushToken();
+
+    const unsubscribe = subscribeToPushTokenRefresh();
+
+    return unsubscribe;
+  }, [user?.uid]);
 
   if (!isHydrated) {
     return null;

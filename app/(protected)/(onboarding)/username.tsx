@@ -26,7 +26,6 @@ const username = () => {
   const { setUsername, nextScreen } = useOnboardingStore();
   const { username } = useWatch({ control });
   const [usernameAvailable, setUsernameAvailable] = useState(false);
-  const [timer, setTimer] = useState<number | null>(null);
 
   useEffect(() => {
     clearErrors("username");

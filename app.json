@@ -16,38 +16,44 @@
         "NSPhotoLibraryUsageDescription": "Allow access to save workout photos.",
         "NSPhotoLibraryAddUsageDescription": "Allow saving workout progress photos.",
         "NSMicrophoneUsageDescription": "Allow recording audio during workout videos."
+      },
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "entitlements": {
+        "aps-environment": "development"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#0F1113",
+        "foregroundImage": "./assets/images/full_logo.png",
+        "backgroundImage": "./assets/images/full_logo.png",
+        "monochromeImage": "./assets/images/full_logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ],
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
+      "googleServicesFile": "./google-services.json",
+
       "package": "com.djcade32.BuiltMode"
+    },
+    "notification": {
+      "icon": "./assets/images/ios-icon.png"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/ios-icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/full_logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#0F1113",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0F1113"
           }
         }
       ],
@@ -67,7 +73,9 @@
         }
       ],
       "expo-localization",
-      "expo-audio"
+      "expo-audio",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
     ],
     "experiments": {
       "typedRoutes": true,

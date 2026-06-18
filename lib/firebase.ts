@@ -2,15 +2,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   Auth,
-  connectAuthEmulator,
   getAuth,
   //@ts-ignore
   getReactNativePersistence,
   initializeAuth,
 } from "firebase/auth";
-import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
-import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
-import { connectStorageEmulator, getStorage } from "firebase/storage";
+import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCQ8jRXtG4oiI8xPxTiX7yirskttvyEScM",
@@ -22,10 +21,10 @@ const firebaseConfig = {
   measurementId: "G-PK7Z4PVE11",
 };
 
-export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const functions = getFunctions(app);
 const db = getFirestore(app);
-export const storage = getStorage(app);
+const storage = getStorage(app);
 
 let auth: Auth;
 try {
@@ -39,12 +38,12 @@ try {
 const EMULATOR_HOST = "127.0.0.1";
 // const EMULATOR_HOST = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST ?? "127.0.0.1";
 
-if (__DEV__) {
-  console.warn("Running Dev mode. Connecting to Firebase Emulator.");
-  connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`);
-  connectFirestoreEmulator(db, EMULATOR_HOST, 8080);
-  connectFunctionsEmulator(functions, EMULATOR_HOST, 5001);
-  connectStorageEmulator(storage, EMULATOR_HOST, 9199);
-}
+// if (__DEV__) {
+//   console.warn("Running Dev mode. Connecting to Firebase Emulator.");
+//   connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`);
+//   connectFirestoreEmulator(db, EMULATOR_HOST, 8080);
+//   connectFunctionsEmulator(functions, EMULATOR_HOST, 5001);
+//   connectStorageEmulator(storage, EMULATOR_HOST, 9199);
+// }
 
-export { auth, db, functions };
+export { app, auth, db, functions, storage };
