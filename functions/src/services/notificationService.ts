@@ -31,6 +31,11 @@ export async function sendPushNotificationToUser({
   type,
   data = {},
 }: SendPushNotificationInput): Promise<void> {
+  console.log("Sending push", {
+    recipientUid,
+    type,
+  });
+
   const tokenSnapshot = await db
     .collection(`users/${recipientUid}/pushTokens`)
     .where("enabled", "==", true)
@@ -69,6 +74,12 @@ export async function sendPushNotificationToUser({
     return;
   }
 
+  console.log("Sending push with token", {
+    recipientUid,
+    tokenCount: tokens.length,
+    type,
+  });
+
   const chunks = chunkArray(tokens, MAX_TOKENS_PER_MULTICAST);
 
   for (const tokenChunk of chunks) {
@@ -101,7 +112,15 @@ export async function sendPushNotificationToUser({
     const invalidTokens: string[] = [];
 
     response.responses.forEach((sendResponse, index) => {
-      if (sendResponse.success) return;
+      if (sendResponse.success) {
+        return;
+      } else {
+        console.log("Push token failed", {
+          token: tokenChunk[index],
+          code: sendResponse.error?.code,
+          message: sendResponse.error?.message,
+        });
+      }
 
       const token = tokenChunk[index];
       const errorCode = sendResponse.error?.code;
@@ -117,7 +136,10 @@ export async function sendPushNotificationToUser({
     if (invalidTokens.length > 0) {
       await disableInvalidTokens(recipientUid, invalidTokens);
     }
-
+    console.log("Push send result", {
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+    });
     await createNotificationLog({
       recipientUid,
       title,

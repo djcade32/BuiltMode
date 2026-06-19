@@ -1,4 +1,10 @@
-import { registerPushToken, subscribeToPushTokenRefresh } from "@/services/notification-service";
+import {
+  handleInitialNotification,
+  registerPushToken,
+  subscribeToForegroundNotifications,
+  subscribeToNotificationOpens,
+  subscribeToPushTokenRefresh,
+} from "@/services/notification-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, Stack, usePathname, useRouter } from "expo-router";
@@ -12,6 +18,18 @@ const ProtectedLayout = () => {
 
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    const unsubscribeForeground = subscribeToForegroundNotifications();
+    const unsubscribeNotificationOpen = subscribeToNotificationOpens();
+
+    handleInitialNotification();
+
+    return () => {
+      unsubscribeForeground();
+      unsubscribeNotificationOpen();
+    };
+  }, []);
 
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !activeWorkoutDraft) return;

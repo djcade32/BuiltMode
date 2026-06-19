@@ -7,13 +7,19 @@ import { db } from "@/lib/firebase";
 import { getApp } from "@react-native-firebase/app";
 import {
   AuthorizationStatus,
+  FirebaseMessagingTypes,
+  getInitialNotification,
   getMessaging,
   getToken,
   isDeviceRegisteredForRemoteMessages,
+  onMessage,
+  onNotificationOpenedApp,
   onTokenRefresh,
   registerDeviceForRemoteMessages,
   requestPermission,
 } from "@react-native-firebase/messaging";
+import { router } from "expo-router";
+import Toast from "react-native-toast-message";
 
 export async function registerPushToken(): Promise<void> {
   const auth = getAuth();
@@ -92,6 +98,77 @@ export function subscribeToPushTokenRefresh(): () => void {
     console.warn("Unable to subscribe to push token refresh:", error);
     return () => {};
   }
+}
+
+export function subscribeToNotificationOpens(): () => void {
+  const app = getApp();
+  const messaging = getMessaging(app);
+
+  return onNotificationOpenedApp(messaging, (remoteMessage) => {
+    const screen = remoteMessage.data?.screen;
+
+    if (screen === "friendsList") {
+      router.push("/(protected)/(tabs)/(feed)/friendsList");
+    }
+
+    if (screen === "home") {
+      router.push("/(protected)/(tabs)");
+    }
+  });
+}
+
+export async function handleInitialNotification(): Promise<void> {
+  const app = getApp();
+  const messaging = getMessaging(app);
+
+  const remoteMessage = await getInitialNotification(messaging);
+
+  if (!remoteMessage) return;
+
+  const screen = remoteMessage.data?.screen;
+
+  if (screen === "friendsList") {
+    router.push("/(protected)/(tabs)/(feed)/friendsList");
+  }
+
+  if (screen === "home") {
+    router.push("/(protected)/(tabs)");
+  }
+}
+
+export function subscribeToForegroundNotifications(): () => void {
+  const app = getApp();
+  const messaging = getMessaging(app);
+
+  return onMessage(messaging, async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+    const title = remoteMessage.notification?.title ?? "BuiltMode";
+    const body = remoteMessage.notification?.body ?? "";
+    const type = remoteMessage.data?.type;
+    const screen = remoteMessage.data?.screen;
+
+    Toast.show({
+      type: "in_app",
+      text1: title,
+      text2: body,
+      visibilityTime: 4000,
+      props: {
+        action: () => {
+          Toast.hide();
+
+          if (type === "friend_request" || screen === "friend_request") {
+            router.push("/(protected)/(tabs)/(feed)/friendsList");
+            return;
+          }
+
+          if (type === "official_week_started" || screen === "home") {
+            router.push("/(protected)/(tabs)");
+            return;
+          }
+        },
+        actionText: "View",
+      },
+    });
+  });
 }
 
 function createTokenId(token: string): string {

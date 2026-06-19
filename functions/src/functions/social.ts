@@ -91,7 +91,7 @@ export async function handleSendFriendRequest(fromUid: string, toUid: string): P
       type: "friend_request",
       data: {
         fromUid,
-        screen: "friendRequests",
+        screen: "friendsList",
       },
     }));
 
@@ -162,10 +162,10 @@ export async function handleRespondToFriendRequest(
       recipientUid,
       title: "Accepted friend request",
       body: `${toUserDisplayName} accepted your train request.`,
-      type: "accepted_friend_request",
+      type: "friend_request",
       data: {
         recipientUid,
-        screen: "friendRequests",
+        screen: "friendsList",
       },
     }));
 
