@@ -35,10 +35,10 @@ export type User = {
   weeklyTargetDays: WeeklyTargetDays;
 
   // Meta
-  createdAt: string;
-  homeTimezoneSetAt: string;
-  homeTimezoneUpdatedAt?: string;
-  updatedAt: string;
+  createdAt: firestoreTimestamp;
+  homeTimezoneSetAt: firestoreTimestamp;
+  homeTimezoneUpdatedAt?: firestoreTimestamp;
+  updatedAt: firestoreTimestamp;
 };
 
 export type UserWeekAggregate = {
@@ -53,7 +53,7 @@ export type UserWeekAggregate = {
   isDeloadWeek: boolean;
   modeScore: number | null;
   scoreVersion: number;
-  updatedAt: string;
+  updatedAt: firestoreTimestamp;
 };
 
 export type UserStats = {

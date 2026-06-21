@@ -28,7 +28,7 @@ import {
 import { db } from "../lib/firebaseAdmin.js";
 import { LeaderboardEntry } from "../types/leaderboard.js";
 import { DayMarker, UserWeekAggregate, Workout } from "../types/workout.js";
-import { handleGetLocalDateKey, handleGetWeekId } from "../utils/weekId.js";
+import { handleGetLocalDateKey, handleGetWeekId, handleGetWeekWindow } from "../utils/weekId.js";
 import { createWorkoutCompletedFeedItem, fanoutFeedItemToFriends } from "./social.js";
 
 /** 
@@ -58,9 +58,18 @@ export async function handleCompleteWorkout(
 
   const result = await db.runTransaction(async (tx) => {
     const user = await getUserByUid(tx, uid);
+
+    const fetchedUserStats = await getUserStats(tx, uid);
+    const userStatsExists = fetchedUserStats.exists;
+
     if (!user.exists) {
       throw new HttpsError("not-found", "User not found.");
     }
+    if (!userStatsExists) {
+      throw new HttpsError("not-found", "User stats not found.");
+    }
+
+    const userStats = fetchedUserStats.data() as UserStats;
 
     const homeTimezone = user.get("homeTimezone");
     const officialStartWeekId = user.get("officialStartWeekId");
@@ -96,17 +105,21 @@ export async function handleCompleteWorkout(
         ? weekAggregate.get("activeDaysThisWeek") + 1
         : weekAggregate.get("activeDaysThisWeek")
       : 1;
-    const metTargetThisWeek = weekAggregateExists ? activeDaysThisWeek >= weeklyTargetDays : false;
+
+    const metTargetThisWeek = activeDaysThisWeek >= weeklyTargetDays;
     const isDeloadWeek = weekAggregateExists ? weekAggregate.get("isDeloadWeek") : false;
+    let targetMetAt = null;
+    let streakCreditedAt = null;
     // If weekAgreggate doc exits, there is no workout and target is met increment streak. Else do nothing
-    let streakWeeks = 0;
-    if (weekAggregateExists) {
-      if (metTargetThisWeek && streakStatus === "inactive") {
-        streakWeeks = weekAggregate.get("streakWeeks") + 1;
-        streakStatus = "active";
-      } else {
-        streakWeeks = weekAggregate.get("streakWeeks");
-      }
+    let streakWeeks = userStats.currentWeekStreak;
+
+    if (metTargetThisWeek && streakStatus === "inactive") {
+      targetMetAt = now;
+      streakCreditedAt = now;
+      streakWeeks = streakWeeks + 1;
+      streakStatus = "active";
+    } else {
+      streakWeeks = streakWeeks;
     }
 
     const calculatedStats = calculateModeScore({
@@ -155,14 +168,11 @@ export async function handleCompleteWorkout(
       : 0;
     const activeDaysCount = dayMarkerExists ? activeDaysInMonth : activeDaysInMonth + 1;
 
-    const userStats = await getUserStats(tx, uid);
-    const userStatsExists = userStats.exists;
-
     const bestWeekStreak = userStatsExists
-      ? Math.max(streakWeeks, userStats.data()?.bestWeekStreak ?? 0)
+      ? Math.max(streakWeeks, userStats.bestWeekStreak ?? 0)
       : 0;
-    const totalWorkoutsLogged = userStatsExists ? userStats.data()?.totalWorkoutsLogged + 1 : 1;
-    const previousTotalTargetsMet = userStatsExists ? (userStats.data()?.totalTargetsMet ?? 0) : 0;
+    const totalWorkoutsLogged = userStatsExists ? userStats.totalWorkoutsLogged + 1 : 1;
+    const previousTotalTargetsMet = userStatsExists ? (userStats.totalTargetsMet ?? 0) : 0;
     const newlyMetTargetThisWeek =
       isOfficialWeek &&
       metTargetThisWeek &&
@@ -196,6 +206,7 @@ export async function handleCompleteWorkout(
       createdAt: now,
       weekId,
     };
+    const weekWindow = handleGetWeekWindow(new Date(), homeTimezone);
 
     const userWeekAggregateDoc: UserWeekAggregate = {
       uid,
@@ -210,6 +221,11 @@ export async function handleCompleteWorkout(
       updatedAt: now,
       weekId,
       isDeloadWeek,
+      weekEndAt: weekWindow.weekEndAt,
+      weekStartAt: weekWindow.weekStartAt,
+      streakCreditedAt,
+      finalizedAt: null,
+      targetMetAt,
     };
 
     const userMonthAggregateDoc: UserMonthAggregate = {

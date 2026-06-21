@@ -3,6 +3,7 @@ import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { sendPushNotificationToUser } from "../services/notificationService.js";
+import { handleGetWeekWindow } from "../utils/weekId.js";
 
 if (!getApps().length) {
   initializeApp();
@@ -149,28 +150,33 @@ async function activateUserOfficialWeek(
     const aggregateSnap = await tx.get(userWeekAggregateRef);
 
     if (!aggregateSnap.exists) {
+      const weekWindow = handleGetWeekWindow(new Date(), user?.homeTimezone || "");
       tx.create(userWeekAggregateRef, {
         uid,
         weekId,
+        isOfficialWeek: true,
         weeklyTargetDays,
 
         modeScore: 0,
-        completedWorkoutCount: 0,
-        totalWorkouts: 0,
-        activeDaysCount: 0,
+        activeDaysThisWeek: 0,
         workoutCountByDate: {},
 
-        weeklyAdherenceRate: 0,
-        weeklyTargetMet: false,
+        metTargetThisWeek: false,
+        targetMetAt: null,
 
-        currentWeekStreak: 0,
-        bestWeekStreak: 0,
+        streakWeeks: 0,
+        streakStatus: "inactive",
 
         isDeloadWeek: false,
 
         createdBy: "activateOfficialWeeks",
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
+        streakCreditedAt: null,
+        finalizedAt: null,
+        weekStartAt: weekWindow.weekStartAt,
+        weekEndAt: weekWindow.weekEndAt,
+        scoreVersion: 1,
       });
     }
 
@@ -180,6 +186,7 @@ async function activateUserOfficialWeek(
       currentWeekId: weekId,
       updatedAt: FieldValue.serverTimestamp(),
       officialWeekActivationError: FieldValue.delete(),
+      lastEnsuredWeekId: weekId,
     });
 
     return {

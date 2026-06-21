@@ -36,12 +36,17 @@ export type UserWeekAggregate = {
   weeklyTargetDays: number;
   activeDaysThisWeek: number;
   metTargetThisWeek: boolean;
+  weekStartAt: Timestamp;
+  weekEndAt: Timestamp;
+  targetMetAt: Timestamp | null;
   streakWeeks: number;
   streakStatus: "inactive" | "active";
   isDeloadWeek: boolean;
   modeScore: number | null;
   scoreVersion: number;
   updatedAt: Timestamp;
+  streakCreditedAt: Timestamp | null;
+  finalizedAt: Timestamp | null;
 };
 
 export type DayMarker = {

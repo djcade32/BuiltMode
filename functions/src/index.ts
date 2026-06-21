@@ -213,3 +213,5 @@ export const fetchUsersHomeTimezone = onCall(async (request: CallableRequest<{ u
 });
 
 export { activateOfficialWeeks } from "./scheduled/activateOfficialWeek.js";
+export { ensureCurrentWeekAggregates } from "./scheduled/ensureCurrentWeekAggregates.js";
+export { finalizeExpiredWeeks } from "./scheduled/finalizeExpiredWeeks.js";

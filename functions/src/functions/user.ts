@@ -84,6 +84,7 @@ export async function handleCreateUserProfile(
       officialStartWeekId,
       officialStartAt,
       officialWeekStatus,
+      lastEnsuredWeekId: null,
 
       /**
        * If the user signs up exactly inside their official week,

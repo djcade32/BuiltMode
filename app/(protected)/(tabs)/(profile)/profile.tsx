@@ -83,6 +83,7 @@ const profile = () => {
       targetDays: userWeekAggregate?.weeklyTargetDays || userStats?.weeklyTargetDays || 5,
       currentStreakWeek: userWeekAggregate?.streakWeeks || userStats?.currentWeekStreak || 0,
       isPracticeWeek: user?.isPracticeWeek || !userWeekAggregate?.isOfficialWeek || false,
+      isStreakActive: userWeekAggregate?.streakStatus === "active",
     };
   }, [userWeekAggregate, userStats, user]);
 
@@ -144,7 +145,7 @@ const profile = () => {
               </View>
 
               <View style={styles.badgeRow}>
-                {userWeekAggregateData.currentStreakWeek > 0 && (
+                {userWeekAggregateData.isStreakActive && (
                   <View style={styles.streakWeekButton}>
                     <View style={styles.streakBadgeInner}>
                       <FontAwesome5 name="fire-alt" size={12} color={Colors.accent.primary} />

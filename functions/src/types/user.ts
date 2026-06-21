@@ -23,6 +23,8 @@ export type UserDoc = {
   officialWeekStatus: OfficialWeekStatus;
   officialStartedAt: Timestamp | null;
   currentWeekId: string;
+  lastEnsuredWeekId: string | null;
+
   // Meta
   createdAt: Timestamp;
   updatedAt: Timestamp;
