@@ -1,5 +1,6 @@
 import { Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
+import dayjs from "@/lib/dayjs";
 import { fetchUserWeekAggregate } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
@@ -21,10 +22,25 @@ const TrainingTargetWidget = ({ isRefreshing }: { isRefreshing?: boolean }) => {
     enabled: !!user,
   });
 
-  const getDaysLeft = () => {
-    const today = new Date().getDay();
-    if (today === 0) return 1;
-    return Math.abs(today - 8);
+  const getDaysLeftUntilNextMonday = (homeTimezone: string) => {
+    const nowLocal = dayjs();
+    const nowInHomeTimezone = dayjs().tz(homeTimezone);
+
+    console.log("getDaysLeftUntilNextMonday debug", {
+      homeTimezone,
+      localTime: nowLocal.format(),
+      homeTimezoneTime: nowInHomeTimezone.format(),
+      localDay: nowLocal.day(),
+      homeTimezoneDay: nowInHomeTimezone.day(),
+    });
+
+    const dayOfWeek = nowInHomeTimezone.day();
+
+    if (dayOfWeek === 0) {
+      return 1;
+    }
+
+    return 8 - dayOfWeek;
   };
 
   useEffect(() => {
@@ -70,7 +86,8 @@ const TrainingTargetWidget = ({ isRefreshing }: { isRefreshing?: boolean }) => {
                   color: Colors.accent.primary,
                 }}
               >
-                In {getDaysLeft()} {getDaysLeft() > 1 ? "Days" : "Day"}
+                In {getDaysLeftUntilNextMonday(user.homeTimezone)}{" "}
+                {getDaysLeftUntilNextMonday(user.homeTimezone) > 1 ? "Days" : "Day"}
               </ThemedText>
             ) : (
               <ThemedText

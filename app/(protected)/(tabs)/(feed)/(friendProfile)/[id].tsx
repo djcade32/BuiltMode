@@ -207,7 +207,7 @@ const FriendProfile = () => {
                   onPress={() =>
                     Alert.alert("Are You Sure?", "You will lose access to this user's profile", [
                       {
-                        text: "Continue",
+                        text: "Unfriend",
                         onPress: () => removeFriendFunc(id),
                         style: "destructive",
                       },

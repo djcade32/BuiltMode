@@ -15,6 +15,9 @@ type OfficialWeekStatus = "practice" | "official";
 
 type BuiltModeUser = {
   uid?: string;
+  displayName?: string;
+  username?: string;
+  avatarUrl?: string | null;
   weeklyTargetDays?: number;
   homeTimezone?: string;
   officialWeekStatus?: OfficialWeekStatus;
@@ -30,6 +33,7 @@ type ActivateOfficialWeekResult =
     }
   | {
       status: "skipped";
+      reason?: string;
     };
 
 const PAGE_SIZE = 100;
@@ -73,6 +77,7 @@ export const activateOfficialWeeks = onSchedule(
 
         if (result.status === "activated") {
           activatedCount += 1;
+
           await sendPushNotificationToUser({
             recipientUid: result.uid,
             title: "Your official week has started",
@@ -85,16 +90,20 @@ export const activateOfficialWeeks = onSchedule(
           });
         } else {
           skippedCount += 1;
+
+          logger.info("Skipped official week activation", {
+            userPath: userDoc.ref.path,
+            reason: result.reason,
+          });
         }
       }
 
       /**
-       * We do not need startAfter pagination here because every activated user
-       * is removed from the query set by changing officialWeekStatus.
+       * No startAfter pagination needed because activated users are removed
+       * from this query by changing officialWeekStatus from "practice" to "official".
        *
-       * If a user is skipped because of bad/missing data, they could remain in
-       * the query set forever. That is why activateUserOfficialWeek marks invalid
-       * records with an error flag instead of leaving them untouched.
+       * Invalid records are also marked with officialWeekActivationError so they
+       * can be inspected instead of silently failing forever.
        */
     }
 
@@ -116,14 +125,20 @@ async function activateUserOfficialWeek(
     const freshUserSnap = await tx.get(userRef);
 
     if (!freshUserSnap.exists) {
-      return { status: "skipped" };
+      return {
+        status: "skipped",
+        reason: "user_not_found",
+      };
     }
 
     const user = freshUserSnap.data() as BuiltModeUser;
     const uid = freshUserSnap.id;
 
     if (user.officialWeekStatus !== "practice") {
-      return { status: "skipped" };
+      return {
+        status: "skipped",
+        reason: "not_in_practice",
+      };
     }
 
     if (!user.officialStartAt || !user.officialStartWeekId) {
@@ -135,22 +150,51 @@ async function activateUserOfficialWeek(
         updatedAt: FieldValue.serverTimestamp(),
       });
 
-      return { status: "skipped" };
+      return {
+        status: "skipped",
+        reason: "missing_official_start_fields",
+      };
+    }
+
+    if (!user.homeTimezone) {
+      tx.update(userRef, {
+        officialWeekActivationError: {
+          reason: "missing_home_timezone",
+          checkedAt: FieldValue.serverTimestamp(),
+        },
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      return {
+        status: "skipped",
+        reason: "missing_home_timezone",
+      };
     }
 
     if (user.officialStartAt.toMillis() > now.toMillis()) {
-      return { status: "skipped" };
+      return {
+        status: "skipped",
+        reason: "official_start_in_future",
+      };
     }
 
     const weekId = user.officialStartWeekId;
     const weeklyTargetDays = user.weeklyTargetDays ?? 4;
 
     const userWeekAggregateRef = db.doc(`userWeekAggregates/${uid}_${weekId}`);
+    const leaderboardEntryRef = db.doc(`leaderboardEntries/${uid}`);
 
     const aggregateSnap = await tx.get(userWeekAggregateRef);
 
     if (!aggregateSnap.exists) {
-      const weekWindow = handleGetWeekWindow(new Date(), user?.homeTimezone || "");
+      /**
+       * Use officialStartAt instead of new Date().
+       *
+       * If this cron runs late, new Date() could point to a later week.
+       * The first official aggregate should match officialStartWeekId.
+       */
+      const weekWindow = handleGetWeekWindow(user.officialStartAt.toDate(), user.homeTimezone);
+
       tx.create(userWeekAggregateRef, {
         uid,
         weekId,
@@ -159,6 +203,7 @@ async function activateUserOfficialWeek(
 
         modeScore: 0,
         activeDaysThisWeek: 0,
+        totalWorkouts: 0,
         workoutCountByDate: {},
 
         metTargetThisWeek: false,
@@ -172,10 +217,13 @@ async function activateUserOfficialWeek(
         createdBy: "activateOfficialWeeks",
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
+
         streakCreditedAt: null,
         finalizedAt: null,
+
         weekStartAt: weekWindow.weekStartAt,
         weekEndAt: weekWindow.weekEndAt,
+
         scoreVersion: 1,
       });
     }
@@ -184,10 +232,37 @@ async function activateUserOfficialWeek(
       officialWeekStatus: "official",
       officialStartedAt: FieldValue.serverTimestamp(),
       currentWeekId: weekId,
+      lastEnsuredWeekId: weekId,
       updatedAt: FieldValue.serverTimestamp(),
       officialWeekActivationError: FieldValue.delete(),
-      lastEnsuredWeekId: weekId,
     });
+
+    /**
+     * This is the important leaderboard change.
+     *
+     * During practice week:
+     *   isRanked: false
+     *
+     * Once official:
+     *   isRanked: true
+     *
+     * set(..., { merge: true }) keeps any existing leaderboard fields intact.
+     */
+    tx.set(
+      leaderboardEntryRef,
+      {
+        uid,
+        displayName: user.displayName ?? null,
+        usernameLower: user.username?.toLocaleLowerCase() ?? null,
+        avatarUrl: user.avatarUrl ?? null,
+
+        isRanked: true,
+        weekId,
+
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
 
     return {
       status: "activated",

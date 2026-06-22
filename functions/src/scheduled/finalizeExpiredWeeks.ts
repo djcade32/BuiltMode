@@ -9,7 +9,6 @@ import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import {
   calculateModeScore,
-  getDayMarker,
   getLastFourWeekAggregates,
   getLastFourWeeksAdherenceRate,
   getWorkoutsWithinLast30Days,
@@ -162,6 +161,7 @@ async function finalizeWeekAggregate(
 
     const userRef = db.collection("users").doc(uid);
     const userStatsRef = db.collection("userStats").doc(uid);
+    const leaderboardEntryRef = db.collection("leaderboardEntries").doc(uid);
 
     const freshUserSnap = await tx.get(userRef);
 
@@ -178,6 +178,13 @@ async function finalizeWeekAggregate(
       return {
         status: "skipped",
         reason: "not_official",
+      };
+    }
+
+    if (!user.homeTimezone) {
+      return {
+        status: "skipped",
+        reason: "missing_home_timezone",
       };
     }
 
@@ -221,17 +228,43 @@ async function finalizeWeekAggregate(
       };
     }
 
+    const localDateKey = handleGetLocalDateKey(now.toDate(), user.homeTimezone);
+
+    /**
+     * Since this cron is not completing a new workout,
+     * do not add +1 here. Just read the current 30-day count.
+     */
+    const completedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(tx, uid, localDateKey);
+
+    const last4WeekAggregates = await getLastFourWeekAggregates(tx, uid, weekId);
+    const lastFourWeeksAdherenceRate = getLastFourWeeksAdherenceRate(last4WeekAggregates);
+
     /**
      * Deload weeks preserve the streak.
      * No increment.
      * No reset.
-     * Just mark the week as closed.
+     * Just mark the week as closed and keep leaderboard state aligned.
      */
     if (weekAggregate.isDeloadWeek) {
+      const currentWeekStreak = userStats.currentWeekStreak ?? 0;
+      const bestWeekStreak = userStats.bestWeekStreak ?? 0;
+      const currentModeScore = userStats.modeScore ?? weekAggregate.modeScore ?? 0;
+
       tx.update(aggregateRef, {
         finalizedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       });
+
+      tx.set(
+        leaderboardEntryRef,
+        getLeaderboardEntryUpdate({
+          uid,
+          modeScore: currentModeScore,
+          streakWeeks: currentWeekStreak,
+          weekId: user.currentWeekId ?? weekId,
+        }),
+        { merge: true },
+      );
 
       return {
         status: "finalized",
@@ -239,20 +272,6 @@ async function finalizeWeekAggregate(
         weekId,
       };
     }
-
-    const localDateKey = handleGetLocalDateKey(now.toDate(), user.homeTimezone);
-    const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
-    const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(
-      tx,
-      uid,
-      localDateKey,
-    );
-    const completedWorkoutsLast30Days = dayMarkerExists
-      ? numOfCompletedWorkoutsLast30Days
-      : numOfCompletedWorkoutsLast30Days + 1;
-
-    const last4WeekAggregates = await getLastFourWeekAggregates(tx, uid, weekId);
-    const lastFourWeeksAdherenceRate = getLastFourWeeksAdherenceRate(last4WeekAggregates);
 
     /**
      * Target met.
@@ -297,17 +316,59 @@ async function finalizeWeekAggregate(
           last30DayWeeklyAdherenceRate: lastFourWeeksAdherenceRate,
           updatedAt: FieldValue.serverTimestamp(),
         });
+
+        tx.set(
+          leaderboardEntryRef,
+          getLeaderboardEntryUpdate({
+            uid,
+            modeScore: calculatedStats.modeScore,
+            streakWeeks: newCurrentWeekStreak,
+            weekId: user.currentWeekId ?? weekId,
+          }),
+          { merge: true },
+        );
       } else {
         /**
          * Streak was already credited by completeWorkout.
-         * Do not increment again.
+         * Do not increment again, but still recalculate Mode Score
+         * and sync leaderboard because the week is now officially finalized.
          */
+        const currentWeekStreak = userStats.currentWeekStreak ?? 0;
+        const bestWeekStreak = userStats.bestWeekStreak ?? 0;
+
+        const calculatedStats = calculateModeScore({
+          weeklyTarget: weeklyTargetDays,
+          completedWorkoutsLast30Days,
+          weeklyAdherenceStreak: currentWeekStreak,
+          completedWorkoutsThisWeek: activeDaysThisWeek,
+        });
+
         tx.update(aggregateRef, {
           metTargetThisWeek: true,
           finalizedAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
+          modeScore: calculatedStats.modeScore,
+          streakWeeks: currentWeekStreak,
           streakStatus: "active",
         });
+
+        tx.update(userStatsRef, {
+          modeScore: calculatedStats.modeScore,
+          activity30DayRate: calculatedStats.activity30DayScore,
+          last30DayWeeklyAdherenceRate: lastFourWeeksAdherenceRate,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        tx.set(
+          leaderboardEntryRef,
+          getLeaderboardEntryUpdate({
+            uid,
+            modeScore: calculatedStats.modeScore,
+            streakWeeks: currentWeekStreak,
+            weekId: user.currentWeekId ?? weekId,
+          }),
+          { merge: true },
+        );
       }
 
       return {
@@ -322,12 +383,18 @@ async function finalizeWeekAggregate(
      *
      * This is the main reason this cron exists.
      * Missed weeks happen through inactivity, so completeWorkout may never fire.
+     *
+     * Important:
+     * Mode Score should be calculated with weeklyAdherenceStreak: 0 because
+     * this branch resets the user's weekly streak.
      */
+    const resetWeekStreak = 0;
+    const bestWeekStreak = userStats.bestWeekStreak ?? 0;
 
     const calculatedStats = calculateModeScore({
       weeklyTarget: weeklyTargetDays,
       completedWorkoutsLast30Days,
-      weeklyAdherenceStreak: userStats.currentWeekStreak ?? 0,
+      weeklyAdherenceStreak: resetWeekStreak,
       completedWorkoutsThisWeek: activeDaysThisWeek,
     });
 
@@ -336,17 +403,28 @@ async function finalizeWeekAggregate(
       modeScore: calculatedStats.modeScore,
       finalizedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
-      streakWeeks: userStats.currentWeekStreak ?? 0,
+      streakWeeks: resetWeekStreak,
       streakStatus: "reset",
     });
 
     tx.update(userStatsRef, {
-      currentWeekStreak: 0,
+      currentWeekStreak: resetWeekStreak,
       modeScore: calculatedStats.modeScore,
       activity30DayRate: calculatedStats.activity30DayScore,
       last30DayWeeklyAdherenceRate: lastFourWeeksAdherenceRate,
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    tx.set(
+      leaderboardEntryRef,
+      getLeaderboardEntryUpdate({
+        uid,
+        modeScore: calculatedStats.modeScore,
+        streakWeeks: resetWeekStreak,
+        weekId: user.currentWeekId ?? weekId,
+      }),
+      { merge: true },
+    );
 
     return {
       status: "finalized",
@@ -354,4 +432,24 @@ async function finalizeWeekAggregate(
       weekId,
     };
   });
+}
+
+function getLeaderboardEntryUpdate(input: {
+  uid: string;
+  modeScore: number;
+  streakWeeks: number;
+  weekId: string;
+}) {
+  return {
+    uid: input.uid,
+
+    modeScore: input.modeScore,
+    streakWeeks: input.streakWeeks,
+
+    weekId: input.weekId,
+
+    isRanked: true,
+
+    updatedAt: FieldValue.serverTimestamp(),
+  };
 }

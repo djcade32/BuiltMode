@@ -22,6 +22,7 @@ import {
 } from "@expo-google-fonts/jetbrains-mono";
 
 import { ThemedText } from "@/components/themed-text";
+import "@/lib/intl-polyfils";
 import { ArchivoBlack_400Regular } from "@expo-google-fonts/archivo-black";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useState } from "react";

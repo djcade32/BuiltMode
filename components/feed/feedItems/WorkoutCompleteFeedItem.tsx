@@ -181,6 +181,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
               },
             })
           }
+          hitSlop={15}
         >
           <ThemedText style={styles.viewDetailsButton}>VIEW DETAILS</ThemedText>
           <FontAwesome6 name="arrow-right" size={10} color={Colors.accent.primary} />
