@@ -6,6 +6,7 @@ import {
   signOutUser,
   signUpWithEmail,
 } from "@/services/auth-service";
+import { unregisterPushToken } from "@/services/notification-service";
 import { checkForUserProfile } from "@/services/user-service";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -126,6 +127,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       signout: async () => {
+        await unregisterPushToken()
         await signOutUser();
         set({ ...initialState, isHydrated: true });
         useUserStore.getState().setUser(null);

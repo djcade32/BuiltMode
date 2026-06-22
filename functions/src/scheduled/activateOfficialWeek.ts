@@ -84,6 +84,7 @@ export const activateOfficialWeeks = onSchedule(
             body: "Your BuiltMode standard is live. Time to build.",
             type: "official_week_started",
             data: {
+              targetUid: result.uid,
               weekId: result.weekId,
               screen: "home",
             },
