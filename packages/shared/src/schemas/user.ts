@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { firestoreTimestampSchema } from "./firestore.js";
+import { firestoreTimestampSchema, firestoreTimestampV2Schema } from "./firestore.js";
 
 export const goalSchema = z.union([
   z.literal("BUILD MUSCLE"),
@@ -76,7 +76,10 @@ export const createUserProfileResponseSchema = z.object({
   avatarUrl: avatarUrlSchema,
   homeTimezone: homeTimezoneSchema,
   officialStartWeekId: z.string().min(1),
-  officialStartAt: firestoreTimestampSchema,
+  officialStartAt: z.union([
+    firestoreTimestampSchema,
+    firestoreTimestampV2Schema,
+  ]),
   officialWeekStatus: officialWeekSchema,
   currentWeekId: z.string().min(1),
   weeklyTargetDays: weeklyTargetDaysSchema,

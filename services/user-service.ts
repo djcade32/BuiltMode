@@ -54,10 +54,10 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       return undefined;
     }
 
-    const createdAt = timestampToIsoString(data.createdAt);
-    const updatedAt = timestampToIsoString(data.updatedAt);
-    const homeTimezoneSetAt = timestampToIsoString(data.homeTimezoneSetAt);
-    const homeTimezoneUpdatedAt = timestampToIsoString(data.homeTimezoneUpdatedAt) ?? "";
+    const createdAt = data.createdAt;
+    const updatedAt = data.updatedAt;
+    const homeTimezoneSetAt = data.homeTimezoneSetAt;
+    const homeTimezoneUpdatedAt = data.homeTimezoneUpdatedAt ?? "";
 
     // Required timestamp fields must be present and valid
     if (!createdAt || !updatedAt || !homeTimezoneSetAt) {
@@ -74,6 +74,9 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       homeTimezoneSetAt,
       homeTimezoneUpdatedAt,
       officialStartWeekId: data.officialStartWeekId,
+      officialWeekStatus: data.officialWeekStatus,
+      currentWeekId: data.currentWeekId,
+      officialStartAt: data.officialStartAt,
       updatedAt,
       username: data.username,
       usernameLower: data.usernameLower,
@@ -90,7 +93,6 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
 export const isUsernameAvailable = async (username: string): Promise<boolean> => {
   try {
     const usernameDoc = doc(db, `usernames/${username.trim().toLowerCase()}`);
-    const test = await getDoc(usernameDoc);
     return !(await getDoc(usernameDoc)).exists();
   } catch (error: any) {
     throw error;

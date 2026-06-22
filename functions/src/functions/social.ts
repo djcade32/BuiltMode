@@ -305,8 +305,19 @@ type CreateWorkoutCompletedFeedItemParams = {
     name?: string | null;
     durationSeconds?: number | null;
     exercises?: Exercise[];
+
     weekId: string;
     localDateKey: string;
+    localDate: string;
+
+    workoutTimezone: string;
+    workoutLocalDate: string;
+    workoutLocalTime: string;
+    workoutLocalDateTimeISO: string;
+    workoutLocalDisplayDate: string;
+    workoutLocalDisplayTime: string;
+    workoutUtcOffsetMinutes: number;
+
     caption: string | null;
     isPracticeWeek: boolean;
     completedAt: Timestamp;

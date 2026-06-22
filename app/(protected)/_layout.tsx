@@ -12,7 +12,8 @@ import React, { useEffect } from "react";
 import { MenuProvider } from "react-native-popup-menu";
 
 const ProtectedLayout = () => {
-  // useWorkoutStore.persist.clearStorage();
+  // useUserStore.persist.clearStorage();
+  // useAuthStore.persist.clearStorage();
   const { isAuthenticated, isHydrated, user } = useAuthStore();
   const { activeWorkoutDraft } = useWorkoutStore();
 

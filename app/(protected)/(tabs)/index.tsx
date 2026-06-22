@@ -1,6 +1,3 @@
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone.js";
-import utc from "dayjs/plugin/utc";
 import { Image, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 
 import ModeScoreWidget from "@/components/home/ModeScoreWidget";
@@ -18,9 +15,6 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export default function HomeScreen() {
   const router = useRouter();

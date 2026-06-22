@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { homeTimezoneSchema } from "./user.js";
 
 export const exerciseTypeSchema = z.enum(["strength", "conditioning", "cardio"]);
 
@@ -20,6 +21,24 @@ export const exerciseMetricTypeSchema = z.enum([
   "calories",
   "time",
 ]);
+
+const workoutLocalDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected date format YYYY-MM-DD");
+
+const workoutLocalTimeSchema = z
+  .string()
+  .regex(/^\d{2}:\d{2}$/, "Expected time format HH:mm");
+
+export const workoutTimezoneFieldsSchema = z.object({
+  workoutTimezone: homeTimezoneSchema,
+  workoutLocalDate: workoutLocalDateSchema,
+  workoutLocalTime: workoutLocalTimeSchema,
+  workoutLocalDateTimeISO: z.string().min(1),
+  workoutLocalDisplayDate: z.string().min(1),
+  workoutLocalDisplayTime: z.string().min(1),
+  workoutUtcOffsetMinutes: z.number().int().min(-840).max(840),
+});
 
 export const exerciseSetSchema = z.object({
   id: z.string().min(1),
@@ -61,16 +80,19 @@ export const completeWorkoutRequestSchema = z.object({
   duration: z.number().int().nonnegative(),
 });
 
-export const completeWorkoutResponseSchema = z.object({
-  weekId: z.string().min(1),
-  isOfficialWeek: z.boolean(),
-  activeDaysThisWeek: z.number().int().nonnegative(),
-  weeklyTargetDays: z.number().int().min(2).max(7),
-  streakWeeks: z.number().int().nonnegative(),
-  modeScore: z.number().min(0).max(100).nullable(),
-  modeScoreDifference: z.number().min(-100).max(100),
-  lockedAt: z.string().min(1),
-});
+export const completeWorkoutResponseSchema = z
+  .object({
+    weekId: z.string().min(1),
+    isOfficialWeek: z.boolean(),
+    activeDaysThisWeek: z.number().int().nonnegative(),
+    weeklyTargetDays: z.number().int().min(2).max(7),
+    streakWeeks: z.number().int().nonnegative(),
+    modeScore: z.number().min(0).max(100).nullable(),
+    modeScoreDifference: z.number().min(-100).max(100),
+    lockedAt: z.string().min(1),
+    localDate: z.string().min(1),
+  })
+  .merge(workoutTimezoneFieldsSchema);
 
 export const editWorkoutMetadataRequestSchema = z.object({
   sessionId: z.string().min(1),

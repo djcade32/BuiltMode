@@ -2,6 +2,7 @@ import {
   CreateUserProfileRequest,
   CreateUserProfileResponse,
 } from "@builtmode/shared/schemas/user";
+import { firestoreTimestampV2 } from "@builtmode/shared/types/firestore";
 import { UserStats } from "@builtmode/shared/types/user";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
@@ -159,7 +160,7 @@ export async function handleFetchingUserHomeTimezone(userId: string): Promise<st
 export function handleGetOfficialStartAt(
   officialStartWeekId: string,
   homeTimezone: string,
-): Timestamp {
+): Timestamp | firestoreTimestampV2 {
   if (!officialStartWeekId.trim()) {
     throw new Error("officialStartWeekId is required.");
   }

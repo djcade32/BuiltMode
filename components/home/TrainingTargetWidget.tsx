@@ -1,6 +1,8 @@
 import { Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
 import dayjs from "@/lib/dayjs";
+import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
+import { firestoreTimestamp, firestoreTimestampV2 } from "@/packages/shared/src/types/firestore";
 import { fetchUserWeekAggregate } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
@@ -22,25 +24,32 @@ const TrainingTargetWidget = ({ isRefreshing }: { isRefreshing?: boolean }) => {
     enabled: !!user,
   });
 
-  const getDaysLeftUntilNextMonday = (homeTimezone: string) => {
-    const nowLocal = dayjs();
-    const nowInHomeTimezone = dayjs().tz(homeTimezone);
-
-    console.log("getDaysLeftUntilNextMonday debug", {
-      homeTimezone,
-      localTime: nowLocal.format(),
-      homeTimezoneTime: nowInHomeTimezone.format(),
-      localDay: nowLocal.day(),
-      homeTimezoneDay: nowInHomeTimezone.day(),
-    });
-
-    const dayOfWeek = nowInHomeTimezone.day();
-
-    if (dayOfWeek === 0) {
-      return 1;
+  const getDaysLeftUntilNextOfficialWeek = (officialStartAt: firestoreTimestampV2 | firestoreTimestamp) => {
+    let seconds = null
+    let nanoseconds = null
+    if("_seconds" in officialStartAt){
+      seconds = officialStartAt._seconds
+      nanoseconds = officialStartAt._nanoseconds
+    }else {
+      seconds = officialStartAt.seconds,
+      nanoseconds = officialStartAt.nanoseconds
     }
 
-    return 8 - dayOfWeek;
+    const now = dayjs();
+    const start = dayjs(formatFirestoreDateTimeISO({seconds, nanoseconds}));
+
+    /**
+     * If official week has not started yet, count down to officialStartAt.
+     */
+    if (now.isBefore(start)) {
+      return Math.ceil(start.diff(now, "day", true));
+    }
+
+    const daysSinceOfficialStart = now.diff(start, "day", true);
+    const completedWeeks = Math.floor(daysSinceOfficialStart / 7);
+    const nextWeekStart = start.add(completedWeeks + 1, "week");
+
+    return Math.ceil(nextWeekStart.diff(now, "day", true));
   };
 
   useEffect(() => {
@@ -86,8 +95,8 @@ const TrainingTargetWidget = ({ isRefreshing }: { isRefreshing?: boolean }) => {
                   color: Colors.accent.primary,
                 }}
               >
-                In {getDaysLeftUntilNextMonday(user.homeTimezone)}{" "}
-                {getDaysLeftUntilNextMonday(user.homeTimezone) > 1 ? "Days" : "Day"}
+                In {getDaysLeftUntilNextOfficialWeek(user.officialStartAt)}{" "}
+                {getDaysLeftUntilNextOfficialWeek(user.officialStartAt) > 1 ? "Days" : "Day"}
               </ThemedText>
             ) : (
               <ThemedText

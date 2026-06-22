@@ -31,11 +31,6 @@ export async function sendPushNotificationToUser({
   type,
   data = {},
 }: SendPushNotificationInput): Promise<void> {
-  console.log("Sending push", {
-    recipientUid,
-    type,
-  });
-
   const tokenSnapshot = await db
     .collection(`users/${recipientUid}/pushTokens`)
     .where("enabled", "==", true)
@@ -73,12 +68,6 @@ export async function sendPushNotificationToUser({
 
     return;
   }
-
-  console.log("Sending push with token", {
-    recipientUid,
-    tokenCount: tokens.length,
-    type,
-  });
 
   const chunks = chunkArray(tokens, MAX_TOKENS_PER_MULTICAST);
 

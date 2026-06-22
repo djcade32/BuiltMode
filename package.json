@@ -28,6 +28,8 @@
     "@formatjs/intl-datetimeformat": "^7.4.9",
     "@formatjs/intl-getcanonicallocales": "^3.2.10",
     "@formatjs/intl-locale": "^5.3.9",
+    "@formatjs/intl-numberformat": "^9.3.11",
+    "@formatjs/intl-pluralrules": "^6.3.10",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-firebase/app": "^24.1.1",
     "@react-native-firebase/messaging": "^24.1.1",

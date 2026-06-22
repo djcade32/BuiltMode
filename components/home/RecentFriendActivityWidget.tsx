@@ -1,9 +1,9 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useUserFeedInfinite } from "@/hooks/social/useUserFeedInfinite";
+import dayjs from "@/lib/dayjs";
 import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
 import { useUserStore } from "@/stores/user-store";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
-import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";

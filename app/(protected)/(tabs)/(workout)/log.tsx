@@ -6,7 +6,6 @@ import { Template } from "@/functions/src/types/template";
 import { Workout } from "@/functions/src/types/workout";
 import { useUserTemplatesInfinite } from "@/hooks/workouts/useUserTemplatesInfinite";
 import { useUserWorkoutsInfinite } from "@/hooks/workouts/useUserWorkoutsInfinite";
-import { formatFirestoreTimestamp } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { durationTimeString } from "@/lib/utils/time";
 import { useUserStore } from "@/stores/user-store";
@@ -108,7 +107,8 @@ const TemplateItem = ({ template, onPress }: TemplateItemProps) => {
 };
 
 const LastWorkout = ({ workout, onPress }: WorkoutItemProps) => {
-  const { name, completedAt, duration, exercises, workoutType } = workout;
+  const { name, duration, exercises, workoutType, workoutLocalDisplayDate } =
+    workout;
 
   return (
     <View style={styles.lastWorkoutContainer}>
@@ -130,7 +130,8 @@ const LastWorkout = ({ workout, onPress }: WorkoutItemProps) => {
 
       <View style={styles.lastWorkoutFooterContainer}>
         <ThemedText style={styles.lastWorkoutFooterText}>
-          <Ionicons name="calendar-clear" size={12} /> {formatFirestoreTimestamp(completedAt)}
+          <Ionicons name="calendar-clear" size={12} />{" "}
+          {workoutLocalDisplayDate}
         </ThemedText>
 
         <ThemedText style={styles.lastWorkoutFooterText}>

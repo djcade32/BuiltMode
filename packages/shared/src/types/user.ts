@@ -14,6 +14,8 @@ export type Metrics = {
   system: "IMPERIAL" | "METRIC";
 };
 
+export type OfficialWeekStatus = "practice" | "official";
+
 export type HomeTimezone = string;
 
 export type WeeklyTargetDays = 2 | 3 | 4 | 5 | 6 | 7;
@@ -32,6 +34,9 @@ export type User = {
   // Discipline / eligibility
   homeTimezone: HomeTimezone;
   officialStartWeekId: string;
+  currentWeekId: string;
+  officialWeekStatus: OfficialWeekStatus;
+  officialStartAt: firestoreTimestamp;
   weeklyTargetDays: WeeklyTargetDays;
 
   // Meta
@@ -95,13 +100,11 @@ export type CreateUserProfileRequest = {
   displayName: string;
 };
 
-export type OfficialWeekStatus = "practice" | "official";
-
 export type CreateUserProfileResponse = {
   uid: string;
   username: string;
   goal: Goal;
-  metrics?: Metrics;
+  metrics?: Metrics | null;
   displayName: string;
   avatarUrl?: string;
   homeTimezone: HomeTimezone;

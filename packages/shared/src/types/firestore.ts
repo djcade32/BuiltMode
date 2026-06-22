@@ -4,3 +4,8 @@ export type firestoreTimestamp = {
   toDate: () => Date;
   toMillis: () => number;
 };
+
+export type firestoreTimestampV2 = {
+  _seconds: number;
+  _nanoseconds: number;
+};

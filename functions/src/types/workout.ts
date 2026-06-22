@@ -1,4 +1,4 @@
-import { Exercise, WorkoutType } from "@builtmode/shared/types/workout";
+import { Exercise, WorkoutTimezoneFields, WorkoutType } from "@builtmode/shared/types/workout";
 import { Timestamp } from "firebase-admin/firestore";
 
 export type WorkoutStatus = "completed" | "voided";
@@ -7,27 +7,24 @@ export type Workout = {
   sessionId: string;
   uid: string;
 
-  // Authoritative time
   completedAt: Timestamp;
   weekId: string;
   localDateKey: string;
+  localDate: string;
 
-  // User content
   name?: string;
   workoutType?: WorkoutType;
   notes?: string;
   exercises: Exercise[];
   duration: number;
 
-  // Integrity / correction window
   lockedAt: Timestamp;
   status: WorkoutStatus;
   voidedAt?: Timestamp | null;
 
-  // Meta
   createdAt: Timestamp;
   updatedAt: Timestamp;
-};
+} & WorkoutTimezoneFields;
 
 export type UserWeekAggregate = {
   uid: string;

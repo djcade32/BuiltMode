@@ -60,6 +60,9 @@ export const useAuthStore = create<AuthStore>()(
               avatarUrl,
               homeTimezone,
               officialStartWeekId,
+              officialStartAt,
+              officialWeekStatus,
+              currentWeekId,
               weeklyTargetDays,
             } = userFromDb;
             const user: CreateUserProfileResponse = {
@@ -71,6 +74,9 @@ export const useAuthStore = create<AuthStore>()(
               avatarUrl,
               homeTimezone,
               officialStartWeekId,
+              officialStartAt,
+              officialWeekStatus,
+              currentWeekId,
               weeklyTargetDays,
               isPracticeWeek: handleGetWeekId(new Date(), homeTimezone) < officialStartWeekId,
             };
@@ -139,8 +145,17 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => async (state) => {
         state?.setHydrated(true);
+
+        if (state?.user?.uid) {
+          const freshUser = await checkForUserProfile(state.user.uid);
+          freshUser &&
+            useUserStore.getState().setUser({
+              ...freshUser,
+              isPracticeWeek: freshUser.officialWeekStatus === "practice",
+            });
+        }
       },
     },
   ),
