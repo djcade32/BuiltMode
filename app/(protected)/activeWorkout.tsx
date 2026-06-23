@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   nextExercisesContainer: {
     gap: 17,
     paddingVertical: 17,
-    flex: 1,
+    flexGrow: 1
   },
   footerContainer: {
     paddingVertical: 20,
