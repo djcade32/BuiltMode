@@ -19,7 +19,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -131,70 +130,75 @@ const ViewTemplates = () => {
       style={{ flex: 1, backgroundColor: Colors.background.primary }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.headerContainer}>
-          <Pressable onPress={() => router.back()} hitSlop={15}>
-            <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
-          </Pressable>
-          <ThemedText style={styles.headerTitle}>TEMPLATES</ThemedText>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.iconContainer} onPress={() => router.back()}>
+            <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
+          </TouchableOpacity>
+          <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
+            <ThemedText style={styles.headerText}>TEMPLATES</ThemedText>
+          </View>
         </View>
 
-        <View style={styles.controlsContainer}>
-          <Input
-            placeholder="Search templates"
-            placeholderTextColor={Colors.icon}
-            value={query}
-            onChangeText={setQuery}
-            containerStyle={{ marginBottom: 16 }}
-            preIcon={{
-              familyIcon: MaterialIcons,
-              name: "search",
-            }}
-          />
-        </View>
+        <View style={styles.container}>
+          <View style={styles.controlsContainer}>
+            <Input
+              placeholder="Search templates"
+              placeholderTextColor={Colors.icon}
+              value={query}
+              onChangeText={setQuery}
+              containerStyle={{ marginBottom: 16 }}
+              preIcon={{
+                familyIcon: MaterialIcons,
+                name: "search",
+              }}
+            />
+          </View>
 
-        {isLoading ? (
-          <View style={styles.centerState}>
-            <ActivityIndicator />
-          </View>
-        ) : error ? (
-          <View style={styles.messageContainer}>
-            <ThemedText>Something went wrong loading templates.</ThemedText>
-          </View>
-        ) : (
-          <FlatList
-            data={filteredTemplates}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            onEndReachedThreshold={0.5}
-            onEndReached={() => {
-              if (hasNextPage && !isFetchingNextPage) {
-                fetchNextPage();
+          {isLoading ? (
+            <View style={styles.centerState}>
+              <ActivityIndicator />
+            </View>
+          ) : error ? (
+            <View style={styles.messageContainer}>
+              <ThemedText>Something went wrong loading templates.</ThemedText>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredTemplates}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              onEndReachedThreshold={0.5}
+              onEndReached={() => {
+                if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+              }}
+              renderItem={({ item }) => (
+                <TemplateItem
+                  template={item}
+                  onPress={(template) => handleTemplatePress(template)}
+                  onDelete={() => deleteTemplateFunc(item.id)}
+                />
+              )}
+              ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+              ListFooterComponent={
+                isFetchingNextPage ? (
+                  <View style={styles.footerLoader}>
+                    <ActivityIndicator />
+                  </View>
+                ) : null
               }
-            }}
-            renderItem={({ item }) => (
-              <TemplateItem
-                template={item}
-                onPress={(template) => handleTemplatePress(template)}
-                onDelete={() => deleteTemplateFunc(item.id)}
-              />
-            )}
-            ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
-            ListFooterComponent={
-              isFetchingNextPage ? (
-                <View style={styles.footerLoader}>
-                  <ActivityIndicator />
+              ListEmptyComponent={
+                <View style={styles.messageContainer}>
+                  <ThemedText>No templates found.</ThemedText>
                 </View>
-              ) : null
-            }
-            ListEmptyComponent={
-              <View style={styles.messageContainer}>
-                <ThemedText>No templates found.</ThemedText>
-              </View>
-            }
-          />
-        )}
+              }
+            />
+          )}
+        </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -207,6 +211,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     backgroundColor: Colors.background.primary,
     flex: 1,
+  },
+  header: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "#15181c49",
+    height: 65,
+  },
+  headerText: {
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: 0.4,
+    fontFamily: Typography.family.primary.semibold,
+  },
+  iconContainer: {
+    position: "absolute",
+    left: 24,
+    backgroundColor: Colors.background.secondary,
+    width: 40,
+    height: 40,
+    borderRadius: Border.radius.md,
+    justifyContent: "center",
+    alignItems: "center",
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
   },
   controlsContainer: {
     marginTop: 24,

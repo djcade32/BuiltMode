@@ -3,19 +3,18 @@ import Input from "@/components/ui/Input";
 import WorkoutHistoryCard from "@/components/workout/workoutHistory/WorkoutHistoryCard";
 import WorkoutHistoryMonthJumpModal from "@/components/workout/workoutHistory/WorkoutHistoryMonthJumpModal";
 import WorkoutHistorySectionHeader from "@/components/workout/workoutHistory/WorkoutHistorySectionHeader";
-import { Colors, Typography } from "@/constants/theme";
+import { Border, Colors, Typography } from "@/constants/theme";
 import { Workout } from "@/functions/src/types/workout";
 import { useUserWorkoutsInfinite } from "@/hooks/workouts/useUserWorkoutsInfinite";
 import { getFirestoreMonthSectionLabel } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
-import { MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   SectionList,
   StyleSheet,
   TouchableOpacity,
@@ -108,89 +107,93 @@ const ViewHistory = () => {
       style={{ flex: 1, backgroundColor: Colors.background.primary }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.headerContainer}>
-          <Pressable onPress={handleBack} hitSlop={15}>
-            <MaterialIcons name="keyboard-arrow-left" size={24} color={Colors.icon} />
-          </Pressable>
-          <ThemedText style={styles.headerTitle}>WORKOUT HISTORY</ThemedText>
-        </View>
-
-        <View style={styles.controlsContainer}>
-          <Input
-            placeholder="Search workouts"
-            placeholderTextColor={Colors.icon}
-            value={query}
-            onChangeText={setQuery}
-            containerStyle={{ marginBottom: 16, borderColor: Colors.inputBorder }}
-            preIcon={{
-              familyIcon: MaterialIcons,
-              name: "search",
-            }}
-          />
-
-          <TouchableOpacity onPress={handleOpenMonthJumpModal} style={styles.jumpToDateButton}>
-            <MaterialIcons name="calendar-today" size={14} color={Colors.icon} />
-            <ThemedText style={styles.datePickerText}>Jump to Month</ThemedText>
+      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.iconContainer} onPress={handleBack}>
+            <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
           </TouchableOpacity>
+          <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
+            <ThemedText style={styles.headerText}>WORKOUT HISTORY</ThemedText>
+          </View>
         </View>
+        <View style={styles.container}>
+          <View style={styles.controlsContainer}>
+            <Input
+              placeholder="Search workouts"
+              placeholderTextColor={Colors.icon}
+              value={query}
+              onChangeText={setQuery}
+              containerStyle={{ marginBottom: 16, borderColor: Colors.inputBorder }}
+              preIcon={{
+                familyIcon: MaterialIcons,
+                name: "search",
+              }}
+            />
 
-        {isLoading ? (
-          <View style={styles.centerState}>
-            <ActivityIndicator />
+            <TouchableOpacity onPress={handleOpenMonthJumpModal} style={styles.jumpToDateButton}>
+              <MaterialIcons name="calendar-today" size={14} color={Colors.icon} />
+              <ThemedText style={styles.datePickerText}>Jump to Month</ThemedText>
+            </TouchableOpacity>
           </View>
-        ) : error ? (
-          <View style={styles.messageContainer}>
-            <ThemedText>Something went wrong loading workouts.</ThemedText>
-          </View>
-        ) : (
-          <SectionList
-            ref={sectionListRef}
-            sections={sections}
-            keyExtractor={(item) => item.sessionId}
-            contentContainerStyle={styles.listContent}
-            stickySectionHeadersEnabled={false}
-            showsVerticalScrollIndicator={false}
-            onEndReachedThreshold={0.5}
-            onEndReached={() => {
-              if (hasNextPage && !isFetchingNextPage) {
-                fetchNextPage();
+
+          {isLoading ? (
+            <View style={styles.centerState}>
+              <ActivityIndicator />
+            </View>
+          ) : error ? (
+            <View style={styles.messageContainer}>
+              <ThemedText>Something went wrong loading workouts.</ThemedText>
+            </View>
+          ) : (
+            <SectionList
+              ref={sectionListRef}
+              sections={sections}
+              keyExtractor={(item) => item.sessionId}
+              contentContainerStyle={styles.listContent}
+              stickySectionHeadersEnabled={false}
+              showsVerticalScrollIndicator={false}
+              onEndReachedThreshold={0.5}
+              onEndReached={() => {
+                if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+              }}
+              renderSectionHeader={({ section }) => (
+                <WorkoutHistorySectionHeader title={section.title} />
+              )}
+              renderItem={({ item }) => (
+                <WorkoutHistoryCard
+                  workout={item}
+                  onPress={(workout) => {
+                    router.push(`/(workoutHistoryDetails)/${workout.sessionId}`);
+                  }}
+                />
+              )}
+              SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
+              ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+              ListFooterComponent={
+                isFetchingNextPage ? (
+                  <View style={styles.footerLoader}>
+                    <ActivityIndicator />
+                  </View>
+                ) : null
               }
-            }}
-            renderSectionHeader={({ section }) => (
-              <WorkoutHistorySectionHeader title={section.title} />
-            )}
-            renderItem={({ item }) => (
-              <WorkoutHistoryCard
-                workout={item}
-                onPress={(workout) => {
-                  router.push(`/(workoutHistoryDetails)/${workout.sessionId}`);
-                }}
-              />
-            )}
-            SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
-            ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
-            ListFooterComponent={
-              isFetchingNextPage ? (
-                <View style={styles.footerLoader}>
-                  <ActivityIndicator />
+              ListEmptyComponent={
+                <View style={styles.messageContainer}>
+                  <ThemedText>No workouts found.</ThemedText>
                 </View>
-              ) : null
-            }
-            ListEmptyComponent={
-              <View style={styles.messageContainer}>
-                <ThemedText>No workouts found.</ThemedText>
-              </View>
-            }
-          />
-        )}
+              }
+            />
+          )}
 
-        <WorkoutHistoryMonthJumpModal
-          visible={isMonthJumpModalVisible}
-          months={sections.map((section) => section.title)}
-          onClose={() => setIsMonthJumpModalVisible(false)}
-          onSelectMonth={handleJumpToSection}
-        />
+          <WorkoutHistoryMonthJumpModal
+            visible={isMonthJumpModalVisible}
+            months={sections.map((section) => section.title)}
+            onClose={() => setIsMonthJumpModalVisible(false)}
+            onSelectMonth={handleJumpToSection}
+          />
+        </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -203,6 +206,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     backgroundColor: Colors.background.primary,
     flex: 1,
+  },
+  header: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "#15181c49",
+    height: 65,
+  },
+  headerText: {
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: 0.4,
+    fontFamily: Typography.family.primary.semibold,
+  },
+  iconContainer: {
+    position: "absolute",
+    left: 24,
+    backgroundColor: Colors.background.secondary,
+    width: 40,
+    height: 40,
+    borderRadius: Border.radius.md,
+    justifyContent: "center",
+    alignItems: "center",
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
   },
   controlsContainer: {
     marginTop: 24,
