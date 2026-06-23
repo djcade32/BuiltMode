@@ -1,6 +1,7 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import React from "react";
 import {
+  ActivityIndicator,
   StyleProp,
   StyleSheet,
   Text,
@@ -15,6 +16,7 @@ type props = TouchableOpacityProps & {
   postIcon?: { familyIcon: any; name: string; size?: number };
   fontSize?: number;
   textStyle?: StyleProp<TextStyle>;
+  isLoading?: boolean;
 };
 
 const ThemedButton = ({
@@ -26,6 +28,7 @@ const ThemedButton = ({
   disabled,
   fontSize,
   textStyle,
+  isLoading,
   ...rest
 }: props) => {
   const renderIcon = (familyIcon: any, name: string, size: number = 16) => {
@@ -49,11 +52,19 @@ const ThemedButton = ({
       disabled={disabled}
       {...rest}
     >
-      {preIconComponent}
-      <Text style={[styles.buttonText, { fontSize: fontSize ?? Typography.size.sm }, textStyle]}>
-        {title}
-      </Text>
-      {postIconComponent}
+      {isLoading ? (
+        <ActivityIndicator color={Colors.background.primary} />
+      ) : (
+        <>
+          {preIconComponent}
+          <Text
+            style={[styles.buttonText, { fontSize: fontSize ?? Typography.size.sm }, textStyle]}
+          >
+            {title}
+          </Text>
+          {postIconComponent}
+        </>
+      )}
     </TouchableOpacity>
   );
 };

@@ -200,6 +200,7 @@ const ActiveWorkout = () => {
                   title="COMPLETE WORKOUT"
                   onPress={handleCompleteWorkout}
                   disabled={!isWorkoutComplete || isLoggingWorkout}
+                  isLoading={isLoggingWorkout}
                 />
               </View>
             }
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
   nextExercisesContainer: {
     gap: 17,
     paddingVertical: 17,
-    flexGrow: 1
+    flexGrow: 1,
   },
   footerContainer: {
     paddingVertical: 20,

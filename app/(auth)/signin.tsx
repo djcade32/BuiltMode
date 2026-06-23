@@ -111,6 +111,7 @@ const Signin = () => {
                   name: "arrow-right",
                 }}
                 onPress={handleSubmit(handleSignin)}
+                isLoading={isSigningIn}
               />
             </ThemedView>
 
