@@ -26,7 +26,6 @@ const username = () => {
   const { setUsername, nextScreen } = useOnboardingStore();
   const { username } = useWatch({ control });
   const [usernameAvailable, setUsernameAvailable] = useState(false);
-  const [timer, setTimer] = useState<number | null>(null);
 
   useEffect(() => {
     clearErrors("username");
@@ -102,6 +101,7 @@ const username = () => {
             </View>
             <View style={{ gap: 12, marginTop: 65 }}>
               <FormInput
+                autoCapitalize="none"
                 name="username"
                 control={control}
                 errors={errors.username}

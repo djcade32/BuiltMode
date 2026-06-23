@@ -4,11 +4,11 @@ import { fetchUserMonthAggregate, fetchUserStats } from "@/services/user-service
 import { useUserStore } from "@/stores/user-store";
 import { getMonthId } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { ThemedText } from "../themed-text";
 
-const PerformanceSnapshotWidget = () => {
+const PerformanceSnapshotWidget = ({ isRefreshing }: { isRefreshing?: boolean }) => {
   const { user } = useUserStore();
 
   const uid = user?.uid;
@@ -19,6 +19,7 @@ const PerformanceSnapshotWidget = () => {
     data: userStatsData,
     isLoading: userStatsIsLoading,
     error: userStatsError,
+    refetch: userStatsRefetch,
   } = useQuery({
     queryKey: ["user-stats", uid],
     queryFn: fetchUserStats,
@@ -30,12 +31,20 @@ const PerformanceSnapshotWidget = () => {
     data: monthAggregateData,
     isLoading: monthAggregateIsLoading,
     error: monthAggregateError,
+    refetch: monthAggregateRefetch,
   } = useQuery({
     queryKey: ["user-month-aggregate", uid, monthId],
     queryFn: fetchUserMonthAggregate,
     params: { uid: uid ?? "", monthId },
     enabled: !!user,
   });
+
+  useEffect(() => {
+    if (isRefreshing) {
+      userStatsRefetch();
+      monthAggregateRefetch();
+    }
+  }, [isRefreshing]);
 
   if (!user) return null;
 

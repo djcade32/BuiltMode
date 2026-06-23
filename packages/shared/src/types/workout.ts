@@ -71,7 +71,8 @@ export type CompleteWorkoutResponse = {
   modeScore: number | null;
   modeScoreDifference: number;
   lockedAt: string;
-};
+  localDate: string;
+} & WorkoutTimezoneFields;
 
 export type EditWorkoutMetadataRequest = {
   sessionId: string;
@@ -84,4 +85,44 @@ export type EditWorkoutMetadataResponse = {
   workoutType?: WorkoutType;
   notes?: string;
   lockedAt: string;
+};
+
+export type WorkoutTimezoneFields = {
+  workoutTimezone: string;
+
+  /**
+   * Owner-timezone local date.
+   * Example: "2026-06-23"
+   */
+  workoutLocalDate: string;
+
+  /**
+   * Owner-timezone local time.
+   * Example: "03:51"
+   */
+  workoutLocalTime: string;
+
+  /**
+   * Full owner-timezone ISO datetime.
+   * Example: "2026-06-23T03:51:02+10:00"
+   */
+  workoutLocalDateTimeISO: string;
+
+  /**
+   * Preformatted display date from Cloud Functions.
+   * Example: "Tuesday, Jun 23"
+   */
+  workoutLocalDisplayDate: string;
+
+  /**
+   * Preformatted display time from Cloud Functions.
+   * Example: "3:51 AM"
+   */
+  workoutLocalDisplayTime: string;
+
+  /**
+   * Timezone offset in minutes at completion time.
+   * Example: 600 for Australia/Sydney during UTC+10.
+   */
+  workoutUtcOffsetMinutes: number;
 };

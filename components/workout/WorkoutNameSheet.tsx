@@ -103,7 +103,11 @@ const WorkoutNameSheet = ({
               autoFocus
               maxLength={60}
             />
-            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ flex: 1 }}
+              keyboardShouldPersistTaps="handled"
+            >
               <View style={styles.quickSuggestionsSection}>
                 <ThemedText style={styles.quickSuggestionsLabel}>QUICK SUGGESTIONS</ThemedText>
 

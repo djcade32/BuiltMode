@@ -54,37 +54,46 @@ export const getUserWorkouts = async ({
   params: { uid: string };
   limit: number;
 }): Promise<InfinitePage<Workout, WorkoutCursor>> => {
-  const workoutsRef = collection(db, "workouts");
+  try {
+    const workoutsRef = collection(db, "workouts");
 
-  const workoutsQuery = pageParam
-    ? query(
-        workoutsRef,
-        where("uid", "==", params.uid),
-        orderBy("completedAt", "desc"),
-        startAfter(pageParam),
-        limit(pageSize),
-      )
-    : query(
-        workoutsRef,
-        where("uid", "==", params.uid),
-        orderBy("completedAt", "desc"),
-        limit(pageSize),
-      );
+    const workoutsQuery = pageParam
+      ? query(
+          workoutsRef,
+          where("uid", "==", params.uid),
+          orderBy("completedAt", "desc"),
+          startAfter(pageParam),
+          limit(pageSize),
+        )
+      : query(
+          workoutsRef,
+          where("uid", "==", params.uid),
+          orderBy("completedAt", "desc"),
+          limit(pageSize),
+        );
 
-  const snapshot = await getDocs(workoutsQuery);
+    const snapshot = await getDocs(workoutsQuery);
 
-  const items: Workout[] = snapshot.docs.map((doc) => ({
-    ...(doc.data() as Workout),
-  }));
+    const items: Workout[] = snapshot.docs.map((doc) => ({
+      ...(doc.data() as Workout),
+    }));
 
-  const hasMore = snapshot.docs.length === pageSize;
-  const nextCursor = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
+    const hasMore = snapshot.docs.length === pageSize;
+    const nextCursor = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
 
-  return {
-    items,
-    nextCursor,
-    hasMore,
-  };
+    return {
+      items,
+      nextCursor,
+      hasMore,
+    };
+  } catch (error) {
+    console.error("error fetching user workouts: ", error);
+    return {
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    };
+  }
 };
 
 export const getWorkoutBySessionId = async ({

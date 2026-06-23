@@ -103,6 +103,7 @@ const findFriends = () => {
   });
 
   const handleSearchForUserButtonPress = () => {
+    if (!searchQuery.trim()) return;
     searchUserByUsernameFunc(searchQuery);
   };
 
@@ -144,6 +145,7 @@ const findFriends = () => {
                 familyIcon: MaterialIcons,
                 name: "alternate-email",
               }}
+              onSubmitEditing={handleSearchForUserButtonPress}
             />
             <TouchableOpacity
               style={[

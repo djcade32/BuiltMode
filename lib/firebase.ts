@@ -22,10 +22,10 @@ const firebaseConfig = {
   measurementId: "G-PK7Z4PVE11",
 };
 
-export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const functions = getFunctions(app);
 const db = getFirestore(app);
-export const storage = getStorage(app);
+const storage = getStorage(app);
 
 let auth: Auth;
 try {
@@ -47,4 +47,4 @@ if (__DEV__) {
   connectStorageEmulator(storage, EMULATOR_HOST, 9199);
 }
 
-export { auth, db, functions };
+export { app, auth, db, functions, storage };

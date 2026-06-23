@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Workout } from "@/functions/src/types/workout";
-import { formatFirestoreTime, formatFirestoreTimestamp } from "@/lib/utils/date";
+import { formatWorkoutLocalDate } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { durationTimeString } from "@/lib/utils/time";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -25,11 +25,14 @@ const WorkoutHistoryCard = ({ workout, onPress }: Props) => {
           {workoutTitle}
         </ThemedText>
         <View>
-          <ThemedText style={styles.workoutTime}>
-            {formatFirestoreTimestamp(workout.completedAt)}
+          <ThemedText style={[styles.workoutTime,{ textAlign: "right" }]}>
+            {formatWorkoutLocalDate(workout.workoutLocalDate)}
           </ThemedText>
           <ThemedText style={[styles.workoutTime, { textAlign: "right" }]}>
-            {formatFirestoreTime(workout.completedAt)}
+            {workout.workoutLocalDisplayTime}
+          </ThemedText>
+          <ThemedText style={[styles.workoutTime, { textAlign: "right" }]}>
+            ({workout.workoutTimezone})
           </ThemedText>
         </View>
       </View>

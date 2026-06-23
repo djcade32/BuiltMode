@@ -1,7 +1,4 @@
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone.js";
-import utc from "dayjs/plugin/utc";
-import { Image, ScrollView, StyleSheet, View } from "react-native";
+import { Image, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 
 import ModeScoreWidget from "@/components/home/ModeScoreWidget";
 import PerformanceSnapshotWidget from "@/components/home/PerformanceSnapshotWidget";
@@ -16,24 +13,33 @@ import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export default function HomeScreen() {
   const router = useRouter();
   const { setInitialWorkout } = useWorkoutStore();
   const { user } = useUserStore();
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const uid = user?.uid;
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch, isPending } = useQuery({
     queryKey: ["user-stats", uid],
     queryFn: fetchUserStats,
     params: { uid: uid ?? "" },
     enabled: !!uid,
   });
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    refetch();
+  }, [data]);
+
+  useEffect(() => {
+    if (!isPending && refreshing) setRefreshing(false);
+  }, [isPending]);
 
   if (!user) return null;
   return (
@@ -45,6 +51,14 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={{ paddingBottom: 15 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isPending}
+            onRefresh={onRefresh}
+            colors={["#6B7280"]}
+            tintColor="#6B7280"
+          />
+        }
       >
         {/* WEEK STREAK HEADER */}
         <View style={styles.weekStreakHeaderSection}>
@@ -142,7 +156,7 @@ export default function HomeScreen() {
 
         {/* WIDGETS */}
         <View style={styles.widgetsContainer}>
-          <TrainingTargetWidget />
+          <TrainingTargetWidget isRefreshing={refreshing} />
           {user.isPracticeWeek ? null : <ModeScoreWidget />}
           <ThemedButton
             title="LOG WORKOUT"
@@ -152,8 +166,8 @@ export default function HomeScreen() {
               router.push("/(protected)/(tabs)/(workout)/log");
             }}
           />
-          <PerformanceSnapshotWidget />
-          <RecentFriendActivityWidget />
+          <PerformanceSnapshotWidget isRefreshing={refreshing} />
+          <RecentFriendActivityWidget isRefreshing={refreshing} />
           {!user.isPracticeWeek ? null : (
             <View style={styles.infoContainer}>
               <View style={styles.iconContainer}>

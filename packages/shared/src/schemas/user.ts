@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { firestoreTimestampSchema } from "./firestore.js";
+import { firestoreTimestampSchema, firestoreTimestampV2Schema } from "./firestore.js";
 
 export const goalSchema = z.union([
   z.literal("BUILD MUSCLE"),
@@ -8,6 +8,10 @@ export const goalSchema = z.union([
   z.literal("IMPROVE CONDITIONING"),
   z.literal("GENERAL DISCIPLINE"),
 ]);
+
+export const streakStatusSchema = z.union([z.literal("active"), z.literal("inactive")]);
+
+export const officialWeekSchema = z.union([z.literal("practice"), z.literal("official")]);
 
 export const metricsSchema = z
   .object({
@@ -72,6 +76,12 @@ export const createUserProfileResponseSchema = z.object({
   avatarUrl: avatarUrlSchema,
   homeTimezone: homeTimezoneSchema,
   officialStartWeekId: z.string().min(1),
+  officialStartAt: z.union([
+    firestoreTimestampSchema,
+    firestoreTimestampV2Schema,
+  ]),
+  officialWeekStatus: officialWeekSchema,
+  currentWeekId: z.string().min(1),
   weeklyTargetDays: weeklyTargetDaysSchema,
   isPracticeWeek: z.boolean(),
 });
@@ -117,6 +127,21 @@ export const userStatsSchema = z.object({
   updatedAt: firestoreTimestampSchema,
 });
 
+export const userWeekAggregateSchema = {
+  uid: z.string().min(1),
+  weekId: z.string().min(1),
+  isOfficialWeek: z.boolean(),
+  weeklyTargetDays: weeklyTargetDaysSchema,
+  activeDaysThisWeek: z.number().nonnegative(),
+  metTargetThisWeek: z.boolean(),
+  streakWeeks: z.number().nonnegative(),
+  streakStatus: streakStatusSchema,
+  isDeloadWeek: z.boolean(),
+  modeScore: z.number().nonnegative().nullable(),
+  scoreVersion: z.number().nonnegative(),
+  updatedAt: firestoreTimestampSchema,
+};
+
 export const userMonthAggregateSchema = z.object({
   uid: z.string().min(1),
   monthId: z.string().min(1),
@@ -129,6 +154,7 @@ export const userMonthAggregateSchema = z.object({
 
 export type WeeklyTargetDays = z.infer<typeof weeklyTargetDaysSchema>;
 export type Goal = z.infer<typeof goalSchema>;
+export type OfficialWeek = z.infer<typeof officialWeekSchema>;
 export type Metrics = z.infer<typeof metricsSchema>;
 export type HomeTimezone = z.infer<typeof homeTimezoneSchema>;
 export type CreateUserProfileRequest = z.infer<typeof createUserProfileRequestSchema>;
@@ -140,4 +166,5 @@ export type UpdateWeeklyTargetResponse = z.infer<typeof updateWeeklyTargetRespon
 export type UpdateHomeTimezoneRequest = z.infer<typeof updateHomeTimezoneRequestSchema>;
 export type UpdateHomeTimezoneResponse = z.infer<typeof updateHomeTimezoneResponseSchema>;
 export type UserStats = z.infer<typeof userStatsSchema>;
+export type UserWeekAggregate = z.infer<typeof userWeekAggregateSchema>;
 export type UserMonthAggregate = z.infer<typeof userMonthAggregateSchema>;

@@ -42,37 +42,46 @@ export const getUserTemplates = async ({
   params: { uid: string };
   limit: number;
 }): Promise<InfinitePage<Template, TemplateCursor>> => {
-  const templatesRef = collection(db, "templates");
+  try {
+    const templatesRef = collection(db, "templates");
 
-  const templatesQuery = pageParam
-    ? query(
-        templatesRef,
-        where("uid", "==", params.uid),
-        orderBy("completedAt", "desc"),
-        startAfter(pageParam),
-        limit(pageSize),
-      )
-    : query(
-        templatesRef,
-        where("uid", "==", params.uid),
-        orderBy("completedAt", "desc"),
-        limit(pageSize),
-      );
+    const templatesQuery = pageParam
+      ? query(
+          templatesRef,
+          where("uid", "==", params.uid),
+          orderBy("completedAt", "desc"),
+          startAfter(pageParam),
+          limit(pageSize),
+        )
+      : query(
+          templatesRef,
+          where("uid", "==", params.uid),
+          orderBy("completedAt", "desc"),
+          limit(pageSize),
+        );
 
-  const snapshot = await getDocs(templatesQuery);
+    const snapshot = await getDocs(templatesQuery);
 
-  const items: Template[] = snapshot.docs.map((doc) => ({
-    ...(doc.data() as Template),
-  }));
+    const items: Template[] = snapshot.docs.map((doc) => ({
+      ...(doc.data() as Template),
+    }));
 
-  const hasMore = snapshot.docs.length === pageSize;
-  const nextCursor = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
+    const hasMore = snapshot.docs.length === pageSize;
+    const nextCursor = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
 
-  return {
-    items,
-    nextCursor,
-    hasMore,
-  };
+    return {
+      items,
+      nextCursor,
+      hasMore,
+    };
+  } catch (error) {
+    console.error("Error fetching user templates: ", error);
+    return {
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    };
+  }
 };
 
 export const deleteTemplate = async (id: string): Promise<DeleteTemplateResult> => {

@@ -124,7 +124,7 @@ const Signin = () => {
                 New here?
               </ThemedText>
               <Link href="/signup" asChild>
-                <TouchableOpacity>
+                <TouchableOpacity hitSlop={15}>
                   <ThemedText
                     type="defaultSemiBold"
                     style={{

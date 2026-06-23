@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "181901947527",
+    "project_id": "builtmode-90430",
+    "storage_bucket": "builtmode-90430.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:181901947527:android:1177b18db71e72b64a7e22",
+        "android_client_info": {
+          "package_name": "com.djcade32.BuiltMode"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "181901947527-3mddmn5p4oh25dr2069naabcmlvjlqa7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAiUaEpPpAvKAyCoGdKuMh006TD1KbrcMc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "181901947527-3mddmn5p4oh25dr2069naabcmlvjlqa7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "181901947527-2c1f5nhmvcvepm6sbucbik230tg7codp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.djcade32.BuiltMode"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

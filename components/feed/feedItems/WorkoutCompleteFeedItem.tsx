@@ -1,19 +1,16 @@
 import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
-import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
+import dayjs from "@/lib/dayjs";
+import { formatFirestoreDateTimeISO, formatFirestoreTimestamp } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
 import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import WeeklyProgressBar from "./WeeklyProgressBar";
-
-dayjs.extend(relativeTime);
 
 const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
   const { user } = useUserStore();
@@ -37,10 +34,15 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
 
   const hasWorkoutId = Boolean(workoutId);
 
-  const createdAtDayjs = dayjs(formatFirestoreDateTimeISO(completedAt));
+  const createdAt =
+    Math.abs(dayjs(formatFirestoreDateTimeISO(completedAt)).diff(new Date(), "days")) >= 1
+      ? formatFirestoreTimestamp(completedAt)
+      : dayjs(formatFirestoreDateTimeISO(completedAt)).fromNow();
   const targetMet = weeklyProgress === weeklyTargetDays && !isPractice;
   const navigateToFriendProfile = (uid: string) =>
-    currentUserUid === uid ? router.push("/profile") : router.push(`/(friendProfile)/${uid}`);
+    currentUserUid === uid
+      ? router.push("/(profile)/profile")
+      : router.push(`/(friendProfile)/${uid}`);
 
   return (
     <View
@@ -99,10 +101,10 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
             <View style={{ flexDirection: "row" }}>
               <TouchableOpacity onPress={() => navigateToFriendProfile(actorUid)}>
                 <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
-                  @{actorUsername}
+                  @{actorUsername.toLocaleLowerCase()}
                 </ThemedText>
               </TouchableOpacity>
-              <ThemedText style={styles.username}> · {createdAtDayjs.fromNow()}</ThemedText>
+              <ThemedText style={styles.username}> · {createdAt}</ThemedText>
             </View>
           </View>
         </View>
@@ -176,6 +178,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
               },
             })
           }
+          hitSlop={15}
         >
           <ThemedText style={styles.viewDetailsButton}>VIEW DETAILS</ThemedText>
           <FontAwesome6 name="arrow-right" size={10} color={Colors.accent.primary} />

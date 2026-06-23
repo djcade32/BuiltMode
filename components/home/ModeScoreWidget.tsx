@@ -1,10 +1,10 @@
 import { Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
+import dayjs from "@/lib/dayjs";
 import { fetchUserStats, fetchUserWeekAggregate } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
 import { FontAwesome6 } from "@expo/vector-icons";
-import dayjs from "dayjs";
 import React, { useMemo } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { ThemedText } from "../themed-text";

@@ -14,14 +14,16 @@ import {
 } from "../firestore/social.js";
 import { getUserByUid } from "../firestore/user.js";
 import { db } from "../lib/firebaseAdmin.js";
+import { sendPushNotificationToUser } from "../services/notificationService.js";
 
 export async function handleSendFriendRequest(fromUid: string, toUid: string): Promise<boolean> {
   if (fromUid === toUid) {
     console.error("Failed to send request to user. fromUid and toUid cannot be the same: ", toUid);
     return false;
   }
+  let requesterDisplayName = "";
 
-  return await db.runTransaction(async (tx) => {
+  const response = await db.runTransaction(async (tx) => {
     const forwardRequestId = `${fromUid}_${toUid}`;
     const reverseRequestId = `${toUid}_${fromUid}`;
 
@@ -51,6 +53,8 @@ export async function handleSendFriendRequest(fromUid: string, toUid: string): P
       const toUser = toUserDoc.data();
       const fromUser = fromUserDoc.data();
 
+      requesterDisplayName = fromUser?.displayName;
+
       const now = Timestamp.now();
 
       const doc: FriendRequest = {
@@ -78,6 +82,21 @@ export async function handleSendFriendRequest(fromUid: string, toUid: string): P
     console.error("Failed to send request to user. Doesn't exist:", toUid);
     return false;
   });
+
+  response &&
+    (await sendPushNotificationToUser({
+      recipientUid: toUid,
+      title: "New friend request",
+      body: `${requesterDisplayName} wants to train with you.`,
+      type: "friend_request",
+      data: {
+        targetUid: toUid,
+        fromUid,
+        screen: "friendsList",
+      },
+    }));
+
+  return response;
 }
 
 export async function handleRespondToFriendRequest(
@@ -85,7 +104,10 @@ export async function handleRespondToFriendRequest(
   requestId: string,
   action: "accepted" | "declined",
 ): Promise<boolean> {
-  return await db.runTransaction(async (tx) => {
+  let recipientUid = "";
+  let toUserDisplayName = "";
+
+  const response = await db.runTransaction(async (tx) => {
     const friendRequest = await getFriendRequest(tx, requestId);
 
     if (!friendRequest) {
@@ -103,6 +125,9 @@ export async function handleRespondToFriendRequest(
       );
       return false;
     }
+    recipientUid = friendRequest.fromUid;
+    toUserDisplayName = friendRequest.toDisplayName;
+
     const now = Timestamp.now();
 
     const friendRequestDoc: FriendRequest = {
@@ -131,6 +156,21 @@ export async function handleRespondToFriendRequest(
     }
     return true;
   });
+
+  response &&
+    action == "accepted" &&
+    (await sendPushNotificationToUser({
+      recipientUid,
+      title: "Accepted friend request",
+      body: `${toUserDisplayName} accepted your train request.`,
+      type: "friend_request",
+      data: {
+        targetUid: recipientUid,
+        screen: "friendsList",
+      },
+    }));
+
+  return response;
 }
 
 export async function handleCancelFriendRequest(uid: string, requestId: string): Promise<boolean> {
@@ -266,8 +306,19 @@ type CreateWorkoutCompletedFeedItemParams = {
     name?: string | null;
     durationSeconds?: number | null;
     exercises?: Exercise[];
+
     weekId: string;
     localDateKey: string;
+    localDate: string;
+
+    workoutTimezone: string;
+    workoutLocalDate: string;
+    workoutLocalTime: string;
+    workoutLocalDateTimeISO: string;
+    workoutLocalDisplayDate: string;
+    workoutLocalDisplayTime: string;
+    workoutUtcOffsetMinutes: number;
+
     caption: string | null;
     isPracticeWeek: boolean;
     completedAt: Timestamp;

@@ -1,36 +1,62 @@
 import { Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
+import dayjs from "@/lib/dayjs";
+import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
+import { firestoreTimestamp, firestoreTimestampV2 } from "@/packages/shared/src/types/firestore";
 import { fetchUserWeekAggregate } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback } from "react";
+import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import WeeklyProgressBar from "../feed/feedItems/WeeklyProgressBar";
 import { ThemedText } from "../themed-text";
 
-const TrainingTargetWidget = () => {
+const TrainingTargetWidget = ({ isRefreshing }: { isRefreshing?: boolean }) => {
   const { user } = useUserStore();
 
   const uid = user?.uid;
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["user-week-aggregate", user ? getWeekId(new Date(), user.homeTimezone) : "", uid],
     queryFn: fetchUserWeekAggregate,
     params: { uid: uid ?? "", weekId: user ? getWeekId(new Date(), user.homeTimezone) : "" },
     enabled: !!user,
   });
 
-  const getPercentage = useCallback(
-    () => (data && user ? (data.activeDaysThisWeek / user.weeklyTargetDays) * 100 : 0),
-    [user?.weeklyTargetDays, data?.activeDaysThisWeek],
-  );
+  const getDaysLeftUntilNextOfficialWeek = (officialStartAt: firestoreTimestampV2 | firestoreTimestamp) => {
+    let seconds = null
+    let nanoseconds = null
+    if("_seconds" in officialStartAt){
+      seconds = officialStartAt._seconds
+      nanoseconds = officialStartAt._nanoseconds
+    }else {
+      seconds = officialStartAt.seconds,
+      nanoseconds = officialStartAt.nanoseconds
+    }
 
-  const getDaysLeft = () => {
-    const today = new Date().getDay();
-    if (today === 0) return 1;
-    return Math.abs(today - 8);
+    const now = dayjs();
+    const start = dayjs(formatFirestoreDateTimeISO({seconds, nanoseconds}));
+
+    /**
+     * If official week has not started yet, count down to officialStartAt.
+     */
+    if (now.isBefore(start)) {
+      return Math.ceil(start.diff(now, "day", true));
+    }
+
+    const daysSinceOfficialStart = now.diff(start, "day", true);
+    const completedWeeks = Math.floor(daysSinceOfficialStart / 7);
+    const nextWeekStart = start.add(completedWeeks + 1, "week");
+
+    return Math.ceil(nextWeekStart.diff(now, "day", true));
   };
+
+  useEffect(() => {
+    if (isRefreshing) {
+      refetch();
+    }
+  }, [isRefreshing]);
 
   if (!user) return null;
 
@@ -69,7 +95,8 @@ const TrainingTargetWidget = () => {
                   color: Colors.accent.primary,
                 }}
               >
-                In {getDaysLeft()} {getDaysLeft() > 1 ? "Days" : "Day"}
+                In {getDaysLeftUntilNextOfficialWeek(user.officialStartAt)}{" "}
+                {getDaysLeftUntilNextOfficialWeek(user.officialStartAt) > 1 ? "Days" : "Day"}
               </ThemedText>
             ) : (
               <ThemedText

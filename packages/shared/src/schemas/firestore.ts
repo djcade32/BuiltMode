@@ -17,3 +17,17 @@ export const firestoreTimestampSchema = z.custom<{
     message: "Expected Firestore Timestamp",
   },
 );
+
+export const firestoreTimestampV2Schema = z.custom<{
+  _seconds: number;
+  _nanoseconds: number;
+}>(
+  (value) =>
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as any)._seconds === "number" &&
+    typeof (value as any)._nanoseconds === "number", 
+  {
+    message: "Expected Firestore Timestamp V2",
+  },
+);

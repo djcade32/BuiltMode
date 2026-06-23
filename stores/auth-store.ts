@@ -6,6 +6,7 @@ import {
   signOutUser,
   signUpWithEmail,
 } from "@/services/auth-service";
+import { unregisterPushToken } from "@/services/notification-service";
 import { checkForUserProfile } from "@/services/user-service";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -60,6 +61,9 @@ export const useAuthStore = create<AuthStore>()(
               avatarUrl,
               homeTimezone,
               officialStartWeekId,
+              officialStartAt,
+              officialWeekStatus,
+              currentWeekId,
               weeklyTargetDays,
             } = userFromDb;
             const user: CreateUserProfileResponse = {
@@ -71,6 +75,9 @@ export const useAuthStore = create<AuthStore>()(
               avatarUrl,
               homeTimezone,
               officialStartWeekId,
+              officialStartAt,
+              officialWeekStatus,
+              currentWeekId,
               weeklyTargetDays,
               isPracticeWeek: handleGetWeekId(new Date(), homeTimezone) < officialStartWeekId,
             };
@@ -120,6 +127,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       signout: async () => {
+        await unregisterPushToken()
         await signOutUser();
         set({ ...initialState, isHydrated: true });
         useUserStore.getState().setUser(null);
@@ -139,8 +147,17 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => async (state) => {
         state?.setHydrated(true);
+
+        if (state?.user?.uid) {
+          const freshUser = await checkForUserProfile(state.user.uid);
+          freshUser &&
+            useUserStore.getState().setUser({
+              ...freshUser,
+              isPracticeWeek: freshUser.officialWeekStatus === "practice",
+            });
+        }
       },
     },
   ),

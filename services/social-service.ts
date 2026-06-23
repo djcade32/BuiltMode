@@ -152,22 +152,27 @@ export const getIncomingFriendRequests = async ({
 }: {
   params: { uid: string };
 }): Promise<FriendRequest[]> => {
-  const requestsRef = collection(db, "friendRequests");
+  try {
+    const requestsRef = collection(db, "friendRequests");
 
-  const requestsQuery = query(
-    requestsRef,
-    where("toUid", "==", params.uid),
-    where("status", "==", "pending"),
-    orderBy("updatedAt", "desc"),
-  );
+    const requestsQuery = query(
+      requestsRef,
+      where("toUid", "==", params.uid),
+      where("status", "==", "pending"),
+      orderBy("updatedAt", "desc"),
+    );
 
-  const snapshot = await getDocs(requestsQuery);
+    const snapshot = await getDocs(requestsQuery);
 
-  const items: FriendRequest[] = snapshot.docs.map((doc) => ({
-    ...(doc.data() as FriendRequest),
-  }));
+    const items: FriendRequest[] = snapshot.docs.map((doc) => ({
+      ...(doc.data() as FriendRequest),
+    }));
 
-  return items;
+    return items;
+  } catch (error) {
+    console.error("Error fetching incoming friend request: ", error);
+    return [];
+  }
 };
 
 export const getSentFriendRequests = async ({
@@ -175,22 +180,27 @@ export const getSentFriendRequests = async ({
 }: {
   params: { uid: string };
 }): Promise<FriendRequest[]> => {
-  const requestsRef = collection(db, "friendRequests");
+  try {
+    const requestsRef = collection(db, "friendRequests");
 
-  const requestsQuery = query(
-    requestsRef,
-    where("fromUid", "==", params.uid),
-    where("status", "==", "pending"),
-    orderBy("updatedAt", "desc"),
-  );
+    const requestsQuery = query(
+      requestsRef,
+      where("fromUid", "==", params.uid),
+      where("status", "==", "pending"),
+      orderBy("updatedAt", "desc"),
+    );
 
-  const snapshot = await getDocs(requestsQuery);
+    const snapshot = await getDocs(requestsQuery);
 
-  const items: FriendRequest[] = snapshot.docs.map((doc) => ({
-    ...(doc.data() as FriendRequest),
-  }));
+    const items: FriendRequest[] = snapshot.docs.map((doc) => ({
+      ...(doc.data() as FriendRequest),
+    }));
 
-  return items;
+    return items;
+  } catch (error) {
+    console.error("Error fetching sent friend request: ", error);
+    return [];
+  }
 };
 
 type FeedCursor = QueryDocumentSnapshot<DocumentData>;

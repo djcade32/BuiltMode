@@ -1,4 +1,4 @@
-import ViewHistory from "@/app/(protected)/(tabs)/(workout)/viewHistory";
+import ViewHistory from "@/app/(protected)/(tabs)/(workout)/(viewHistory)/[id]";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import React from "react";
 
@@ -10,6 +10,9 @@ jest.mock("expo-router", () => ({
   useRouter: () => ({
     push: mockPush,
     back: mockBack,
+  }),
+  useLocalSearchParams: () => ({
+    id: "user-123",
   }),
 }));
 

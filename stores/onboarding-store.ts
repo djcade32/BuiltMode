@@ -129,9 +129,9 @@ export const useOnboardingStore = create<OnboardingStore>()(
             weeklyTargetDays: weeklyStandard,
             homeTimezone,
           };
-          console.log("createdUser: ", user);
 
           const response = await createUserProfile(user);
+          console.log("createdUser: ", user);
           resetState();
           return response;
         } catch (error) {

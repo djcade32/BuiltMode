@@ -1,7 +1,9 @@
-import { Goal, Metrics } from "@builtmode/shared/types/user";
+import { firestoreTimestampV2 } from "@builtmode/shared/types/firestore";
+import { Goal, Metrics, } from "@builtmode/shared/types/user";
 import { Timestamp } from "firebase-admin/firestore";
 
 export type WeeklyTargetDays = 2 | 3 | 4 | 5 | 6 | 7;
+export type OfficialWeekStatus = "practice" | "official";
 
 export type UserDoc = {
   uid: string;
@@ -18,6 +20,11 @@ export type UserDoc = {
   homeTimezone: string;
   officialStartWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
+  officialStartAt: Timestamp | firestoreTimestampV2;
+  officialWeekStatus: OfficialWeekStatus;
+  officialStartedAt: Timestamp | null;
+  currentWeekId: string;
+  lastEnsuredWeekId: string | null;
 
   // Meta
   createdAt: Timestamp;

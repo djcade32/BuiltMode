@@ -54,10 +54,10 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       return undefined;
     }
 
-    const createdAt = timestampToIsoString(data.createdAt);
-    const updatedAt = timestampToIsoString(data.updatedAt);
-    const homeTimezoneSetAt = timestampToIsoString(data.homeTimezoneSetAt);
-    const homeTimezoneUpdatedAt = timestampToIsoString(data.homeTimezoneUpdatedAt) ?? "";
+    const createdAt = data.createdAt;
+    const updatedAt = data.updatedAt;
+    const homeTimezoneSetAt = data.homeTimezoneSetAt;
+    const homeTimezoneUpdatedAt = data.homeTimezoneUpdatedAt ?? "";
 
     // Required timestamp fields must be present and valid
     if (!createdAt || !updatedAt || !homeTimezoneSetAt) {
@@ -74,6 +74,9 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       homeTimezoneSetAt,
       homeTimezoneUpdatedAt,
       officialStartWeekId: data.officialStartWeekId,
+      officialWeekStatus: data.officialWeekStatus,
+      currentWeekId: data.currentWeekId,
+      officialStartAt: data.officialStartAt,
       updatedAt,
       username: data.username,
       usernameLower: data.usernameLower,
@@ -176,6 +179,7 @@ export const fetchUserStats = async ({
 
     return snapshot.data() as UserStats;
   } catch (error: any) {
+    console.error("error: ", error);
     throw error;
   }
 };

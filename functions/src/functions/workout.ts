@@ -2,6 +2,8 @@ import { FeedItem } from "@builtmode/shared/types/social";
 import { UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
 import { CompleteWorkoutRequest, CompleteWorkoutResponse } from "@builtmode/shared/types/workout";
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone.js";
+import utc from "dayjs/plugin/utc.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
 import { updateLeaderboardEntry } from "../firestore/leaderboard.js";
@@ -28,8 +30,42 @@ import {
 import { db } from "../lib/firebaseAdmin.js";
 import { LeaderboardEntry } from "../types/leaderboard.js";
 import { DayMarker, UserWeekAggregate, Workout } from "../types/workout.js";
-import { handleGetLocalDateKey, handleGetWeekId } from "../utils/weekId.js";
+import { handleGetWeekId, handleGetWeekWindow } from "../utils/weekId.js";
 import { createWorkoutCompletedFeedItem, fanoutFeedItemToFriends } from "./social.js";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const DEFAULT_TIMEZONE = "UTC";
+
+const getValidTimezone = (timezoneValue: unknown): string => {
+  return typeof timezoneValue === "string" && timezoneValue.trim().length > 0
+    ? timezoneValue
+    : DEFAULT_TIMEZONE;
+};
+
+/**
+ * Computes the workout owner's local date/time once in Cloud Functions.
+ *
+ * The mobile app should display these stored fields directly instead of
+ * recalculating the workout date from `completedAt`, because React Native/Hermes
+ * can format the same instant in the viewer/device timezone.
+ */
+const getWorkoutTimezoneFields = (completedAt: Date, workoutTimezone: string) => {
+  const workoutLocalDateTime = dayjs(completedAt).tz(workoutTimezone);
+
+  return {
+    localDateKey: workoutLocalDateTime.format("YYYY-MM-DD"),
+    localDate: workoutLocalDateTime.format(),
+    monthId: workoutLocalDateTime.format("YYYY-MM"),
+    workoutLocalDate: workoutLocalDateTime.format("YYYY-MM-DD"),
+    workoutLocalTime: workoutLocalDateTime.format("HH:mm"),
+    workoutLocalDateTimeISO: workoutLocalDateTime.format(),
+    workoutLocalDisplayDate: workoutLocalDateTime.format("dddd, MMM D"),
+    workoutLocalDisplayTime: workoutLocalDateTime.format("h:mm A"),
+    workoutUtcOffsetMinutes: workoutLocalDateTime.utcOffset(),
+  };
+};
 
 /** 
   Completes workout.
@@ -58,17 +94,31 @@ export async function handleCompleteWorkout(
 
   const result = await db.runTransaction(async (tx) => {
     const user = await getUserByUid(tx, uid);
+
+    const fetchedUserStats = await getUserStats(tx, uid);
+    const userStatsExists = fetchedUserStats.exists;
+
     if (!user.exists) {
       throw new HttpsError("not-found", "User not found.");
     }
+    if (!userStatsExists) {
+      throw new HttpsError("not-found", "User stats not found.");
+    }
 
-    const homeTimezone = user.get("homeTimezone");
+    const userStats = fetchedUserStats.data() as UserStats;
+
+    const homeTimezone = getValidTimezone(user.get("homeTimezone"));
+    const workoutTimezone = homeTimezone;
     const officialStartWeekId = user.get("officialStartWeekId");
     const weeklyTargetDays = user.get("weeklyTargetDays");
 
-    const weekId = handleGetWeekId(now.toDate(), homeTimezone);
-    const localDateKey = handleGetLocalDateKey(now.toDate(), homeTimezone);
-    const monthId = dayjs(localDateKey).format("YYYY-MM");
+    const completedAtDate = now.toDate();
+    const workoutTimezoneFields = getWorkoutTimezoneFields(completedAtDate, workoutTimezone);
+
+    const weekId = handleGetWeekId(completedAtDate, workoutTimezone);
+    const localDateKey = workoutTimezoneFields.localDateKey;
+    const localDate = workoutTimezoneFields.localDate;
+    const monthId = workoutTimezoneFields.monthId;
 
     const isOfficialWeek =
       dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
@@ -96,17 +146,21 @@ export async function handleCompleteWorkout(
         ? weekAggregate.get("activeDaysThisWeek") + 1
         : weekAggregate.get("activeDaysThisWeek")
       : 1;
-    const metTargetThisWeek = weekAggregateExists ? activeDaysThisWeek >= weeklyTargetDays : false;
+
+    const metTargetThisWeek = activeDaysThisWeek >= weeklyTargetDays;
     const isDeloadWeek = weekAggregateExists ? weekAggregate.get("isDeloadWeek") : false;
+    let targetMetAt = null;
+    let streakCreditedAt = null;
     // If weekAgreggate doc exits, there is no workout and target is met increment streak. Else do nothing
-    let streakWeeks = 0;
-    if (weekAggregateExists) {
-      if (metTargetThisWeek && streakStatus === "inactive") {
-        streakWeeks = weekAggregate.get("streakWeeks") + 1;
-        streakStatus = "active";
-      } else {
-        streakWeeks = weekAggregate.get("streakWeeks");
-      }
+    let streakWeeks = userStats.currentWeekStreak;
+
+    if (metTargetThisWeek && streakStatus === "inactive") {
+      targetMetAt = now;
+      streakCreditedAt = now;
+      streakWeeks = streakWeeks + 1;
+      streakStatus = "active";
+    } else {
+      streakWeeks = streakWeeks;
     }
 
     const calculatedStats = calculateModeScore({
@@ -155,14 +209,11 @@ export async function handleCompleteWorkout(
       : 0;
     const activeDaysCount = dayMarkerExists ? activeDaysInMonth : activeDaysInMonth + 1;
 
-    const userStats = await getUserStats(tx, uid);
-    const userStatsExists = userStats.exists;
-
     const bestWeekStreak = userStatsExists
-      ? Math.max(streakWeeks, userStats.data()?.bestWeekStreak ?? 0)
+      ? Math.max(streakWeeks, userStats.bestWeekStreak ?? 0)
       : 0;
-    const totalWorkoutsLogged = userStatsExists ? userStats.data()?.totalWorkoutsLogged + 1 : 1;
-    const previousTotalTargetsMet = userStatsExists ? (userStats.data()?.totalTargetsMet ?? 0) : 0;
+    const totalWorkoutsLogged = userStatsExists ? userStats.totalWorkoutsLogged + 1 : 1;
+    const previousTotalTargetsMet = userStatsExists ? (userStats.totalTargetsMet ?? 0) : 0;
     const newlyMetTargetThisWeek =
       isOfficialWeek &&
       metTargetThisWeek &&
@@ -180,6 +231,7 @@ export async function handleCompleteWorkout(
       completedAt: now,
       createdAt: now,
       localDateKey,
+      localDate,
       lockedAt: lockedAtTimestamp,
       status: "completed",
       uid,
@@ -188,6 +240,13 @@ export async function handleCompleteWorkout(
       name: name ?? "",
       voidedAt: null,
       duration,
+      workoutTimezone,
+      workoutLocalDate: workoutTimezoneFields.workoutLocalDate,
+      workoutLocalTime: workoutTimezoneFields.workoutLocalTime,
+      workoutLocalDateTimeISO: workoutTimezoneFields.workoutLocalDateTimeISO,
+      workoutLocalDisplayDate: workoutTimezoneFields.workoutLocalDisplayDate,
+      workoutLocalDisplayTime: workoutTimezoneFields.workoutLocalDisplayTime,
+      workoutUtcOffsetMinutes: workoutTimezoneFields.workoutUtcOffsetMinutes,
     };
 
     const dayMarkerDoc: DayMarker = {
@@ -196,6 +255,7 @@ export async function handleCompleteWorkout(
       createdAt: now,
       weekId,
     };
+    const weekWindow = handleGetWeekWindow(completedAtDate, workoutTimezone);
 
     const userWeekAggregateDoc: UserWeekAggregate = {
       uid,
@@ -210,6 +270,11 @@ export async function handleCompleteWorkout(
       updatedAt: now,
       weekId,
       isDeloadWeek,
+      weekEndAt: weekWindow.weekEndAt,
+      weekStartAt: weekWindow.weekStartAt,
+      streakCreditedAt,
+      finalizedAt: null,
+      targetMetAt,
     };
 
     const userMonthAggregateDoc: UserMonthAggregate = {
@@ -266,6 +331,14 @@ export async function handleCompleteWorkout(
         exercises: workoutDoc.exercises,
         weekId: workoutDoc.weekId,
         localDateKey: workoutDoc.localDateKey,
+        localDate: workoutDoc.localDate,
+        workoutTimezone: workoutDoc.workoutTimezone,
+        workoutLocalDate: workoutTimezoneFields.workoutLocalDate,
+        workoutLocalTime: workoutTimezoneFields.workoutLocalTime,
+        workoutLocalDateTimeISO: workoutTimezoneFields.workoutLocalDateTimeISO,
+        workoutLocalDisplayDate: workoutTimezoneFields.workoutLocalDisplayDate,
+        workoutLocalDisplayTime: workoutTimezoneFields.workoutLocalDisplayTime,
+        workoutUtcOffsetMinutes: workoutTimezoneFields.workoutUtcOffsetMinutes,
         completedAt: now,
         isPracticeWeek: !isOfficialWeek,
         caption: "",
@@ -287,7 +360,15 @@ export async function handleCompleteWorkout(
       weekId,
       weeklyTargetDays,
       modeScoreDifference,
-      lockedAt: dayjs(lockedAtTimestamp.toDate()).tz(homeTimezone).toString(),
+      lockedAt: dayjs(lockedAtTimestamp.toDate()).tz(workoutTimezone).format(),
+      workoutTimezone,
+      localDate,
+      workoutLocalDate: workoutTimezoneFields.workoutLocalDate,
+      workoutLocalTime: workoutTimezoneFields.workoutLocalTime,
+      workoutLocalDateTimeISO: workoutTimezoneFields.workoutLocalDateTimeISO,
+      workoutLocalDisplayDate: workoutTimezoneFields.workoutLocalDisplayDate,
+      workoutLocalDisplayTime: workoutTimezoneFields.workoutLocalDisplayTime,
+      workoutUtcOffsetMinutes: workoutTimezoneFields.workoutUtcOffsetMinutes,
     } as CompleteWorkoutResponse;
   });
 

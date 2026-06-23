@@ -6,7 +6,7 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { Workout } from "@/functions/src/types/workout";
 import { useQuery } from "@/hooks/useQuery";
 import { breakdownSeconds } from "@/lib/utils/conversions";
-import { formatFirestoreDateTimeString, getFirestoreDayLabel } from "@/lib/utils/date";
+import { formatWorkoutLocalDate } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { getWorkoutBySessionId } from "@/services/workout-service";
 import { useUserStore } from "@/stores/user-store";
@@ -79,8 +79,8 @@ const WorkoutHistoryDetails = () => {
   };
 
   const dateInfo = () => {
-    return data?.completedAt
-      ? `${getFirestoreDayLabel(data.completedAt)} • ${formatFirestoreDateTimeString(data.completedAt)}`
+    return data?.workoutLocalDisplayTime && data.workoutLocalDate && data.workoutTimezone && data.workoutLocalDisplayDate
+      ? `${data.workoutLocalDisplayDate.split(',')[0]} • ${formatWorkoutLocalDate(data.workoutLocalDate)} • ${data.workoutLocalDisplayTime}`
       : "";
   };
 
@@ -175,7 +175,11 @@ const WorkoutHistoryDetails = () => {
       )}
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconContainer} onPress={handleBack}>
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={handleBack}
+          testID="workout-details-back-button"
+        >
           <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
         </TouchableOpacity>
 
@@ -206,6 +210,7 @@ const WorkoutHistoryDetails = () => {
           <View style={styles.workoutInfoContainer}>
             <ThemedText style={styles.workoutName}>{workoutName()}</ThemedText>
             <ThemedText style={styles.workoutDateText}>{dateInfo()}</ThemedText>
+            <ThemedText style={styles.workoutDateText}>{`(${data.workoutTimezone})`}</ThemedText>
             <View style={styles.moreInfoContainer}>
               <View style={{ flexDirection: "row", gap: 5 }}>
                 <MaterialCommunityIcons name="clock" size={14} color={Colors.gray} />

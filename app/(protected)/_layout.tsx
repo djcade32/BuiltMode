@@ -1,3 +1,10 @@
+import {
+  handleInitialNotification,
+  registerPushToken,
+  subscribeToForegroundNotifications,
+  subscribeToNotificationOpens,
+  subscribeToPushTokenRefresh,
+} from "@/services/notification-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, Stack, usePathname, useRouter } from "expo-router";
@@ -5,12 +12,25 @@ import React, { useEffect } from "react";
 import { MenuProvider } from "react-native-popup-menu";
 
 const ProtectedLayout = () => {
-  // useWorkoutStore.persist.clearStorage();
-  const { isAuthenticated, isHydrated } = useAuthStore();
+  // useUserStore.persist.clearStorage();
+  // useAuthStore.persist.clearStorage();
+  const { isAuthenticated, isHydrated, user } = useAuthStore();
   const { activeWorkoutDraft } = useWorkoutStore();
 
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    const unsubscribeForeground = subscribeToForegroundNotifications();
+    const unsubscribeNotificationOpen = subscribeToNotificationOpens();
+
+    handleInitialNotification();
+
+    return () => {
+      unsubscribeForeground();
+      unsubscribeNotificationOpen();
+    };
+  }, []);
 
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !activeWorkoutDraft) return;
@@ -31,6 +51,15 @@ const ProtectedLayout = () => {
       router.replace(targetPath);
     }
   }, [isHydrated, isAuthenticated, activeWorkoutDraft, pathname, router]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    registerPushToken();
+
+    const unsubscribe = subscribeToPushTokenRefresh();
+
+    return unsubscribe;
+  }, [user?.uid]);
 
   if (!isHydrated) {
     return null;

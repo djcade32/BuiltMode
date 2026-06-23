@@ -14,6 +14,8 @@ export type Metrics = {
   system: "IMPERIAL" | "METRIC";
 };
 
+export type OfficialWeekStatus = "practice" | "official";
+
 export type HomeTimezone = string;
 
 export type WeeklyTargetDays = 2 | 3 | 4 | 5 | 6 | 7;
@@ -32,13 +34,16 @@ export type User = {
   // Discipline / eligibility
   homeTimezone: HomeTimezone;
   officialStartWeekId: string;
+  currentWeekId: string;
+  officialWeekStatus: OfficialWeekStatus;
+  officialStartAt: firestoreTimestamp;
   weeklyTargetDays: WeeklyTargetDays;
 
   // Meta
-  createdAt: string;
-  homeTimezoneSetAt: string;
-  homeTimezoneUpdatedAt?: string;
-  updatedAt: string;
+  createdAt: firestoreTimestamp;
+  homeTimezoneSetAt: firestoreTimestamp;
+  homeTimezoneUpdatedAt?: firestoreTimestamp;
+  updatedAt: firestoreTimestamp;
 };
 
 export type UserWeekAggregate = {
@@ -53,7 +58,7 @@ export type UserWeekAggregate = {
   isDeloadWeek: boolean;
   modeScore: number | null;
   scoreVersion: number;
-  updatedAt: string;
+  updatedAt: firestoreTimestamp;
 };
 
 export type UserStats = {
@@ -99,11 +104,14 @@ export type CreateUserProfileResponse = {
   uid: string;
   username: string;
   goal: Goal;
-  metrics?: Metrics;
+  metrics?: Metrics | null;
   displayName: string;
   avatarUrl?: string;
   homeTimezone: HomeTimezone;
   officialStartWeekId: string;
+  officialStartAt: firestoreTimestamp;
+  officialWeekStatus: OfficialWeekStatus;
+  currentWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
   isPracticeWeek: boolean;
 };
