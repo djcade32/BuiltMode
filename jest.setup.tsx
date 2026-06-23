@@ -158,6 +158,26 @@ jest.mock("@/lib/firebase", () => ({
   storage: {},
 }));
 
+jest.mock("@react-native-firebase/app", () => ({
+  getApp: jest.fn(() => ({ name: "[DEFAULT]" })),
+}));
+
+jest.mock("@react-native-firebase/messaging", () => ({
+  AuthorizationStatus: {
+    AUTHORIZED: 1,
+    PROVISIONAL: 2,
+  },
+  getMessaging: jest.fn(() => ({})),
+  getToken: jest.fn(),
+  getInitialNotification: jest.fn(),
+  isDeviceRegisteredForRemoteMessages: jest.fn(() => true),
+  onMessage: jest.fn(() => jest.fn()),
+  onNotificationOpenedApp: jest.fn(() => jest.fn()),
+  onTokenRefresh: jest.fn(() => jest.fn()),
+  registerDeviceForRemoteMessages: jest.fn(),
+  requestPermission: jest.fn(),
+}));
+
 jest.mock("@/services/workout-service", () => ({
   createCompleteWorkout: jest.fn(),
 }));
