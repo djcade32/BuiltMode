@@ -188,6 +188,10 @@ describe("HomeScreen", () => {
       homeTimezone: "America/New_York",
       weeklyTargetDays: 5,
       isPracticeWeek: false,
+      officialStartAt: {
+        seconds: 1760000000,
+        nanoseconds: 0,
+      },
     };
 
     mockQueryResponses = {
@@ -250,7 +254,7 @@ describe("HomeScreen", () => {
     expect(screen.getByText("TRAINING TARGET")).toBeTruthy();
     expect(screen.getByText("THIS WEEK")).toBeTruthy();
     expect(screen.getByText("5 Days / Week")).toBeTruthy();
-    expect(screen.getByText("Progress 80%")).toBeTruthy();
+    expect(screen.queryByText("Progress 80%")).toBeNull();
 
     expect(screen.getByText("MODE SCORE")).toBeTruthy();
     expect(screen.getByText("72")).toBeTruthy();
@@ -277,7 +281,7 @@ describe("HomeScreen", () => {
     fireEvent.press(screen.getByText("LOG WORKOUT"));
 
     expect(mockSetInitialWorkout).toHaveBeenCalledWith(null);
-    expect(mockPush).toHaveBeenCalledWith("/(protected)/(tabs)/(workout)/buildWorkout");
+    expect(mockPush).toHaveBeenCalledWith("/(protected)/(tabs)/(workout)/log");
   });
 
   it("does not render ModeScoreWidget during practice week", () => {
@@ -363,7 +367,7 @@ describe("HomeScreen", () => {
     render(<HomeScreen />);
 
     expect(screen.getByText("TRAINING TARGET")).toBeTruthy();
-    expect(screen.getByText("Progress 80%")).toBeTruthy();
+    expect(screen.queryByText("Progress 80%")).toBeNull();
     expect(screen.queryByText("Target met")).toBeNull();
   });
 
