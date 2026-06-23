@@ -175,7 +175,11 @@ const WorkoutHistoryDetails = () => {
       )}
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconContainer} onPress={handleBack}>
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={handleBack}
+          testID="workout-details-back-button"
+        >
           <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
         </TouchableOpacity>
 

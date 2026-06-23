@@ -1,4 +1,5 @@
 import WorkoutComplete from "@/app/(protected)/workoutComplete";
+import { useQuery } from "@/hooks/useQuery";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { fireEvent, render } from "@testing-library/react-native";
@@ -22,10 +23,19 @@ jest.mock("expo-router", () => ({
   },
 }));
 
+jest.mock("@/hooks/useQuery", () => ({
+  useQuery: jest.fn(),
+}));
+
 describe("workoutComplete", () => {
   beforeEach(() => {
     resetWorkoutStore();
     jest.clearAllMocks();
+    (useQuery as jest.Mock).mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: null,
+    });
   });
 
   it("redirects if completeWorkoutResponse is missing", () => {
