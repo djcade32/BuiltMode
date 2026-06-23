@@ -17,7 +17,9 @@
     "build:shared": "npm --workspace @builtmode/shared run build",
     "build:functions:watch": "npm --workspace functions run build:watch",
     "build:functions": "npm --workspace functions run build",
-    "build": "npm run build:shared && npm run build:functions"
+    "build": "npm run build:shared && npm run build:functions",
+    "eas-build-pre-install": "npm install --workspaces=false",
+    "eas-build-post-install": "npm run build -w @builtmode/shared"
   },
   "dependencies": {
     "@builtmode/shared": "workspace:*",
