@@ -1,6 +1,9 @@
+import { firestoreTimestamp } from "./firestore.js";
 import { WeeklyTargetDays } from "./user.js";
 
 export type ExerciseType = "strength" | "conditioning" | "cardio";
+
+type WorkoutFeedStatus = "pending_publish" | "published";
 
 export type WorkoutType =
   | "strength"
@@ -72,6 +75,8 @@ export type CompleteWorkoutResponse = {
   modeScoreDifference: number;
   lockedAt: string;
   localDate: string;
+  photoUrl: string | null;
+  sessionId: string;
 } & WorkoutTimezoneFields;
 
 export type EditWorkoutMetadataRequest = {
@@ -125,4 +130,23 @@ export type WorkoutTimezoneFields = {
    * Example: 600 for Australia/Sydney during UTC+10.
    */
   workoutUtcOffsetMinutes: number;
+};
+
+export type PublishCompletedWorkoutToFeedResponse = {
+  sessionId: string;
+  feedStatus: WorkoutFeedStatus;
+  alreadyPublished: boolean;
+  photoUrl: string | null;
+};
+
+export type PublishableWorkoutFields = {
+  feedStatus: WorkoutFeedStatus;
+  feedPublishedAt: firestoreTimestamp | null;
+  caption: string | null;
+};
+
+export type PublishCompletedWorkoutToFeedRequest = {
+  sessionId: string;
+  photoUrl?: string | null;
+  caption?: string | null;
 };

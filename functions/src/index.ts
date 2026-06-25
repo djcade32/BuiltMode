@@ -24,7 +24,7 @@ import {
 } from "./functions/social.js";
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
 import { handleCreateUserProfile, handleFetchingUserHomeTimezone } from "./functions/user.js";
-import { handleCompleteWorkout } from "./functions/workout.js";
+import { handleCompleteWorkout, handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
 import { assertValidTimezone } from "./utils/time.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekId.js";
 
@@ -211,6 +211,27 @@ export const fetchUsersHomeTimezone = onCall(async (request: CallableRequest<{ u
 
   return await handleFetchingUserHomeTimezone(uid);
 });
+
+export const publishCompletedWorkoutToFeed = onCall(
+  async (
+    request: CallableRequest<{ sessionId: string; photoUrl: string; caption: string | null }>,
+  ) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "User must be signed in.");
+    }
+
+    const data = request.data;
+    if (!data || typeof data.sessionId !== "string") {
+      throw new HttpsError("invalid-argument", "Invalid publishCompletedWorkoutToFeed payload.");
+    }
+
+    return await handlePublishCompletedWorkoutToFeed(request.auth.uid, {
+      sessionId: data.sessionId,
+      photoUrl: data.photoUrl,
+      caption: data.caption,
+    });
+  },
+);
 
 export { activateOfficialWeeks } from "./scheduled/activateOfficialWeek.js";
 export { ensureCurrentWeekAggregates } from "./scheduled/ensureCurrentWeekAggregates.js";

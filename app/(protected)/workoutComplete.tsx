@@ -3,19 +3,25 @@ import { ThemedView } from "@/components/themed-view";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
+import { uploadImageAsync } from "@/lib/firestorage";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { ExerciseMetricType } from "@/packages/shared/src";
 import { fetchUserStats } from "@/services/user-service";
+import { publishCompletedWorkoutToFeed } from "@/services/workout-service";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
+import * as ImagePicker from "expo-image-picker";
 import { Redirect, useRouter } from "expo-router";
-import React, { useMemo } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import React, { useMemo, useState } from "react";
+import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 const workoutComplete = () => {
   const router = useRouter();
   const { duration, completeWorkoutResponse, clearWorkout, activeWorkoutDraft } = useWorkoutStore();
   const { user } = useUserStore();
+  const [workoutPhotoUri, setWorkoutPhotoUri] = useState<string | null>(null);
+  const [isOpeningCamera, setIsOpeningCamera] = useState(false);
+  const [isPublishingWorkout, setIsPublishingWorkout] = useState(false);
 
   const uid = user?.uid;
   const isPracticeWeek = user?.isPracticeWeek;
@@ -49,33 +55,82 @@ const workoutComplete = () => {
     }
   };
 
-  const handleDone = () => {
-    clearWorkout();
-    router.replace("/(protected)/(tabs)/(workout)/log");
+  const handleTakeWorkoutPhoto = async () => {
+    if (isOpeningCamera) return;
+
+    try {
+      setIsOpeningCamera(true);
+
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert("Camera access needed", "BuiltMode needs camera access so you can add a post-workout photo to your completed workout.", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings() },
+        ]);
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        cameraType: ImagePicker.CameraType.front,
+        allowsEditing: true,
+        aspect: [4, 5],
+        quality: 0.85,
+      });
+
+      if (!result.canceled) {
+        setWorkoutPhotoUri(result.assets[0]?.uri ?? null);
+      }
+    } catch (error) {
+      console.error("Error taking workout photo", error);
+      Alert.alert("Photo failed", "We couldn't open the camera. Please try again.");
+    } finally {
+      setIsOpeningCamera(false);
+    }
   };
 
-  const isTrainingTargetMet =
-    (completeWorkoutResponse?.activeDaysThisWeek ?? 0) >=
-    (completeWorkoutResponse?.weeklyTargetDays ?? 0);
+  const handleRemoveWorkoutPhoto = () => {
+    setWorkoutPhotoUri(null);
+  };
+
+  const handleDone = async () => {
+    setIsPublishingWorkout(true);
+    if (completeWorkoutResponse?.sessionId) {
+      let convertedUrl = null;
+      if (workoutPhotoUri) {
+        convertedUrl = (await uploadImageAsync(workoutPhotoUri, `workouts/${uid}_${completeWorkoutResponse.sessionId}`)) ?? null;
+
+        if (!convertedUrl) {
+          console.warn("Avatar upload failed; creating profile without avatar");
+        }
+      }
+      const result = await publishCompletedWorkoutToFeed(completeWorkoutResponse.sessionId, convertedUrl, null);
+      if (result.feedStatus !== "published") {
+        console.error("Error publishing workout to feed.");
+      }
+      clearWorkout();
+      router.replace("/(protected)/(tabs)/(workout)/log");
+    } else {
+      console.warn("Cannot publish workout to feed. No session id provided.");
+    }
+    setIsPublishingWorkout(false);
+  };
+
+  const isTrainingTargetMet = (completeWorkoutResponse?.activeDaysThisWeek ?? 0) >= (completeWorkoutResponse?.weeklyTargetDays ?? 0);
 
   if (!completeWorkoutResponse) return <Redirect href={"/(protected)/(tabs)/(workout)/log"} />;
 
   if (!user) return null;
 
   return (
-    <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      showsVerticalScrollIndicator={false}
-      style={{ backgroundColor: Colors.background.primary }}
-    >
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: Colors.background.primary }}>
       <ThemedView style={styles.container}>
         <View style={{ gap: 8, paddingBottom: 32 }}>
           <ThemedText type="title" style={{ textAlign: "center" }}>
             Workout Complete
           </ThemedText>
-          <ThemedText style={[styles.subtitle, { textAlign: "center" }]}>
-            SESSION LOGGED.
-          </ThemedText>
+          <ThemedText style={[styles.subtitle, { textAlign: "center" }]}>SESSION LOGGED.</ThemedText>
         </View>
 
         <View>
@@ -86,9 +141,7 @@ const workoutComplete = () => {
         </View>
 
         <View style={styles.section}>
-          <ThemedText style={styles.subtitle}>
-            {isPracticeWeek ? "PRACTICE WEEK" : "MODE SCORE"}
-          </ThemedText>
+          <ThemedText style={styles.subtitle}>{isPracticeWeek ? "PRACTICE WEEK" : "MODE SCORE"}</ThemedText>
           {isPracticeWeek ? (
             <View style={styles.modeScoreContainer}>
               <ThemedText
@@ -129,9 +182,7 @@ const workoutComplete = () => {
                   alignItems: "center",
                 }}
               >
-                <ThemedText style={styles.modeScoreText}>
-                  {completeWorkoutResponse.modeScore ?? 0}
-                </ThemedText>
+                <ThemedText style={styles.modeScoreText}>{completeWorkoutResponse.modeScore ?? 0}</ThemedText>
                 {completeWorkoutResponse.modeScoreDifference ? (
                   <ThemedText
                     style={{
@@ -148,16 +199,12 @@ const workoutComplete = () => {
                 )}
               </View>
 
-              <ThemedText style={styles.modeScoreInfoText}>
-                Based on recent activity and adherence.
-              </ThemedText>
+              <ThemedText style={styles.modeScoreInfoText}>Based on recent activity and adherence.</ThemedText>
             </View>
           )}
         </View>
         <View style={styles.section}>
-          <ThemedText style={styles.subtitle}>
-            {isPracticeWeek ? "PREPARATION" : "WEEK PROGRESS"}
-          </ThemedText>
+          <ThemedText style={styles.subtitle}>{isPracticeWeek ? "PREPARATION" : "WEEK PROGRESS"}</ThemedText>
           {isPracticeWeek ? (
             <View style={styles.modeScoreContainer}>
               <View
@@ -237,9 +284,7 @@ const workoutComplete = () => {
               </ThemedText>
             </View>
           ) : (
-            <View
-              style={[styles.modeScoreContainer, isTrainingTargetMet ? styles.targetMet : null]}
-            >
+            <View style={[styles.modeScoreContainer, isTrainingTargetMet ? styles.targetMet : null]}>
               <View
                 style={{
                   flexDirection: "row",
@@ -248,50 +293,24 @@ const workoutComplete = () => {
                 }}
               >
                 <ThemedText style={styles.progressText}>
-                  <ThemedText
-                    style={[
-                      styles.progressText,
-                      isTrainingTargetMet ? { color: Colors.accent.primary } : null,
-                    ]}
-                  >
-                    {completeWorkoutResponse?.activeDaysThisWeek}
-                  </ThemedText>
-                  /{completeWorkoutResponse?.weeklyTargetDays}
+                  <ThemedText style={[styles.progressText, isTrainingTargetMet ? { color: Colors.accent.primary } : null]}>{completeWorkoutResponse?.activeDaysThisWeek}</ThemedText>/
+                  {completeWorkoutResponse?.weeklyTargetDays}
                 </ThemedText>
                 <ThemedText style={styles.daysCompletedText}>DAYS COMPLETED</ThemedText>
               </View>
 
-              {isTrainingTargetMet && (
-                <ThemedText style={{ fontSize: 12, color: Colors.gray }}>
-                  You met your standard for the week.
-                </ThemedText>
-              )}
-              <View
-                style={{ backgroundColor: Colors.background.primary, height: 6, borderRadius: 3 }}
-              >
+              {isTrainingTargetMet && <ThemedText style={{ fontSize: 12, color: Colors.gray }}>You met your standard for the week.</ThemedText>}
+              <View style={{ backgroundColor: Colors.background.primary, height: 6, borderRadius: 3 }}>
                 <View
                   style={{
                     backgroundColor: Colors.accent.primary,
                     height: 6,
-                    width: `${
-                      completeWorkoutResponse.weeklyTargetDays > 0
-                        ? Math.min(
-                            100,
-                            (completeWorkoutResponse.activeDaysThisWeek /
-                              completeWorkoutResponse.weeklyTargetDays) *
-                              100,
-                          )
-                        : 0
-                    }%`,
+                    width: `${completeWorkoutResponse.weeklyTargetDays > 0 ? Math.min(100, (completeWorkoutResponse.activeDaysThisWeek / completeWorkoutResponse.weeklyTargetDays) * 100) : 0}%`,
                     borderRadius: 3,
                   }}
                 />
               </View>
-              {isTrainingTargetMet && (
-                <ThemedText style={{ fontSize: 12, color: Colors.icon }}>
-                  Additional workouts still count toward your history.
-                </ThemedText>
-              )}
+              {isTrainingTargetMet && <ThemedText style={{ fontSize: 12, color: Colors.icon }}>Additional workouts still count toward your history.</ThemedText>}
             </View>
           )}
         </View>
@@ -305,12 +324,37 @@ const workoutComplete = () => {
                 </View>
                 <View>
                   <ThemedText style={styles.exerciseName}>{exercise.name}</ThemedText>
-                  <ThemedText
-                    style={styles.exerciseSet}
-                  >{`${exercise.sets.length} ${getExerciseMetricText(exercise.metricType)}${exercise.sets.length > 1 ? "s" : ""}`}</ThemedText>
+                  <ThemedText style={styles.exerciseSet}>{`${exercise.sets.length} ${getExerciseMetricText(exercise.metricType)}${exercise.sets.length > 1 ? "s" : ""}`}</ThemedText>
                 </View>
               </View>
             ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={styles.subtitle}>POST-WORKOUT PHOTO</ThemedText>
+          <View style={styles.photoCard}>
+            {workoutPhotoUri ? (
+              <>
+                <Image source={{ uri: workoutPhotoUri }} style={styles.workoutPhotoPreview} />
+                <View style={styles.photoActions}>
+                  <Pressable accessibilityRole="button" onPress={handleTakeWorkoutPhoto} style={styles.secondaryPhotoButton}>
+                    <ThemedText style={styles.secondaryPhotoButtonText}>RETAKE</ThemedText>
+                  </Pressable>
+                  <Pressable accessibilityRole="button" onPress={handleRemoveWorkoutPhoto} style={styles.secondaryPhotoButton}>
+                    <ThemedText style={styles.secondaryPhotoButtonText}>REMOVE</ThemedText>
+                  </Pressable>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.photoEmptyState}>
+                  <ThemedText style={styles.photoEmptyTitle}>Show the work.</ThemedText>
+                  <ThemedText style={styles.photoEmptyText}>Add an optional photo to appear with this completed workout in the feed.</ThemedText>
+                </View>
+                <ThemedButton title={isOpeningCamera ? "OPENING CAMERA..." : "TAKE PHOTO"} onPress={handleTakeWorkoutPhoto} />
+              </>
+            )}
           </View>
         </View>
 
@@ -334,16 +378,12 @@ const workoutComplete = () => {
               marginBottom: 24,
             }}
           >
-            {isTrainingTargetMet
-              ? "Great Work!"
-              : completeWorkoutResponse.modeScoreDifference > -1
-                ? "Keep showing up."
-                : "Stay consistent."}
+            {isTrainingTargetMet ? "Great Work!" : completeWorkoutResponse.modeScoreDifference > -1 ? "Keep showing up." : "Stay consistent."}
           </ThemedText>
         )}
 
         <View style={styles.footContainer}>
-          <ThemedButton title="DONE" onPress={handleDone} />
+          <ThemedButton title="DONE" onPress={handleDone} isLoading={isPublishingWorkout} />
         </View>
       </ThemedView>
     </ScrollView>
@@ -438,6 +478,59 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.icon,
     marginTop: 3,
+  },
+
+  photoCard: {
+    backgroundColor: Colors.background.secondary,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    gap: 16,
+  },
+  photoEmptyState: {
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderRadius: 12,
+    padding: 20,
+    gap: 6,
+    alignItems: "center",
+  },
+  photoEmptyTitle: {
+    fontFamily: Typography.family.primary.semibold,
+    fontSize: 16,
+  },
+  photoEmptyText: {
+    color: Colors.icon,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
+  },
+  workoutPhotoPreview: {
+    width: "100%",
+    aspectRatio: 4 / 5,
+    borderRadius: 12,
+    backgroundColor: Colors.background.primary,
+  },
+  photoActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  secondaryPhotoButton: {
+    flex: 1,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryPhotoButtonText: {
+    fontFamily: Typography.family.primary.semibold,
+    fontSize: 12,
+    letterSpacing: 1.2,
+    color: Colors.accent.primary,
   },
   footContainer: {
     // paddingHorizontal: 24,

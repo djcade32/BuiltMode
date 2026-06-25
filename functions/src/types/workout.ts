@@ -15,6 +15,7 @@ export type Workout = {
   name?: string;
   workoutType?: WorkoutType;
   notes?: string;
+  photoUrl: string | null;
   exercises: Exercise[];
   duration: number;
 

@@ -80,6 +80,7 @@ export const feedItemSchema = z.object({
   currentWeekStreak: z.number().nullable(),
 
   caption: z.string().nullable(),
+  photoUrl: z.string().nullable(),
 
   createdAt: firestoreTimestampSchema,
   updatedAt: firestoreTimestampSchema,

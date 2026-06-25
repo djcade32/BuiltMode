@@ -1,7 +1,11 @@
 import { Workout } from "@/functions/src/types/workout";
 import { InfinitePage } from "@/hooks/useInfiniteQuery";
 import { db, functions } from "@/lib/firebase";
-import { CompleteWorkoutRequest, CompleteWorkoutResponse } from "@/packages/shared/src";
+import {
+  CompleteWorkoutRequest,
+  CompleteWorkoutResponse,
+  PublishCompletedWorkoutToFeedResponse,
+} from "@/packages/shared/src";
 import {
   collection,
   doc,
@@ -36,6 +40,19 @@ export const createCompleteWorkout = async (
   );
   const workoutResponse = await createWorkoutFunction(workout);
   return workoutResponse.data;
+};
+
+export const publishCompletedWorkoutToFeed = async (
+  sessionId: string,
+  photoUrl: string | null,
+  caption: string | null,
+): Promise<PublishCompletedWorkoutToFeedResponse> => {
+  const publishCompletedWorkoutToFeedFunction = httpsCallable<
+    { sessionId: string; photoUrl: string | null; caption: string | null },
+    PublishCompletedWorkoutToFeedResponse
+  >(functions, "publishCompletedWorkoutToFeed");
+  const response = await publishCompletedWorkoutToFeedFunction({ photoUrl, caption, sessionId });
+  return response.data;
 };
 
 export type FirestoreTimestamp = {
