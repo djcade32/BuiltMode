@@ -49,9 +49,6 @@ const WorkoutHistoryDetails = () => {
 
   const workoutPhotoUrl = (data as WorkoutWithPhoto | undefined)?.photoUrl ?? null;
 
-  console.log("data: ", data);
-  console.log("workoutPhotoUrl: ", workoutPhotoUrl);
-
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
       {
