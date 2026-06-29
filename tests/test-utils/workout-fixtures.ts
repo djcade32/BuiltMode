@@ -40,6 +40,7 @@ export const makeActiveWorkoutDraft = () => ({
 });
 
 export const makeCompleteWorkoutResponse = () => ({
+  sessionId: "session-1",
   modeScore: 82,
   modeScoreDifference: 2,
   activeDaysThisWeek: 3,
