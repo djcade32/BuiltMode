@@ -1,6 +1,12 @@
 import { FeedItem } from "@builtmode/shared/types/social";
 import { UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
-import { CompleteWorkoutRequest, CompleteWorkoutResponse } from "@builtmode/shared/types/workout";
+import {
+  CompleteWorkoutRequest,
+  CompleteWorkoutResponse,
+  PublishableWorkoutFields,
+  PublishCompletedWorkoutToFeedRequest,
+  PublishCompletedWorkoutToFeedResponse,
+} from "@builtmode/shared/types/workout";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
@@ -39,9 +45,7 @@ dayjs.extend(timezone);
 const DEFAULT_TIMEZONE = "UTC";
 
 const getValidTimezone = (timezoneValue: unknown): string => {
-  return typeof timezoneValue === "string" && timezoneValue.trim().length > 0
-    ? timezoneValue
-    : DEFAULT_TIMEZONE;
+  return typeof timezoneValue === "string" && timezoneValue.trim().length > 0 ? timezoneValue : DEFAULT_TIMEZONE;
 };
 
 /**
@@ -76,22 +80,21 @@ const getWorkoutTimezoneFields = (completedAt: Date, workoutTimezone: string) =>
   - `userWeekAggregates/{uid}_{weekId}`
   - `leaderboardEntries/{uid}`
 
+  Feed publishing is intentionally not done here. The completed workout is saved
+  as `pending_publish`, then the Workout Complete screen can call
+  `handlePublishCompletedWorkoutToFeed` after the user adds/skips a photo.
+
   @param {string} uid User's uid
   @param {CompleteWorkoutRequest} workout Workout object to save in Firestore
   @return On success return user's workout metrics
 */
-export async function handleCompleteWorkout(
-  uid: string,
-  workout: CompleteWorkoutRequest,
-): Promise<CompleteWorkoutResponse> {
+export async function handleCompleteWorkout(uid: string, workout: CompleteWorkoutRequest): Promise<CompleteWorkoutResponse> {
   const { sessionId, workoutType, notes, exercises, name, duration } = workout;
 
   const now = Timestamp.now();
   const lockedAt = now.toDate();
   lockedAt.setMinutes(lockedAt.getMinutes() + 5);
   const lockedAtTimestamp = Timestamp.fromDate(lockedAt);
-  let feedItemToFanout: FeedItem | null = null;
-
   const result = await db.runTransaction(async (tx) => {
     const user = await getUserByUid(tx, uid);
 
@@ -120,18 +123,11 @@ export async function handleCompleteWorkout(
     const localDate = workoutTimezoneFields.localDate;
     const monthId = workoutTimezoneFields.monthId;
 
-    const isOfficialWeek =
-      dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
+    const isOfficialWeek = dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
 
     const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
-    const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(
-      tx,
-      uid,
-      localDateKey,
-    );
-    const completedWorkoutsLast30Days = dayMarkerExists
-      ? numOfCompletedWorkoutsLast30Days
-      : numOfCompletedWorkoutsLast30Days + 1;
+    const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(tx, uid, localDateKey);
+    const completedWorkoutsLast30Days = dayMarkerExists ? numOfCompletedWorkoutsLast30Days : numOfCompletedWorkoutsLast30Days + 1;
     const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
     const weekAggregateExists = weekAggregate.exists;
 
@@ -187,9 +183,7 @@ export async function handleCompleteWorkout(
     const monthAggregate = await getUserMonthAggregate(tx, uid, monthId);
     const monthAggregateExists = monthAggregate.exists;
 
-    const totalWorkoutsInMonth = monthAggregateExists
-      ? monthAggregate.data()?.totalWorkouts + 1
-      : 1;
+    const totalWorkoutsInMonth = monthAggregateExists ? monthAggregate.data()?.totalWorkouts + 1 : 1;
     let workoutCountByDate: Record<string, number> = { [localDateKey]: 1 };
     if (monthAggregateExists) {
       if (monthAggregate.data()?.workoutCountByDate[localDateKey]) {
@@ -204,30 +198,26 @@ export async function handleCompleteWorkout(
         };
       }
     }
-    const activeDaysInMonth = monthAggregateExists
-      ? await getTotalActiveDaysInMonth(tx, uid, localDateKey)
-      : 0;
+    const activeDaysInMonth = monthAggregateExists ? await getTotalActiveDaysInMonth(tx, uid, localDateKey) : 0;
     const activeDaysCount = dayMarkerExists ? activeDaysInMonth : activeDaysInMonth + 1;
 
-    const bestWeekStreak = userStatsExists
-      ? Math.max(streakWeeks, userStats.bestWeekStreak ?? 0)
-      : 0;
+    const bestWeekStreak = userStatsExists ? Math.max(streakWeeks, userStats.bestWeekStreak ?? 0) : 0;
     const totalWorkoutsLogged = userStatsExists ? userStats.totalWorkoutsLogged + 1 : 1;
     const previousTotalTargetsMet = userStatsExists ? (userStats.totalTargetsMet ?? 0) : 0;
     const newlyMetTargetThisWeek =
-      isOfficialWeek &&
-      metTargetThisWeek &&
-      !(weekAggregateExists && weekAggregate.get("metTargetThisWeek"));
+      isOfficialWeek && metTargetThisWeek && !(weekAggregateExists && weekAggregate.get("metTargetThisWeek"));
 
-    const totalTargetsMet = newlyMetTargetThisWeek
-      ? previousTotalTargetsMet + 1
-      : previousTotalTargetsMet;
+    const totalTargetsMet = newlyMetTargetThisWeek ? previousTotalTargetsMet + 1 : previousTotalTargetsMet;
 
-    const workoutDoc: Workout = {
+    const workoutDoc: Workout & PublishableWorkoutFields = {
       sessionId,
       exercises,
       workoutType: workoutType ?? "other",
       notes: notes ?? "",
+      photoUrl: null,
+      feedStatus: "pending_publish",
+      feedPublishedAt: null,
+      caption: null,
       completedAt: now,
       createdAt: now,
       localDateKey,
@@ -314,6 +304,105 @@ export async function handleCompleteWorkout(
     createUserMonthAggregates(tx, uid, monthId, userMonthAggregateDoc);
     createUserStats(tx, uid, userStatsDoc);
     updateLeaderboardEntry(tx, updatedLeaderboardEntry);
+    return {
+      activeDaysThisWeek,
+      isOfficialWeek,
+      modeScore,
+      streakWeeks,
+      weekId,
+      weeklyTargetDays,
+      modeScoreDifference,
+      lockedAt: dayjs(lockedAtTimestamp.toDate()).tz(workoutTimezone).format(),
+      workoutTimezone,
+      localDate,
+      workoutLocalDate: workoutTimezoneFields.workoutLocalDate,
+      workoutLocalTime: workoutTimezoneFields.workoutLocalTime,
+      workoutLocalDateTimeISO: workoutTimezoneFields.workoutLocalDateTimeISO,
+      workoutLocalDisplayDate: workoutTimezoneFields.workoutLocalDisplayDate,
+      workoutLocalDisplayTime: workoutTimezoneFields.workoutLocalDisplayTime,
+      workoutUtcOffsetMinutes: workoutTimezoneFields.workoutUtcOffsetMinutes,
+      sessionId,
+      photoUrl: null,
+      caption: null,
+    } as CompleteWorkoutResponse;
+  });
+
+  return result;
+}
+
+/**
+ * Publishes an already-completed workout to the social feed.
+ *
+ * This is intentionally separate from `handleCompleteWorkout` so the app can:
+ * - save the workout immediately when Active Mode ends
+ * - let the user add an optional post-workout photo on the complete screen
+ * - publish/fan-out only when the completion flow is finalized
+ */
+export async function handlePublishCompletedWorkoutToFeed(
+  uid: string,
+  request: PublishCompletedWorkoutToFeedRequest,
+): Promise<PublishCompletedWorkoutToFeedResponse> {
+  const sessionId = request.sessionId?.trim();
+
+  if (!sessionId) {
+    throw new HttpsError("invalid-argument", "sessionId is required.");
+  }
+
+  const photoUrl = request.photoUrl ?? null;
+  const caption = request.caption ?? null;
+  const now = Timestamp.now();
+  let feedItemToFanout: FeedItem | null = null;
+
+  const result = await db.runTransaction(async (tx) => {
+    const user = await getUserByUid(tx, uid);
+
+    if (!user.exists) {
+      throw new HttpsError("not-found", "User not found.");
+    }
+
+    const workoutRef = db.collection("workouts").doc(sessionId);
+    const workoutSnap = await tx.get(workoutRef);
+
+    if (!workoutSnap.exists) {
+      throw new HttpsError("not-found", "Workout not found.");
+    }
+
+    const workoutDoc = workoutSnap.data() as Workout & Partial<PublishableWorkoutFields>;
+
+    if (workoutDoc.uid !== uid) {
+      throw new HttpsError("permission-denied", "You cannot publish another user's workout.");
+    }
+
+    if (workoutDoc.status !== "completed") {
+      throw new HttpsError("failed-precondition", "Only completed workouts can be published.");
+    }
+
+    const existingFeedStatus = workoutDoc.feedStatus ?? "pending_publish";
+    const existingPhotoUrl = workoutDoc.photoUrl ?? null;
+    const nextPhotoUrl = photoUrl ?? existingPhotoUrl;
+
+    if (existingFeedStatus === "published") {
+      return {
+        sessionId,
+        feedStatus: "published",
+        alreadyPublished: true,
+        photoUrl: existingPhotoUrl,
+      } as PublishCompletedWorkoutToFeedResponse;
+    }
+
+    const weekAggregateSnap = await getUserWeekAggregate(tx, uid, workoutDoc.weekId);
+    if (!weekAggregateSnap.exists) {
+      throw new HttpsError("not-found", "User week aggregate not found.");
+    }
+
+    const userStatsSnap = await getUserStats(tx, uid);
+    if (!userStatsSnap.exists) {
+      throw new HttpsError("not-found", "User stats not found.");
+    }
+
+    const weekAggregate = weekAggregateSnap.data() as UserWeekAggregate;
+    const userStats = userStatsSnap.data() as UserStats;
+
     feedItemToFanout = createWorkoutCompletedFeedItem({
       tx,
       uid,
@@ -333,43 +422,40 @@ export async function handleCompleteWorkout(
         localDateKey: workoutDoc.localDateKey,
         localDate: workoutDoc.localDate,
         workoutTimezone: workoutDoc.workoutTimezone,
-        workoutLocalDate: workoutTimezoneFields.workoutLocalDate,
-        workoutLocalTime: workoutTimezoneFields.workoutLocalTime,
-        workoutLocalDateTimeISO: workoutTimezoneFields.workoutLocalDateTimeISO,
-        workoutLocalDisplayDate: workoutTimezoneFields.workoutLocalDisplayDate,
-        workoutLocalDisplayTime: workoutTimezoneFields.workoutLocalDisplayTime,
-        workoutUtcOffsetMinutes: workoutTimezoneFields.workoutUtcOffsetMinutes,
-        completedAt: now,
-        isPracticeWeek: !isOfficialWeek,
-        caption: "",
+        workoutLocalDate: workoutDoc.workoutLocalDate,
+        workoutLocalTime: workoutDoc.workoutLocalTime,
+        workoutLocalDateTimeISO: workoutDoc.workoutLocalDateTimeISO,
+        workoutLocalDisplayDate: workoutDoc.workoutLocalDisplayDate,
+        workoutLocalDisplayTime: workoutDoc.workoutLocalDisplayTime,
+        workoutUtcOffsetMinutes: workoutDoc.workoutUtcOffsetMinutes,
+        completedAt: workoutDoc.completedAt,
+        isPracticeWeek: !weekAggregate.isOfficialWeek,
+        caption,
+        photoUrl: nextPhotoUrl,
       },
       weekAggregate: {
-        activeDaysThisWeek: userWeekAggregateDoc.activeDaysThisWeek,
-        modeScore: userWeekAggregateDoc.modeScore,
+        activeDaysThisWeek: weekAggregate.activeDaysThisWeek,
+        modeScore: weekAggregate.modeScore,
       },
       userStats: {
-        currentWeekStreak: userStatsDoc.currentWeekStreak,
+        currentWeekStreak: userStats.currentWeekStreak,
       },
     });
 
+    tx.update(workoutRef, {
+      photoUrl: nextPhotoUrl,
+      feedStatus: "published",
+      feedPublishedAt: now,
+      caption,
+      updatedAt: now,
+    });
+
     return {
-      activeDaysThisWeek,
-      isOfficialWeek,
-      modeScore,
-      streakWeeks,
-      weekId,
-      weeklyTargetDays,
-      modeScoreDifference,
-      lockedAt: dayjs(lockedAtTimestamp.toDate()).tz(workoutTimezone).format(),
-      workoutTimezone,
-      localDate,
-      workoutLocalDate: workoutTimezoneFields.workoutLocalDate,
-      workoutLocalTime: workoutTimezoneFields.workoutLocalTime,
-      workoutLocalDateTimeISO: workoutTimezoneFields.workoutLocalDateTimeISO,
-      workoutLocalDisplayDate: workoutTimezoneFields.workoutLocalDisplayDate,
-      workoutLocalDisplayTime: workoutTimezoneFields.workoutLocalDisplayTime,
-      workoutUtcOffsetMinutes: workoutTimezoneFields.workoutUtcOffsetMinutes,
-    } as CompleteWorkoutResponse;
+      sessionId,
+      feedStatus: "published",
+      alreadyPublished: false,
+      photoUrl: nextPhotoUrl,
+    } as PublishCompletedWorkoutToFeedResponse;
   });
 
   if (feedItemToFanout) {
@@ -379,7 +465,7 @@ export async function handleCompleteWorkout(
       // TODO: Implement retry logic here
       console.error("Failed to fanout workout feed item", {
         uid,
-        feedItemId: feedItemToFanout,
+        feedItem: feedItemToFanout,
         error,
       });
     }

@@ -1,3 +1,4 @@
+import PendingWorkoutPublisher from "@/components/system/PendingWorkoutPublisher";
 import {
   handleInitialNotification,
   registerPushToken,
@@ -35,10 +36,7 @@ const ProtectedLayout = () => {
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !activeWorkoutDraft) return;
 
-    const targetPath =
-      activeWorkoutDraft.status === "finishing"
-        ? "/(protected)/workoutComplete"
-        : "/(protected)/activeWorkout";
+    const targetPath = activeWorkoutDraft.status === "finishing" ? "/(protected)/workoutComplete" : "/(protected)/activeWorkout";
 
     const currentPath =
       pathname === "/workoutComplete"
@@ -71,6 +69,7 @@ const ProtectedLayout = () => {
 
   return (
     <MenuProvider>
+      {pathname !== "/workoutComplete" ? <PendingWorkoutPublisher /> : null}
       <Stack>
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

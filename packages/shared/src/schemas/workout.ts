@@ -1,7 +1,10 @@
 import { z } from "zod";
+import { firestoreTimestampSchema } from "./firestore.js";
 import { homeTimezoneSchema } from "./user.js";
 
 export const exerciseTypeSchema = z.enum(["strength", "conditioning", "cardio"]);
+
+export const WorkoutFeedStatusSchema = z.enum(["pending_publish", "published"]);
 
 export const workoutTypeSchema = z.enum([
   "strength",
@@ -26,9 +29,7 @@ const workoutLocalDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected date format YYYY-MM-DD");
 
-const workoutLocalTimeSchema = z
-  .string()
-  .regex(/^\d{2}:\d{2}$/, "Expected time format HH:mm");
+const workoutLocalTimeSchema = z.string().regex(/^\d{2}:\d{2}$/, "Expected time format HH:mm");
 
 export const workoutTimezoneFieldsSchema = z.object({
   workoutTimezone: homeTimezoneSchema,
@@ -82,6 +83,7 @@ export const completeWorkoutRequestSchema = z.object({
 
 export const completeWorkoutResponseSchema = z
   .object({
+    sessionId: z.string().min(1),
     weekId: z.string().min(1),
     isOfficialWeek: z.boolean(),
     activeDaysThisWeek: z.number().int().nonnegative(),
@@ -91,6 +93,7 @@ export const completeWorkoutResponseSchema = z
     modeScoreDifference: z.number().min(-100).max(100),
     lockedAt: z.string().min(1),
     localDate: z.string().min(1),
+    photoUrl: z.string().url().max(500).nullable(),
   })
   .merge(workoutTimezoneFieldsSchema);
 
@@ -107,6 +110,25 @@ export const editWorkoutMetadataResponseSchema = z.object({
   lockedAt: z.string().min(1),
 });
 
+export const PublishableWorkoutFieldsSchema = z.object({
+  feedStatus: WorkoutFeedStatusSchema,
+  feedPublishedAt: firestoreTimestampSchema.nullable(),
+  caption: z.string().trim().max(220).nullable(),
+});
+
+export const PublishCompletedWorkoutToFeedRequestSchema = z.object({
+  sessionId: z.string().trim().min(1, "sessionId is required"),
+  photoUrl: z.string().trim().url().nullable().optional(),
+  caption: z.string().trim().max(220).nullable().optional(),
+});
+
+export const PublishCompletedWorkoutToFeedResponseSchema = z.object({
+  sessionId: z.string().trim().min(1),
+  feedStatus: WorkoutFeedStatusSchema,
+  alreadyPublished: z.boolean(),
+  photoUrl: z.string().trim().url().nullable(),
+});
+
 export type ExerciseType = z.infer<typeof exerciseTypeSchema>;
 export type WorkoutType = z.infer<typeof workoutTypeSchema>;
 export type ExerciseMetricType = z.infer<typeof exerciseMetricTypeSchema>;
@@ -117,3 +139,12 @@ export type CompleteWorkoutRequest = z.infer<typeof completeWorkoutRequestSchema
 export type CompleteWorkoutResponse = z.infer<typeof completeWorkoutResponseSchema>;
 export type EditWorkoutMetadataRequest = z.infer<typeof editWorkoutMetadataRequestSchema>;
 export type EditWorkoutMetadataResponse = z.infer<typeof editWorkoutMetadataResponseSchema>;
+export type WorkoutFeedStatus = z.infer<typeof WorkoutFeedStatusSchema>;
+export type PublishableWorkoutFields = z.infer<typeof PublishableWorkoutFieldsSchema>;
+
+export type PublishCompletedWorkoutToFeedRequest = z.infer<
+  typeof PublishCompletedWorkoutToFeedRequestSchema
+>;
+export type PublishCompletedWorkoutToFeedResponse = z.infer<
+  typeof PublishCompletedWorkoutToFeedResponseSchema
+>;

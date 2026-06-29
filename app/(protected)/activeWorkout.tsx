@@ -6,28 +6,28 @@ import CurrentWorkoutCard from "@/components/workout/CurrentWorkoutCard";
 import NextExerciseItem from "@/components/workout/NextExerciseItem";
 import { StopwatchDisplay } from "@/components/workout/StopwatchDisplay";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { Exercise } from "@/packages/shared/src";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, FlatList, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { useStopwatch } from "react-timer-hook";
+
+const getStopwatchOffsetFromStartedAtMs = (startedAtMs?: number | null) => {
+  const elapsedMs = startedAtMs ? Math.max(0, Date.now() - startedAtMs) : 0;
+
+  /**
+   * react-timer-hook's stopwatch offset works by passing a Date
+   * that represents the elapsed offset.
+   *
+   * If the workout started 10 minutes ago, this returns:
+   * now + 10 minutes
+   *
+   * That makes the stopwatch display 00:10:00 instead of 00:00:00.
+   */
+  return new Date(Date.now() + elapsedMs);
+};
 
 const ActiveWorkout = () => {
   const router = useRouter();
@@ -43,6 +43,8 @@ const ActiveWorkout = () => {
     logWorkout,
   } = useWorkoutStore();
 
+  const hydratedStopwatchStartedAtRef = useRef<number | null>(null);
+
   const opacity = useSharedValue(0.4);
   const scale = useSharedValue(1);
 
@@ -54,17 +56,9 @@ const ActiveWorkout = () => {
   });
 
   useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(withTiming(1, { duration: 600 }), withTiming(0.4, { duration: 600 })),
-      -1,
-      true,
-    );
+    opacity.value = withRepeat(withSequence(withTiming(1, { duration: 600 }), withTiming(0.4, { duration: 600 })), -1, true);
 
-    scale.value = withRepeat(
-      withSequence(withTiming(1.4, { duration: 600 }), withTiming(1, { duration: 600 })),
-      -1,
-      true,
-    );
+    scale.value = withRepeat(withSequence(withTiming(1.4, { duration: 600 }), withTiming(1, { duration: 600 })), -1, true);
   }, []);
 
   useEffect(() => {
@@ -74,12 +68,40 @@ const ActiveWorkout = () => {
   }, [activeWorkoutDraft, router]);
 
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
-  const stopwatch = useStopwatch({ autoStart: true, interval: 100 });
-  const { pause, start, hours, minutes, seconds, isRunning, totalSeconds } = stopwatch;
+
+  const initialStopwatchOffset = useMemo(
+    () => getStopwatchOffsetFromStartedAtMs(activeWorkoutDraft?.startedAtMs),
+    [activeWorkoutDraft?.startedAtMs],
+  );
+
+  const stopwatch = useStopwatch({
+    autoStart: Boolean(activeWorkoutDraft),
+    interval: 100,
+    offsetTimestamp: initialStopwatchOffset,
+  });
+
+  const { pause, start, reset, hours, minutes, seconds, isRunning, totalSeconds } = stopwatch;
+
+  useEffect(() => {
+    if (!activeWorkoutDraft?.startedAtMs) return;
+
+    if (hydratedStopwatchStartedAtRef.current === activeWorkoutDraft.startedAtMs) {
+      return;
+    }
+
+    const offsetTimestamp = getStopwatchOffsetFromStartedAtMs(activeWorkoutDraft.startedAtMs);
+
+    reset(offsetTimestamp, true);
+    hydratedStopwatchStartedAtRef.current = activeWorkoutDraft.startedAtMs;
+  }, [activeWorkoutDraft?.startedAtMs, reset]);
 
   const handleExit = useCallback(() => {
     return Alert.alert("Are You Sure?", "All workout progress will be lost.", [
-      { text: "Continue", onPress: () => clearWorkout(), style: "destructive" },
+      {
+        text: "Continue",
+        onPress: () => clearWorkout(),
+        style: "destructive",
+      },
       { text: "Cancel" },
     ]);
   }, [clearWorkout]);
@@ -97,21 +119,26 @@ const ActiveWorkout = () => {
         icon: <Ionicons name="exit-outline" size={20} color={Colors.icon} />,
       },
     ],
-    [pause, clearWorkout, isRunning, handleExit],
+    [pause, start, isRunning, handleExit],
   );
 
   if (!activeWorkoutDraft) return null;
 
-  const handleExerciseCompleted = (exercise: Exercise) => {
+  const handleExerciseCompleted = () => {
     const exerciseLeftToComplete = activeWorkoutDraft.exercises.find((e) => {
       if (workoutProgress && workoutProgress[e.id]) {
         return workoutProgress[e.id].completed === false;
       }
+
       return true;
     });
 
     const nextExerciseIndex = currentExerciseIndex + 1;
-    if (nextExerciseIndex >= activeWorkoutDraft.exercises.length && !exerciseLeftToComplete) return;
+
+    if (nextExerciseIndex >= activeWorkoutDraft.exercises.length && !exerciseLeftToComplete) {
+      return;
+    }
+
     setCurrentExerciseIndex(
       nextExerciseIndex >= activeWorkoutDraft.exercises.length
         ? activeWorkoutDraft.exercises.findIndex((e) => e.id === exerciseLeftToComplete?.id)
@@ -122,7 +149,9 @@ const ActiveWorkout = () => {
   const handleCompleteWorkout = async () => {
     try {
       pause();
+
       const response = await logWorkout(totalSeconds);
+
       if (response) {
         console.log("Workout logged: ", response);
         router.replace("/(protected)/workoutComplete");
@@ -134,7 +163,11 @@ const ActiveWorkout = () => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.background.primary, position: "relative" }}
+      style={{
+        flex: 1,
+        backgroundColor: Colors.background.primary,
+        position: "relative",
+      }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       {isDropdownOpened && (
@@ -151,6 +184,7 @@ const ActiveWorkout = () => {
           }}
         />
       )}
+
       <ThemedView style={styles.container}>
         <View
           style={{
@@ -166,14 +200,15 @@ const ActiveWorkout = () => {
               <Animated.View style={[styles.lockedInCircle, animatedStyle]} />
               <ThemedText style={styles.lockedInText}>ACTIVE MODE</ThemedText>
             </View>
+
             <TouchableOpacity style={styles.iconContainer}>
               <DropdownMenu
                 onClose={() => setIsDropdownOpened((prev) => !prev)}
-                renderTriggerItem={
-                  <MaterialIcons name="more-horiz" size={22} color={Colors.icon} />
-                }
+                renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
                 options={dropDownOptions}
-                menuOptionsCustomStyles={{ optionsContainer: { width: 100 } }}
+                menuOptionsCustomStyles={{
+                  optionsContainer: { width: 100 },
+                }}
               />
             </TouchableOpacity>
           </View>
@@ -192,7 +227,10 @@ const ActiveWorkout = () => {
 
           <FlatList
             showsVerticalScrollIndicator={false}
-            ListFooterComponentStyle={{ flex: 1, justifyContent: "flex-end" }}
+            ListFooterComponentStyle={{
+              flex: 1,
+              justifyContent: "flex-end",
+            }}
             ListFooterComponent={
               <View style={styles.footerContainer}>
                 <ThemedButton
@@ -200,6 +238,7 @@ const ActiveWorkout = () => {
                   title="COMPLETE WORKOUT"
                   onPress={handleCompleteWorkout}
                   disabled={!isWorkoutComplete || isLoggingWorkout}
+                  isLoading={isLoggingWorkout}
                 />
               </View>
             }
@@ -207,15 +246,13 @@ const ActiveWorkout = () => {
             data={
               !isWorkoutComplete
                 ? activeWorkoutDraft.exercises.filter(
-                    (exercise) =>
-                      exercise.id !== activeWorkoutDraft.exercises[currentExerciseIndex].id,
+                    (exercise) => exercise.id !== activeWorkoutDraft.exercises[currentExerciseIndex].id,
                   )
                 : activeWorkoutDraft.exercises
             }
             renderItem={(exercise) => {
-              const index = activeWorkoutDraft.exercises.findIndex(
-                (e) => e.id === exercise.item.id,
-              );
+              const index = activeWorkoutDraft.exercises.findIndex((e) => e.id === exercise.item.id);
+
               const isCompleted = !!(
                 workoutProgress &&
                 workoutProgress[exercise.item.id] &&
@@ -246,10 +283,12 @@ const styles = StyleSheet.create({
     paddingTop: 54,
     flex: 1,
   },
+
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
+
   dropdownOptionsContainer: {
     backgroundColor: Colors.input,
     borderRadius: Border.radius.md,
@@ -259,29 +298,34 @@ const styles = StyleSheet.create({
     width: 100,
     zIndex: 101,
   },
+
   dropdownOptionContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     padding: 8,
   },
+
   dropdownOptionText: {
     fontSize: 12,
     color: Colors.gray,
     letterSpacing: 0.6,
   },
+
   lockedInCircle: {
     backgroundColor: Colors.accent.primary,
     height: 8,
     width: 8,
     borderRadius: 4,
   },
+
   lockedInText: {
     fontSize: 12,
     fontFamily: Typography.family.primary.semibold,
     color: Colors.accent.primary,
     letterSpacing: 1.8,
   },
+
   iconContainer: {
     width: 40,
     height: 40,
@@ -292,28 +336,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   timer: {
     fontFamily: Typography.family.secondary.semibold,
     fontSize: 60,
     letterSpacing: -1.5,
     textAlign: "center",
   },
+
   activeModeText: {
     fontFamily: Typography.family.primary.semibold,
     fontSize: 12,
     color: Colors.icon,
     letterSpacing: 1.8,
   },
+
   exercisesContainer: {
     paddingHorizontal: 24,
     paddingTop: 17,
     flex: 1,
   },
+
   nextExercisesContainer: {
     gap: 17,
     paddingVertical: 17,
-    flex: 1,
+    flexGrow: 1,
   },
+
   footerContainer: {
     paddingVertical: 20,
   },

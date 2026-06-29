@@ -13,21 +13,7 @@ import {
 
 import { httpsCallable } from "firebase/functions";
 
-import { doc, getDoc, Timestamp } from "firebase/firestore";
-
-const timestampToIsoString = (value: unknown): string | undefined => {
-  if (!value) return undefined;
-
-  if (value instanceof Timestamp) {
-    return value.toDate().toISOString();
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return undefined;
-};
+import { doc, getDoc } from "firebase/firestore";
 
 export const checkForUserProfile = async (uid: string): Promise<User | undefined> => {
   try {

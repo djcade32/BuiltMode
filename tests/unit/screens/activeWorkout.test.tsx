@@ -21,6 +21,7 @@ jest.mock("react-timer-hook", () => ({
   useStopwatch: () => ({
     pause: jest.fn(),
     start: jest.fn(),
+    reset: jest.fn(),
     hours: 0,
     minutes: 7,
     seconds: 0,

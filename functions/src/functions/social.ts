@@ -320,6 +320,7 @@ type CreateWorkoutCompletedFeedItemParams = {
     workoutUtcOffsetMinutes: number;
 
     caption: string | null;
+    photoUrl: string | null;
     isPracticeWeek: boolean;
     completedAt: Timestamp;
   };
@@ -368,7 +369,8 @@ export function createWorkoutCompletedFeedItem({
     durationSeconds: workout.durationSeconds ?? null,
     exerciseCount: workout.exercises ? workout.exercises.length : null,
     completedAt: workout.completedAt ?? now,
-    caption: workout.caption ?? null,
+    caption: workout.caption,
+    photoUrl: workout.photoUrl,
 
     weekId: workout.weekId,
     localDateKey: workout.localDateKey,

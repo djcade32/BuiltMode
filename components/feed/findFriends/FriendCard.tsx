@@ -38,7 +38,6 @@ const FriendCard = ({
   const { user } = useUserStore();
   const router = useRouter();
   const { displayName, avatarUrl, username, relationshipStatus, uid } = data;
-  const navigateToFriendProfile = (uid: string) => router.push(`/(friendProfile)/${uid}`);
 
   const RequestButton = useMemo(() => {
     if (!user) return null;
@@ -100,7 +99,7 @@ const FriendCard = ({
       <View style={{ gap: 10 }}>
         <TouchableOpacity style={buttonStyle} onPress={action} disabled={isPending}>
           {isPending ? (
-            <ActivityIndicator color={Colors.icon} />
+            <ActivityIndicator color={Colors.background.primary} />
           ) : (
             <>
               {relationshipStatus === "request_sent" && (

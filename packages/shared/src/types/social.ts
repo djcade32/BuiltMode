@@ -57,6 +57,7 @@ export type FeedItem = {
   currentWeekStreak: number | null;
 
   caption: string | null;
+  photoUrl: string | null;
 
   createdAt: firestoreTimestamp;
   updatedAt: firestoreTimestamp;

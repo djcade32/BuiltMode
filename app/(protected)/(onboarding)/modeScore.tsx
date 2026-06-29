@@ -385,6 +385,7 @@ const ModeScore = () => {
                 name: "arrow-right",
               }}
               disabled={isCreatingUser}
+              isLoading={isCreatingUser}
             />
           </View>
         </ThemedView>
