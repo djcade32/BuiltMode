@@ -39,7 +39,7 @@ const defaultUser = {
   metrics: undefined,
   displayName: "Norman",
   avatarUrl: undefined,
-  homeTimezone: "America, NY",
+  homeTimezone: "America/New_York",
   officialStartWeekId: "2026-05-18",
   weeklyTargetDays: 5,
   isPracticeWeek: false,
