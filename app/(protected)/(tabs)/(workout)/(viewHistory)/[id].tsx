@@ -11,15 +11,7 @@ import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  SectionList,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, SectionList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type WorkoutHistorySection = {
@@ -37,8 +29,7 @@ const ViewHistory = () => {
 
   const sectionListRef = useRef<SectionList<Workout, WorkoutHistorySection>>(null);
 
-  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useUserWorkoutsInfinite(id, 20);
+  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useUserWorkoutsInfinite(id, 20);
 
   const workouts = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
@@ -50,8 +41,7 @@ const ViewHistory = () => {
     if (!normalized) return workouts;
 
     return workouts.filter((workout) => {
-      const workoutName =
-        workout.name || `${firstLetterToUpperCase(workout.workoutType ?? "")} Workout`;
+      const workoutName = workout.name || `${firstLetterToUpperCase(workout.workoutType ?? "")} Workout`;
 
       return workoutName.toLowerCase().includes(normalized);
     });
@@ -110,7 +100,13 @@ const ViewHistory = () => {
       <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.iconContainer} onPress={handleBack}>
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={handleBack}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={8}
+          >
             <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
           </TouchableOpacity>
           <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
@@ -159,9 +155,7 @@ const ViewHistory = () => {
                   fetchNextPage();
                 }
               }}
-              renderSectionHeader={({ section }) => (
-                <WorkoutHistorySectionHeader title={section.title} />
-              )}
+              renderSectionHeader={({ section }) => <WorkoutHistorySectionHeader title={section.title} />}
               renderItem={({ item }) => (
                 <WorkoutHistoryCard
                   workout={item}

@@ -43,23 +43,21 @@ import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekI
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
 
-export const createUserProfile = onCall(
-  async (request: CallableRequest<CreateUserProfileRequest>) => {
-    if (!request.auth?.uid) {
-      throw new HttpsError("unauthenticated", "User must be signed in.");
-    }
+export const createUserProfile = onCall(async (request: CallableRequest<CreateUserProfileRequest>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
 
-    const parsed = createUserProfileRequestSchema.safeParse(request.data);
+  const parsed = createUserProfileRequestSchema.safeParse(request.data);
 
-    if (!parsed.success) {
-      throw new HttpsError("invalid-argument", "Invalid profile payload.");
-    }
+  if (!parsed.success) {
+    throw new HttpsError("invalid-argument", "Invalid profile payload.");
+  }
 
-    assertValidTimezone(parsed.data.homeTimezone);
+  assertValidTimezone(parsed.data.homeTimezone);
 
-    return await handleCreateUserProfile(request.auth.uid, parsed.data);
-  },
-);
+  return await handleCreateUserProfile(request.auth.uid, parsed.data);
+});
 
 export const getWeekId = onCall((request) => {
   const { date, homeTimezone } = request.data;
@@ -152,37 +150,33 @@ export const respondToFriendRequest = onCall(
   },
 );
 
-export const cancelFriendRequest = onCall(
-  async (request: CallableRequest<{ requestId: string }>) => {
-    if (!request.auth?.uid) {
-      throw new HttpsError("unauthenticated", "User must be signed in.");
-    }
+export const cancelFriendRequest = onCall(async (request: CallableRequest<{ requestId: string }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
 
-    const { requestId } = request.data;
+  const { requestId } = request.data;
 
-    if (!requestId || typeof requestId !== "string") {
-      throw new HttpsError("invalid-argument", "Invalid cancelFriendRequest payload.");
-    }
+  if (!requestId || typeof requestId !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid cancelFriendRequest payload.");
+  }
 
-    return await handleCancelFriendRequest(request.auth.uid, requestId);
-  },
-);
+  return await handleCancelFriendRequest(request.auth.uid, requestId);
+});
 
-export const searchUserByUsername = onCall(
-  async (request: CallableRequest<{ username: string }>) => {
-    if (!request.auth?.uid) {
-      throw new HttpsError("unauthenticated", "User must be signed in.");
-    }
+export const searchUserByUsername = onCall(async (request: CallableRequest<{ username: string }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
 
-    const { username } = request.data;
+  const { username } = request.data;
 
-    if (!username || typeof username !== "string") {
-      throw new HttpsError("invalid-argument", "Invalid searchUserByUsername payload.");
-    }
+  if (!username || typeof username !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid searchUserByUsername payload.");
+  }
 
-    return await handleSearchUserByUsername(request.auth.uid, username);
-  },
-);
+  return await handleSearchUserByUsername(request.auth.uid, username);
+});
 
 export const removeFriend = onCall(async (request: CallableRequest<{ friendUid: string }>) => {
   if (!request.auth?.uid) {
@@ -213,15 +207,18 @@ export const fetchUsersHomeTimezone = onCall(async (request: CallableRequest<{ u
 });
 
 export const publishCompletedWorkoutToFeed = onCall(
-  async (
-    request: CallableRequest<{ sessionId: string; photoUrl: string; caption: string | null }>,
-  ) => {
+  async (request: CallableRequest<{ sessionId: string; photoUrl: string | null; caption: string | null }>) => {
     if (!request.auth?.uid) {
       throw new HttpsError("unauthenticated", "User must be signed in.");
     }
 
     const data = request.data;
-    if (!data || typeof data.sessionId !== "string") {
+    if (
+      !data ||
+      typeof data.sessionId !== "string" ||
+      (data.photoUrl !== null && typeof data.photoUrl !== "string") ||
+      (data.caption !== null && typeof data.caption !== "string")
+    ) {
       throw new HttpsError("invalid-argument", "Invalid publishCompletedWorkoutToFeed payload.");
     }
 

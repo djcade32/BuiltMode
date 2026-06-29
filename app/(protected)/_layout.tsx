@@ -1,5 +1,11 @@
 import PendingWorkoutPublisher from "@/components/system/PendingWorkoutPublisher";
-import { handleInitialNotification, registerPushToken, subscribeToForegroundNotifications, subscribeToNotificationOpens, subscribeToPushTokenRefresh } from "@/services/notification-service";
+import {
+  handleInitialNotification,
+  registerPushToken,
+  subscribeToForegroundNotifications,
+  subscribeToNotificationOpens,
+  subscribeToPushTokenRefresh,
+} from "@/services/notification-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, Stack, usePathname, useRouter } from "expo-router";
@@ -32,7 +38,12 @@ const ProtectedLayout = () => {
 
     const targetPath = activeWorkoutDraft.status === "finishing" ? "/(protected)/workoutComplete" : "/(protected)/activeWorkout";
 
-    const currentPath = pathname === "/workoutComplete" ? "/(protected)/workoutComplete" : pathname === "/activeWorkout" ? "/(protected)/activeWorkout" : pathname;
+    const currentPath =
+      pathname === "/workoutComplete"
+        ? "/(protected)/workoutComplete"
+        : pathname === "/activeWorkout"
+          ? "/(protected)/activeWorkout"
+          : pathname;
 
     if (currentPath !== targetPath) {
       router.replace(targetPath);
@@ -58,7 +69,7 @@ const ProtectedLayout = () => {
 
   return (
     <MenuProvider>
-      <PendingWorkoutPublisher />
+      {pathname !== "/workoutComplete" ? <PendingWorkoutPublisher /> : null}
       <Stack>
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

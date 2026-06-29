@@ -38,11 +38,15 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
   const hasWorkoutId = Boolean(workoutId);
 
   const createdAt =
-    Math.abs(dayjs(formatFirestoreDateTimeISO(completedAt)).diff(new Date(), "days")) >= 1 ? formatFirestoreTimestamp(completedAt) : dayjs(formatFirestoreDateTimeISO(completedAt)).fromNow();
+    Math.abs(dayjs(formatFirestoreDateTimeISO(completedAt)).diff(new Date(), "days")) >= 1
+      ? formatFirestoreTimestamp(completedAt)
+      : dayjs(formatFirestoreDateTimeISO(completedAt)).fromNow();
 
-  const targetMet = weeklyProgress === weeklyTargetDays && !isPractice;
+  const targetMet =
+    weeklyProgress === null || weeklyTargetDays === null ? false : weeklyProgress === weeklyTargetDays && !isPractice;
 
-  const navigateToFriendProfile = (uid: string) => (currentUserUid === uid ? router.push("/(profile)/profile") : router.push(`/(friendProfile)/${uid}`));
+  const navigateToFriendProfile = (uid: string) =>
+    currentUserUid === uid ? router.push("/(profile)/profile") : router.push(`/(friendProfile)/${uid}`);
 
   const WorkoutSummary = ({ overlay = false }: { overlay?: boolean }) => (
     <View style={overlay ? styles.overlayWorkoutContent : styles.workoutContent}>
@@ -58,7 +62,9 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
 
         {durationSeconds ? (
           <View style={[styles.workoutStatContainer, overlay && styles.overlayWorkoutStatContainer]}>
-            <ThemedText style={[styles.workoutStatNumber, overlay && styles.overlayWorkoutStatNumber]}>{durationTimeString(durationSeconds)}</ThemedText>
+            <ThemedText style={[styles.workoutStatNumber, overlay && styles.overlayWorkoutStatNumber]}>
+              {durationTimeString(durationSeconds)}
+            </ThemedText>
             <ThemedText style={[styles.workoutStatLabel, overlay && styles.overlayWorkoutStatLabel]}>DURATION</ThemedText>
           </View>
         ) : null}
@@ -164,7 +170,9 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
             </ThemedText>
           </View>
 
-          {weeklyProgress != null && weeklyTargetDays != null ? <WeeklyProgressBar weeklyProgress={weeklyProgress} weeklyTarget={weeklyTargetDays} isPractice={isPractice} /> : null}
+          {weeklyProgress != null && weeklyTargetDays != null ? (
+            <WeeklyProgressBar weeklyProgress={weeklyProgress} weeklyTarget={weeklyTargetDays} isPractice={isPractice} />
+          ) : null}
         </View>
 
         {isPractice ? (

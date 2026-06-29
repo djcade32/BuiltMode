@@ -64,10 +64,14 @@ const workoutComplete = () => {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 
       if (!permissionResult.granted) {
-        Alert.alert("Camera access needed", "BuiltMode needs camera access so you can add a post-workout photo to your completed workout.", [
-          { text: "Cancel", style: "cancel" },
-          { text: "Open Settings", onPress: () => Linking.openSettings() },
-        ]);
+        Alert.alert(
+          "Camera access needed",
+          "BuiltMode needs camera access so you can add a post-workout photo to your completed workout.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings() },
+          ],
+        );
         return;
       }
 
@@ -95,8 +99,12 @@ const workoutComplete = () => {
   };
 
   const handleShareToFeed = async () => {
+    if (!completeWorkoutResponse?.sessionId) {
+      console.warn("Cannot publish workout to feed. No session id provided.");
+      return;
+    }
     setIsPublishingWorkout(true);
-    if (completeWorkoutResponse?.sessionId) {
+    try {
       let convertedUrl = null;
       if (workoutPhotoUri) {
         convertedUrl = (await uploadImageAsync(workoutPhotoUri, `workouts/${uid}_${completeWorkoutResponse.sessionId}`)) ?? null;
@@ -108,23 +116,32 @@ const workoutComplete = () => {
       const result = await publishCompletedWorkoutToFeed(completeWorkoutResponse.sessionId, convertedUrl, null);
       if (result.feedStatus !== "published") {
         console.error("Error publishing workout to feed.");
+        return;
       }
+
       clearWorkout();
       router.replace("/(protected)/(tabs)/(workout)/log");
-    } else {
-      console.warn("Cannot publish workout to feed. No session id provided.");
+    } catch (error) {
+      console.error("Error publishing workout to feed.", error);
+      Alert.alert("Share failed", "We couldn't publish this workout. Please try again.");
+    } finally {
+      setIsPublishingWorkout(false);
     }
-    setIsPublishingWorkout(false);
   };
 
-  const isTrainingTargetMet = (completeWorkoutResponse?.activeDaysThisWeek ?? 0) >= (completeWorkoutResponse?.weeklyTargetDays ?? 0);
+  const isTrainingTargetMet =
+    (completeWorkoutResponse?.activeDaysThisWeek ?? 0) >= (completeWorkoutResponse?.weeklyTargetDays ?? 0);
 
   if (!completeWorkoutResponse) return <Redirect href={"/(protected)/(tabs)/(workout)/log"} />;
 
   if (!user) return null;
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: Colors.background.primary }}>
+    <ScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      showsVerticalScrollIndicator={false}
+      style={{ backgroundColor: Colors.background.primary }}
+    >
       <ThemedView style={styles.container}>
         <View style={{ gap: 8, paddingBottom: 32 }}>
           <ThemedText type="title" style={{ textAlign: "center" }}>
@@ -293,13 +310,17 @@ const workoutComplete = () => {
                 }}
               >
                 <ThemedText style={styles.progressText}>
-                  <ThemedText style={[styles.progressText, isTrainingTargetMet ? { color: Colors.accent.primary } : null]}>{completeWorkoutResponse?.activeDaysThisWeek}</ThemedText>/
-                  {completeWorkoutResponse?.weeklyTargetDays}
+                  <ThemedText style={[styles.progressText, isTrainingTargetMet ? { color: Colors.accent.primary } : null]}>
+                    {completeWorkoutResponse?.activeDaysThisWeek}
+                  </ThemedText>
+                  /{completeWorkoutResponse?.weeklyTargetDays}
                 </ThemedText>
                 <ThemedText style={styles.daysCompletedText}>DAYS COMPLETED</ThemedText>
               </View>
 
-              {isTrainingTargetMet && <ThemedText style={{ fontSize: 12, color: Colors.gray }}>You met your standard for the week.</ThemedText>}
+              {isTrainingTargetMet && (
+                <ThemedText style={{ fontSize: 12, color: Colors.gray }}>You met your standard for the week.</ThemedText>
+              )}
               <View style={{ backgroundColor: Colors.background.primary, height: 6, borderRadius: 3 }}>
                 <View
                   style={{
@@ -310,7 +331,11 @@ const workoutComplete = () => {
                   }}
                 />
               </View>
-              {isTrainingTargetMet && <ThemedText style={{ fontSize: 12, color: Colors.icon }}>Additional workouts still count toward your history.</ThemedText>}
+              {isTrainingTargetMet && (
+                <ThemedText style={{ fontSize: 12, color: Colors.icon }}>
+                  Additional workouts still count toward your history.
+                </ThemedText>
+              )}
             </View>
           )}
         </View>
@@ -324,7 +349,9 @@ const workoutComplete = () => {
                 </View>
                 <View>
                   <ThemedText style={styles.exerciseName}>{exercise.name}</ThemedText>
-                  <ThemedText style={styles.exerciseSet}>{`${exercise.sets.length} ${getExerciseMetricText(exercise.metricType)}${exercise.sets.length > 1 ? "s" : ""}`}</ThemedText>
+                  <ThemedText
+                    style={styles.exerciseSet}
+                  >{`${exercise.sets.length} ${getExerciseMetricText(exercise.metricType)}${exercise.sets.length > 1 ? "s" : ""}`}</ThemedText>
                 </View>
               </View>
             ))}
@@ -350,7 +377,9 @@ const workoutComplete = () => {
               <>
                 <View style={styles.photoEmptyState}>
                   <ThemedText style={styles.photoEmptyTitle}>Show the work.</ThemedText>
-                  <ThemedText style={styles.photoEmptyText}>Add an optional photo to appear with this completed workout in the feed.</ThemedText>
+                  <ThemedText style={styles.photoEmptyText}>
+                    Add an optional photo to appear with this completed workout in the feed.
+                  </ThemedText>
                 </View>
                 <ThemedButton title={isOpeningCamera ? "OPENING CAMERA..." : "TAKE PHOTO"} onPress={handleTakeWorkoutPhoto} />
               </>
@@ -378,7 +407,11 @@ const workoutComplete = () => {
               marginBottom: 24,
             }}
           >
-            {isTrainingTargetMet ? "Great Work!" : completeWorkoutResponse.modeScoreDifference > -1 ? "Keep showing up." : "Stay consistent."}
+            {isTrainingTargetMet
+              ? "Great Work!"
+              : completeWorkoutResponse.modeScoreDifference > -1
+                ? "Keep showing up."
+                : "Stay consistent."}
           </ThemedText>
         )}
 

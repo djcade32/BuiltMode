@@ -54,16 +54,12 @@ const TemplateItem = ({ template, onPress, onDelete }: TemplateItemProps) => {
         <ThemedText style={styles.templateItemTitle} ellipsizeMode="tail" numberOfLines={1}>
           {name}
         </ThemedText>
-        <ThemedText style={styles.templateItemDate}>
-          {formatFirestoreTimestamp(completedAt)}
-        </ThemedText>
+        <ThemedText style={styles.templateItemDate}>{formatFirestoreTimestamp(completedAt)}</ThemedText>
       </View>
       <ThemedText
         style={[styles.templateItemNumOfExercises, { marginBottom: 5, color: Colors.gray }]}
       >{`${exercises.length} exercises`}</ThemedText>
-      <ThemedText style={styles.templateItemNumOfExercises}>
-        {firstLetterToUpperCase(workoutType ?? "other")}
-      </ThemedText>
+      <ThemedText style={styles.templateItemNumOfExercises}>{firstLetterToUpperCase(workoutType ?? "other")}</ThemedText>
     </TouchableOpacity>
   );
 };
@@ -78,8 +74,7 @@ const ViewTemplates = () => {
 
   const uid = user?.uid ?? "";
 
-  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useUserTemplatesInfinite(uid, 20);
+  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useUserTemplatesInfinite(uid, 20);
 
   const { mutate: deleteTemplateFunc, isPending } = useMutation({
     mutationFn: async (id: string) => {
@@ -106,8 +101,7 @@ const ViewTemplates = () => {
     if (!normalized) return templates;
 
     return templates.filter((workout) => {
-      const workoutName =
-        workout.name || `${firstLetterToUpperCase(workout.workoutType ?? "")} Workout`;
+      const workoutName = workout.name || `${firstLetterToUpperCase(workout.workoutType ?? "")} Workout`;
 
       return workoutName.toLowerCase().includes(normalized);
     });
@@ -133,7 +127,13 @@ const ViewTemplates = () => {
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.iconContainer} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={8}
+          >
             <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
           </TouchableOpacity>
           <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>

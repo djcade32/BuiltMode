@@ -24,7 +24,11 @@ const PendingWorkoutPublisher = () => {
       });
 
       for (const workout of pendingWorkouts) {
-        await publishCompletedWorkoutToFeed(workout.id, null, null);
+        try {
+          await publishCompletedWorkoutToFeed(workout.id, null, null);
+        } catch (error) {
+          console.error(`Failed to publish pending workout ${workout.id}`, error);
+        }
       }
     } catch (error) {
       console.error("Failed to publish pending workouts", error);

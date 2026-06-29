@@ -45,9 +45,7 @@ dayjs.extend(timezone);
 const DEFAULT_TIMEZONE = "UTC";
 
 const getValidTimezone = (timezoneValue: unknown): string => {
-  return typeof timezoneValue === "string" && timezoneValue.trim().length > 0
-    ? timezoneValue
-    : DEFAULT_TIMEZONE;
+  return typeof timezoneValue === "string" && timezoneValue.trim().length > 0 ? timezoneValue : DEFAULT_TIMEZONE;
 };
 
 /**
@@ -90,10 +88,7 @@ const getWorkoutTimezoneFields = (completedAt: Date, workoutTimezone: string) =>
   @param {CompleteWorkoutRequest} workout Workout object to save in Firestore
   @return On success return user's workout metrics
 */
-export async function handleCompleteWorkout(
-  uid: string,
-  workout: CompleteWorkoutRequest,
-): Promise<CompleteWorkoutResponse> {
+export async function handleCompleteWorkout(uid: string, workout: CompleteWorkoutRequest): Promise<CompleteWorkoutResponse> {
   const { sessionId, workoutType, notes, exercises, name, duration } = workout;
 
   const now = Timestamp.now();
@@ -128,18 +123,11 @@ export async function handleCompleteWorkout(
     const localDate = workoutTimezoneFields.localDate;
     const monthId = workoutTimezoneFields.monthId;
 
-    const isOfficialWeek =
-      dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
+    const isOfficialWeek = dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
 
     const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
-    const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(
-      tx,
-      uid,
-      localDateKey,
-    );
-    const completedWorkoutsLast30Days = dayMarkerExists
-      ? numOfCompletedWorkoutsLast30Days
-      : numOfCompletedWorkoutsLast30Days + 1;
+    const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(tx, uid, localDateKey);
+    const completedWorkoutsLast30Days = dayMarkerExists ? numOfCompletedWorkoutsLast30Days : numOfCompletedWorkoutsLast30Days + 1;
     const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
     const weekAggregateExists = weekAggregate.exists;
 
@@ -195,9 +183,7 @@ export async function handleCompleteWorkout(
     const monthAggregate = await getUserMonthAggregate(tx, uid, monthId);
     const monthAggregateExists = monthAggregate.exists;
 
-    const totalWorkoutsInMonth = monthAggregateExists
-      ? monthAggregate.data()?.totalWorkouts + 1
-      : 1;
+    const totalWorkoutsInMonth = monthAggregateExists ? monthAggregate.data()?.totalWorkouts + 1 : 1;
     let workoutCountByDate: Record<string, number> = { [localDateKey]: 1 };
     if (monthAggregateExists) {
       if (monthAggregate.data()?.workoutCountByDate[localDateKey]) {
@@ -212,24 +198,16 @@ export async function handleCompleteWorkout(
         };
       }
     }
-    const activeDaysInMonth = monthAggregateExists
-      ? await getTotalActiveDaysInMonth(tx, uid, localDateKey)
-      : 0;
+    const activeDaysInMonth = monthAggregateExists ? await getTotalActiveDaysInMonth(tx, uid, localDateKey) : 0;
     const activeDaysCount = dayMarkerExists ? activeDaysInMonth : activeDaysInMonth + 1;
 
-    const bestWeekStreak = userStatsExists
-      ? Math.max(streakWeeks, userStats.bestWeekStreak ?? 0)
-      : 0;
+    const bestWeekStreak = userStatsExists ? Math.max(streakWeeks, userStats.bestWeekStreak ?? 0) : 0;
     const totalWorkoutsLogged = userStatsExists ? userStats.totalWorkoutsLogged + 1 : 1;
     const previousTotalTargetsMet = userStatsExists ? (userStats.totalTargetsMet ?? 0) : 0;
     const newlyMetTargetThisWeek =
-      isOfficialWeek &&
-      metTargetThisWeek &&
-      !(weekAggregateExists && weekAggregate.get("metTargetThisWeek"));
+      isOfficialWeek && metTargetThisWeek && !(weekAggregateExists && weekAggregate.get("metTargetThisWeek"));
 
-    const totalTargetsMet = newlyMetTargetThisWeek
-      ? previousTotalTargetsMet + 1
-      : previousTotalTargetsMet;
+    const totalTargetsMet = newlyMetTargetThisWeek ? previousTotalTargetsMet + 1 : previousTotalTargetsMet;
 
     const workoutDoc: Workout & PublishableWorkoutFields = {
       sessionId,
@@ -465,10 +443,10 @@ export async function handlePublishCompletedWorkoutToFeed(
     });
 
     tx.update(workoutRef, {
-      pictureUrl: nextPhotoUrl,
+      photoUrl: nextPhotoUrl,
       feedStatus: "published",
       feedPublishedAt: now,
-      feedCaption: caption,
+      caption,
       updatedAt: now,
     });
 
