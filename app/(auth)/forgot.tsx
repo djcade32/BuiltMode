@@ -10,14 +10,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Link } from "expo-router";
 import React, { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type FormInputProps = {
@@ -56,16 +49,9 @@ const Forgot = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.background.primary }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: Colors.background.primary }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingTop: 50 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: 50 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <ThemedView style={{ flex: 1, position: "relative" }}>
             <AuthHeader />
 
@@ -75,10 +61,7 @@ const Forgot = () => {
                   <ThemedText type="title">Email Sent</ThemedText>
                   <MaterialIcons name="check-circle" size={35} color="green" />
                 </View>
-                <ThemedText style={{ color: Colors.gray, marginVertical: 10 }}>
-                  If email address given exists, an email with instructions to reset your password
-                  will be sent to it.
-                </ThemedText>
+                <ThemedText style={{ color: Colors.gray, marginVertical: 10 }}>If email address given exists, an email with instructions to reset your password will be sent to it.</ThemedText>
               </ThemedView>
             ) : (
               <ThemedView style={styles.formContainer}>
@@ -170,11 +153,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -15,
     right: 70,
-  },
-  logo: {
-    height: 40,
-    width: "100%",
-    objectFit: "contain",
   },
   subtitle: {
     flexDirection: "row",

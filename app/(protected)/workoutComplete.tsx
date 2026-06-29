@@ -94,7 +94,7 @@ const workoutComplete = () => {
     setWorkoutPhotoUri(null);
   };
 
-  const handleDone = async () => {
+  const handleShareToFeed = async () => {
     setIsPublishingWorkout(true);
     if (completeWorkoutResponse?.sessionId) {
       let convertedUrl = null;
@@ -383,7 +383,7 @@ const workoutComplete = () => {
         )}
 
         <View style={styles.footContainer}>
-          <ThemedButton title="DONE" onPress={handleDone} isLoading={isPublishingWorkout} />
+          <ThemedButton title="SHARE TO FEED" onPress={handleShareToFeed} isLoading={isPublishingWorkout} />
         </View>
       </ThemedView>
     </ScrollView>

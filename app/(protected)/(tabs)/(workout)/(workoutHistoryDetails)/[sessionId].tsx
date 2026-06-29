@@ -11,29 +11,21 @@ import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { getWorkoutBySessionId } from "@/services/workout-service";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
-import {
-  FontAwesome,
-  FontAwesome6,
-  MaterialCommunityIcons,
-  MaterialIcons,
-} from "@expo/vector-icons";
+import { FontAwesome, FontAwesome6, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 const PRIMARY_GRADIENT_COLOR = "#c6a34a38";
 const SECONDARY_GRADIENT_COLOR = Colors.background.primary;
+
+type WorkoutWithPhoto = Workout & {
+  photoUrl?: string | null;
+};
 
 const WorkoutHistoryDetails = () => {
   const router = useRouter();
@@ -55,6 +47,11 @@ const WorkoutHistoryDetails = () => {
     enabled: !!sessionId,
   });
 
+  const workoutPhotoUrl = (data as WorkoutWithPhoto | undefined)?.photoUrl ?? null;
+
+  console.log("data: ", data);
+  console.log("workoutPhotoUrl: ", workoutPhotoUrl);
+
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
       {
@@ -73,14 +70,12 @@ const WorkoutHistoryDetails = () => {
   );
 
   const workoutName = () => {
-    return data?.name === ""
-      ? `${firstLetterToUpperCase(data?.workoutType ?? "")} Workout`
-      : data?.name;
+    return data?.name === "" ? `${firstLetterToUpperCase(data?.workoutType ?? "")} Workout` : data?.name;
   };
 
   const dateInfo = () => {
     return data?.workoutLocalDisplayTime && data.workoutLocalDate && data.workoutTimezone && data.workoutLocalDisplayDate
-      ? `${data.workoutLocalDisplayDate.split(',')[0]} • ${formatWorkoutLocalDate(data.workoutLocalDate)} • ${data.workoutLocalDisplayTime}`
+      ? `${data.workoutLocalDisplayDate.split(",")[0]} • ${formatWorkoutLocalDate(data.workoutLocalDate)} • ${data.workoutLocalDisplayTime}`
       : "";
   };
 
@@ -118,9 +113,7 @@ const WorkoutHistoryDetails = () => {
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
-      showToast("Workout saved as template", "View", () =>
-        router.push("/(protected)/(tabs)/(workout)/viewTemplates"),
-      );
+      showToast("Workout saved as template", "View", () => router.push("/(protected)/(tabs)/(workout)/viewTemplates"));
     } catch (error) {
       console.error("Error saving workout as template: ", error);
       ErrorAlert();
@@ -157,6 +150,69 @@ const WorkoutHistoryDetails = () => {
     ]);
   }
 
+  const renderWorkoutOverview = () => {
+    if (!data) return null;
+
+    return (
+      <>
+        <View style={styles.workoutInfoContainer}>
+          <ThemedText style={styles.workoutName}>{workoutName()}</ThemedText>
+          <ThemedText style={styles.workoutDateText}>{dateInfo()}</ThemedText>
+          <ThemedText style={styles.workoutDateText}>{`(${data.workoutTimezone})`}</ThemedText>
+          <View style={styles.moreInfoContainer}>
+            <View style={styles.moreInfoItem}>
+              <MaterialCommunityIcons name="clock" size={14} color={Colors.gray} />
+              <ThemedText style={styles.workoutMoreInfoText}>{durationTime()}</ThemedText>
+            </View>
+
+            <View style={styles.separator} />
+            <ThemedText style={styles.workoutMoreInfoText}>{workoutType()}</ThemedText>
+            <View style={styles.separator} />
+            <ThemedText style={styles.workoutMoreInfoText}>
+              {data.exercises.length} exercise{data.exercises.length > 1 ? "s" : ""}
+            </ThemedText>
+          </View>
+        </View>
+
+        {workoutPhotoUrl ? (
+          <View style={styles.workoutPhotoSection}>
+            <View style={styles.workoutPhotoHeader}>
+              <View style={styles.workoutPhotoTitleRow}>
+                <FontAwesome6 name="camera" size={11} color={Colors.accent.primary} />
+                <ThemedText style={styles.workoutPhotoTitle}>POST-WORKOUT PHOTO</ThemedText>
+              </View>
+              <ThemedText style={styles.workoutPhotoMeta}>SESSION MEDIA</ThemedText>
+            </View>
+
+            <View style={styles.workoutPhotoFrame}>
+              <Image source={{ uri: workoutPhotoUrl }} style={styles.workoutPhotoImage} resizeMode="cover" />
+
+              <LinearGradient
+                pointerEvents="none"
+                colors={["transparent", "rgba(0,0,0,0.32)", "rgba(0,0,0,0.82)"]}
+                locations={[0, 0.52, 1]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.workoutPhotoGradient}
+              />
+
+              <View style={styles.workoutPhotoOverlay}>
+                <ThemedText style={styles.workoutPhotoOverlayTitle}>{workoutName()}</ThemedText>
+                <ThemedText style={styles.workoutPhotoOverlaySubtitle}>{dateInfo()}</ThemedText>
+              </View>
+            </View>
+          </View>
+        ) : null}
+
+        <View style={styles.sessionLogHeaderContainer}>
+          <LinearGradient colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]} start={{ x: 1.0, y: 0.5 }} end={{ x: 0.0, y: 0.5 }} style={styles.titleUnderline} />
+          <ThemedText style={styles.sessionLogTitle}>SESSION LOG</ThemedText>
+          <LinearGradient colors={[PRIMARY_GRADIENT_COLOR, SECONDARY_GRADIENT_COLOR]} start={{ x: 1.0, y: 0.5 }} end={{ x: 0.0, y: 0.5 }} style={styles.titleUnderline} />
+        </View>
+      </>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {isDropdownOpened && (
@@ -175,11 +231,7 @@ const WorkoutHistoryDetails = () => {
       )}
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.iconContainer}
-          onPress={handleBack}
-          testID="workout-details-back-button"
-        >
+        <TouchableOpacity style={styles.iconContainer} onPress={handleBack} testID="workout-details-back-button">
           <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
         </TouchableOpacity>
 
@@ -206,72 +258,35 @@ const WorkoutHistoryDetails = () => {
           <ThemedText>Workout not found.</ThemedText>
         </View>
       ) : (
-        <>
-          <View style={styles.workoutInfoContainer}>
-            <ThemedText style={styles.workoutName}>{workoutName()}</ThemedText>
-            <ThemedText style={styles.workoutDateText}>{dateInfo()}</ThemedText>
-            <ThemedText style={styles.workoutDateText}>{`(${data.workoutTimezone})`}</ThemedText>
-            <View style={styles.moreInfoContainer}>
-              <View style={{ flexDirection: "row", gap: 5 }}>
-                <MaterialCommunityIcons name="clock" size={14} color={Colors.gray} />
-                <ThemedText style={styles.workoutMoreInfoText}>{durationTime()}</ThemedText>
-              </View>
-
-              <View style={styles.separator} />
-              <ThemedText style={styles.workoutMoreInfoText}>{workoutType()}</ThemedText>
-              <View style={styles.separator} />
-              <ThemedText style={styles.workoutMoreInfoText}>
-                {data.exercises.length} exercise{data.exercises.length > 1 ? "s" : ""}
-              </ThemedText>
+        <FlatList
+          style={styles.contentList}
+          data={data.exercises}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={renderWorkoutOverview}
+          renderItem={(exercise) => (
+            <View style={styles.exerciseItemContainer}>
+              <WorkoutHistoryExerciseBreakdown exercise={exercise.item} />
             </View>
-          </View>
-          <View style={styles.exercisesBreakdownContainer}>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <LinearGradient
-                colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
-                start={{ x: 1.0, y: 0.5 }}
-                end={{ x: 0.0, y: 0.5 }}
-                style={styles.titleUnderline}
-              />
-              <ThemedText style={styles.sessionLogTitle}>SESSION LOG</ThemedText>
-              <LinearGradient
-                colors={[PRIMARY_GRADIENT_COLOR, SECONDARY_GRADIENT_COLOR]}
-                start={{ x: 1.0, y: 0.5 }}
-                end={{ x: 0.0, y: 0.5 }}
-                style={styles.titleUnderline}
-              />
-            </View>
-            <FlatList
-              style={{ flex: 1 }}
-              data={data.exercises}
-              showsVerticalScrollIndicator={false}
-              renderItem={(exercise) => (
-                <WorkoutHistoryExerciseBreakdown exercise={exercise.item} />
-              )}
-              keyExtractor={(exercise) => exercise.id}
-              contentContainerStyle={{ gap: 24, paddingTop: 24, paddingBottom: 15 }}
-              ListFooterComponentStyle={{ flex: 1, justifyContent: "flex-end" }}
-              ListFooterComponent={() => {
-                if (!data.notes) return null;
-                return (
-                  <View style={styles.notesContainer}>
-                    <View style={styles.notesHeaderContainer}>
-                      <FontAwesome name="sticky-note" size={12} color={Colors.icon} />
-                      <ThemedText style={styles.notesTitle}>NOTES</ThemedText>
-                    </View>
-                    <ThemedText style={styles.notesText}>{data.notes}</ThemedText>
+          )}
+          keyExtractor={(exercise) => exercise.id}
+          ItemSeparatorComponent={() => <View style={styles.exerciseSeparator} />}
+          contentContainerStyle={styles.listContentContainer}
+          ListFooterComponentStyle={styles.listFooter}
+          ListFooterComponent={() => {
+            if (!data.notes) return null;
+            return (
+              <View style={styles.notesOuterContainer}>
+                <View style={styles.notesContainer}>
+                  <View style={styles.notesHeaderContainer}>
+                    <FontAwesome name="sticky-note" size={12} color={Colors.icon} />
+                    <ThemedText style={styles.notesTitle}>NOTES</ThemedText>
                   </View>
-                );
-              }}
-            />
-          </View>
-        </>
+                  <ThemedText style={styles.notesText}>{data.notes}</ThemedText>
+                </View>
+              </View>
+            );
+          }}
+        />
       )}
       <WorkoutNameSheet
         title="Name Template"
@@ -318,6 +333,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  contentList: {
+    flex: 1,
+  },
+  listContentContainer: {
+    paddingBottom: 24,
+  },
   workoutInfoContainer: {
     paddingHorizontal: 24,
     marginTop: 24,
@@ -338,6 +359,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     alignItems: "center",
+    flexWrap: "wrap",
+  },
+  moreInfoItem: {
+    flexDirection: "row",
+    gap: 5,
+    alignItems: "center",
   },
   workoutMoreInfoText: {
     fontFamily: Typography.family.primary.medium,
@@ -350,6 +377,84 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     backgroundColor: Colors.inputBorder,
   },
+  workoutPhotoSection: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 22,
+    borderBottomColor: Colors.cardBorder,
+    borderBottomWidth: 1,
+  },
+  workoutPhotoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  workoutPhotoTitleRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  workoutPhotoTitle: {
+    color: Colors.icon,
+    fontSize: 10,
+    letterSpacing: 1.1,
+    fontFamily: Typography.family.primary.bold,
+  },
+  workoutPhotoMeta: {
+    color: Colors.gray,
+    fontSize: 9,
+    letterSpacing: 0.9,
+    fontFamily: Typography.family.secondary.semibold,
+  },
+  workoutPhotoFrame: {
+    width: "100%",
+    aspectRatio: 4 / 5,
+    overflow: "hidden",
+    borderRadius: 16,
+    backgroundColor: Colors.background.secondary,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+    position: "relative",
+  },
+  workoutPhotoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  workoutPhotoGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  workoutPhotoOverlay: {
+    position: "absolute",
+    left: 14,
+    right: 14,
+    bottom: 14,
+    zIndex: 2,
+  },
+  workoutPhotoOverlayTitle: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    lineHeight: 20,
+    letterSpacing: -0.3,
+    fontFamily: Typography.family.primary.bold,
+    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  workoutPhotoOverlaySubtitle: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 10,
+    marginTop: 2,
+    fontFamily: Typography.family.secondary.regular,
+  },
+  sessionLogHeaderContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 24,
+  },
   sessionLogTitle: {
     fontFamily: Typography.family.primary.semibold,
     fontSize: 10,
@@ -360,10 +465,14 @@ const styles = StyleSheet.create({
     height: 1.5,
     flex: 1,
   },
-  exercisesBreakdownContainer: {
+  exerciseItemContainer: {
     paddingHorizontal: 24,
-    paddingTop: 20,
-    flex: 1,
+  },
+  exerciseSeparator: {
+    height: 24,
+  },
+  listFooter: {
+    justifyContent: "flex-end",
   },
 
   // Dropdown
@@ -388,6 +497,10 @@ const styles = StyleSheet.create({
   },
 
   // Notes
+  notesOuterContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
   notesContainer: {
     gap: 5,
     borderRadius: Border.radius.md,
