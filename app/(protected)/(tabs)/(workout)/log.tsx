@@ -86,11 +86,7 @@ const TemplateItem = ({ template, onPress }: TemplateItemProps) => {
   const { name, exercises, workoutType } = template;
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      style={styles.templateItemContainer}
-      onPress={() => onPress(template)}
-    >
+    <TouchableOpacity activeOpacity={0.85} style={styles.templateItemContainer} onPress={() => onPress(template)}>
       <ThemedText style={styles.templateItemTitle} ellipsizeMode="tail" numberOfLines={1}>
         {name}
       </ThemedText>
@@ -107,8 +103,7 @@ const TemplateItem = ({ template, onPress }: TemplateItemProps) => {
 };
 
 const LastWorkout = ({ workout, onPress }: WorkoutItemProps) => {
-  const { name, duration, exercises, workoutType, workoutLocalDisplayDate } =
-    workout;
+  const { name, duration, exercises, workoutType, workoutLocalDisplayDate } = workout;
 
   return (
     <View style={styles.lastWorkoutContainer}>
@@ -130,8 +125,7 @@ const LastWorkout = ({ workout, onPress }: WorkoutItemProps) => {
 
       <View style={styles.lastWorkoutFooterContainer}>
         <ThemedText style={styles.lastWorkoutFooterText}>
-          <Ionicons name="calendar-clear" size={12} />{" "}
-          {workoutLocalDisplayDate}
+          <Ionicons name="calendar-clear" size={12} /> {workoutLocalDisplayDate}
         </ThemedText>
 
         <ThemedText style={styles.lastWorkoutFooterText}>
@@ -184,6 +178,7 @@ const Log = () => {
       name: workout.name ?? "",
       exercises: workout.exercises,
       workoutType: workout.workoutType ?? "other",
+      notes: workout.notes,
     });
 
     router.push("/(protected)/(tabs)/(workout)/confirmWorkout");
@@ -208,11 +203,7 @@ const Log = () => {
         </View>
 
         <View style={styles.primaryButtonWrapper}>
-          <ThemedButton
-            title="BUILD WORKOUT"
-            fontSize={Typography.size.sm}
-            onPress={handleBuildWorkoutPress}
-          />
+          <ThemedButton title="BUILD WORKOUT" fontSize={Typography.size.sm} onPress={handleBuildWorkoutPress} />
         </View>
 
         {/* Quick Start Section */}
@@ -231,10 +222,7 @@ const Log = () => {
                 body="Pull down to refresh or try again in a moment."
               />
             ) : workouts.length ? (
-              <LastWorkout
-                workout={workouts[0]}
-                onPress={() => handleRepeatWorkoutPress(workouts[0])}
-              />
+              <LastWorkout workout={workouts[0]} onPress={() => handleRepeatWorkoutPress(workouts[0])} />
             ) : (
               <EmptySectionCard
                 iconName="flash-outline"
@@ -286,9 +274,7 @@ const Log = () => {
             <FlatList
               data={templates}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TemplateItem template={item} onPress={() => handleTemplatePress(item)} />
-              )}
+              renderItem={({ item }) => <TemplateItem template={item} onPress={() => handleTemplatePress(item)} />}
               horizontal
               style={styles.templatesContainer}
               contentContainerStyle={styles.templatesListContent}
@@ -341,11 +327,7 @@ const Log = () => {
         </View>
 
         <Link href={historyHref as RelativePathString} asChild>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.viewHistoryButtonContainer}
-            disabled={!hasUid}
-          >
+          <TouchableOpacity activeOpacity={0.85} style={styles.viewHistoryButtonContainer} disabled={!hasUid}>
             <ThemedText style={styles.viewHistoryButton}>VIEW ALL HISTORY</ThemedText>
           </TouchableOpacity>
         </Link>

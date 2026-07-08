@@ -19,7 +19,7 @@ const Avatar = ({ avatarUrl, displayName, onPress, size = 46, containerStyle }: 
       onPress={onPress}
     >
       {avatarUrl ? (
-        <Image src={avatarUrl} height={size} width={size} />
+        <Image source={{ uri: avatarUrl }} height={size} width={size} />
       ) : (
         <ThemedText style={styles.avatarText}>{displayName?.[0]?.toUpperCase() ?? "?"}</ThemedText>
       )}

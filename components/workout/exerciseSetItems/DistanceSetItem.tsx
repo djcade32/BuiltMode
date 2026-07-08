@@ -17,6 +17,8 @@ type Props = {
   isActive?: boolean;
   isCompleted?: boolean;
   autoFocus?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
 const DistanceSetItem = ({
@@ -30,6 +32,8 @@ const DistanceSetItem = ({
   isActive = false,
   isCompleted = false,
   autoFocus = false,
+  onBlur,
+  onFocus,
 }: Props) => {
   return (
     <View
@@ -65,24 +69,26 @@ const DistanceSetItem = ({
           <Input
             placeholder="0"
             placeholderTextColor={Colors.icon}
-            value={set?.distanceMiles?.toString()}
-            onChangeText={(value) =>
-              onEditSet(exerciseId, set.id, { ...set, distanceMiles: Number(value) })
-            }
+            value={set?.distanceMiles?.toString() ?? "0"}
+            onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, distanceMiles: Number(value) })}
             postText="mi"
             postTextStyle={{ color: Colors.icon, fontSize: 12 }}
             containerStyle={{
               backgroundColor: Colors.background.primary,
-              borderColor: Colors.inputBorder,
+              borderColor: isActive ? "#c6a34a50" : Colors.inputBorder,
               gap: 2,
               paddingHorizontal: 8,
               flex: 1,
             }}
             keyboardType="decimal-pad"
             autoFocus={autoFocus}
+            onBlur={onBlur}
+            onFocus={onFocus}
+            style={isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}}
+            selectTextOnFocus
           />
         ) : (
-          <ThemedText>{`${set.distanceMiles} mi`}</ThemedText>
+          <ThemedText>{`${set?.distanceMiles ?? "0"} mi`}</ThemedText>
         )}
         {usedForBuilding && (
           <Pressable onPress={() => onDeleteSet && onDeleteSet(exerciseId, set.id)} hitSlop={15}>

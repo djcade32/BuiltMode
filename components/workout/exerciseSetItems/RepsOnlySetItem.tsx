@@ -17,6 +17,8 @@ type Props = {
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
   autoFocus?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
 const RepsOnlySetItem = ({
@@ -30,6 +32,8 @@ const RepsOnlySetItem = ({
   isCompleted = false,
   containerStyle,
   autoFocus = false,
+  onBlur,
+  onFocus,
 }: Props) => {
   return (
     <View style={[styles.container, containerStyle]}>
@@ -46,16 +50,20 @@ const RepsOnlySetItem = ({
         <Input
           placeholder="0"
           placeholderTextColor={Colors.icon}
-          value={set?.reps?.toString()}
+          value={set?.reps?.toString() ?? "0"}
           onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, reps: Number(value) })}
           postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-          containerStyle={{ ...styles.setInput, flex: 1 }}
+          containerStyle={{ ...styles.setInput, flex: 1, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
           keyboardType="numeric"
           postText="reps"
           autoFocus={autoFocus}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          style={isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}}
+          selectTextOnFocus
         />
       ) : (
-        <ThemedText>{`${set.reps} reps`}</ThemedText>
+        <ThemedText>{`${set?.reps ?? "0"} reps`}</ThemedText>
       )}
       {usedForBuilding && (
         <Pressable onPress={() => onDeleteSet && onDeleteSet(exerciseId, set.id)} hitSlop={15}>
@@ -94,7 +102,6 @@ const styles = StyleSheet.create({
   },
   setInput: {
     backgroundColor: Colors.background.primary,
-    borderColor: Colors.inputBorder,
     width: 75,
     gap: 2,
     paddingHorizontal: 8,

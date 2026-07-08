@@ -23,6 +23,8 @@ type Props = {
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
   autoFocus?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
 const getExpiryTimestamp = (durationSec: number) => {
@@ -44,6 +46,8 @@ const DurationSetItem = ({
   isCompleted = false,
   containerStyle,
   autoFocus = false,
+  onBlur,
+  onFocus,
 }: Props) => {
   const [isTimerStarted, setIsTimerStarted] = useState(false);
   const [isTimerExpired, setIsTimerExpired] = useState(false);
@@ -117,34 +121,31 @@ const DurationSetItem = ({
       {usedForBuilding || isActive ? (
         <View style={styles.inputAndTimerContainer}>
           {isTimerStarted ? (
-            <StopwatchDisplay
-              hours={hours}
-              minutes={minutes}
-              seconds={seconds}
-              style={styles.stopwatchText}
-            />
+            <StopwatchDisplay hours={hours} minutes={minutes} seconds={seconds} style={styles.stopwatchText} />
           ) : (
             <Input
               placeholder="00:00:00"
               placeholderTextColor={Colors.icon}
-              style={styles.inputText}
+              style={[
+                styles.inputText,
+                isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {},
+              ]}
               value={getDurationString}
               onChangeText={handleChangeValue}
               postText="duration"
               postTextStyle={styles.postText}
-              containerStyle={styles.inputContainer}
+              containerStyle={{ ...styles.inputContainer, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
               keyboardType="number-pad"
               autoFocus={autoFocus}
+              onBlur={onBlur}
+              onFocus={onFocus}
+              selectTextOnFocus
             />
           )}
 
           {!usedForBuilding && !isTimerExpired && (
             <TouchableOpacity style={styles.timerButton} onPress={handleStartTimer}>
-              <FontAwesome6
-                name={isRunning ? "pause" : "play"}
-                size={20}
-                color={Colors.accent.primary}
-              />
+              <FontAwesome6 name={isRunning ? "pause" : "play"} size={20} color={Colors.accent.primary} />
             </TouchableOpacity>
           )}
         </View>
@@ -209,7 +210,6 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     backgroundColor: Colors.background.primary,
-    borderColor: Colors.inputBorder,
     gap: 2,
     paddingHorizontal: 8,
     flex: 1,

@@ -71,7 +71,10 @@ const WorkoutHistoryDetails = () => {
   };
 
   const dateInfo = () => {
-    return data?.workoutLocalDisplayTime && data.workoutLocalDate && data.workoutTimezone && data.workoutLocalDisplayDate
+    return data?.workoutLocalDisplayTime &&
+      data.workoutLocalDate &&
+      data.workoutTimezone &&
+      data.workoutLocalDisplayDate
       ? `${data.workoutLocalDisplayDate.split(",")[0]} • ${formatWorkoutLocalDate(data.workoutLocalDate)} • ${data.workoutLocalDisplayTime}`
       : "";
   };
@@ -110,7 +113,9 @@ const WorkoutHistoryDetails = () => {
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
-      showToast("Workout saved as template", "View", () => router.push("/(protected)/(tabs)/(workout)/viewTemplates"));
+      showToast("Workout saved as template", "View", () =>
+        router.push("/(protected)/(tabs)/(workout)/viewTemplates"),
+      );
     } catch (error) {
       console.error("Error saving workout as template: ", error);
       ErrorAlert();
@@ -120,8 +125,14 @@ const WorkoutHistoryDetails = () => {
   const handleCopyPress = (workout: Workout) => {
     setInitialWorkout({
       name: workout.name ?? "",
-      exercises: workout.exercises,
+      exercises: workout.exercises.map((exercise) => {
+        return {
+          ...exercise,
+          notes: user?.uid === workout.uid ? exercise.notes : undefined,
+        };
+      }),
       workoutType: workout.workoutType ?? "other",
+      notes: user?.uid === workout.uid ? workout.notes : undefined,
     });
 
     router.push("/(protected)/(tabs)/(workout)/buildWorkout");
@@ -202,9 +213,19 @@ const WorkoutHistoryDetails = () => {
         ) : null}
 
         <View style={styles.sessionLogHeaderContainer}>
-          <LinearGradient colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]} start={{ x: 1.0, y: 0.5 }} end={{ x: 0.0, y: 0.5 }} style={styles.titleUnderline} />
+          <LinearGradient
+            colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
+            start={{ x: 1.0, y: 0.5 }}
+            end={{ x: 0.0, y: 0.5 }}
+            style={styles.titleUnderline}
+          />
           <ThemedText style={styles.sessionLogTitle}>SESSION LOG</ThemedText>
-          <LinearGradient colors={[PRIMARY_GRADIENT_COLOR, SECONDARY_GRADIENT_COLOR]} start={{ x: 1.0, y: 0.5 }} end={{ x: 0.0, y: 0.5 }} style={styles.titleUnderline} />
+          <LinearGradient
+            colors={[PRIMARY_GRADIENT_COLOR, SECONDARY_GRADIENT_COLOR]}
+            start={{ x: 1.0, y: 0.5 }}
+            end={{ x: 0.0, y: 0.5 }}
+            style={styles.titleUnderline}
+          />
         </View>
       </>
     );
@@ -233,14 +254,13 @@ const WorkoutHistoryDetails = () => {
         </TouchableOpacity>
 
         <ThemedText style={styles.headerText}>WORKOUT</ThemedText>
-        <TouchableOpacity style={styles.iconContainer}>
-          <DropdownMenu
-            onOpen={() => setIsDropdownOpened(true)}
-            onClose={() => setIsDropdownOpened(false)}
-            renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
-            options={dropDownOptions}
-          />
-        </TouchableOpacity>
+        <DropdownMenu
+          onOpen={() => setIsDropdownOpened(true)}
+          onClose={() => setIsDropdownOpened(false)}
+          renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
+          options={dropDownOptions}
+          menuTriggerStyle={styles.iconContainer}
+        />
       </View>
       {isLoading ? (
         <View style={styles.centerState}>

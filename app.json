@@ -2,7 +2,7 @@
   "expo": {
     "name": "BuiltMode",
     "slug": "BuiltMode",
-    "version": "1.0.0",
+    "version": "Alpha 1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/ios-icon.png",
     "scheme": "builtmode",

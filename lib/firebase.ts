@@ -36,8 +36,8 @@ try {
   console.warn("initializeAuth failed, falling back to getAuth:", error);
   auth = getAuth(app);
 }
-const EMULATOR_HOST = "127.0.0.1";
-// const EMULATOR_HOST = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST ?? "127.0.0.1";
+// const EMULATOR_HOST = "127.0.0.1";
+const EMULATOR_HOST = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST ?? "127.0.0.1";
 
 if (__DEV__) {
   console.warn("Running Dev mode. Connecting to Firebase Emulator.");

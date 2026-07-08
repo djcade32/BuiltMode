@@ -1,19 +1,34 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Exercise } from "@/packages/shared/src";
-import { Feather } from "@expo/vector-icons";
-import React, { useCallback } from "react";
+import { Feather, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
+import React, { useCallback, useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../themed-text";
+import DropdownMenu, { DropdownMenuOption } from "../ui/DropdownMenu";
 
 type Props = {
   index: number;
   exercise: Exercise;
+  setsCompleted: number;
+  onDeleteExercise: (exerciseId: string) => void;
   isNext: boolean;
   isCompleted: boolean;
+  isActive: boolean;
+  isLastExercise: boolean;
   onPress: () => void;
 };
 
-const NextExerciseItem = ({ index, exercise, isNext, isCompleted, onPress }: Props) => {
+const NextExerciseItem = ({
+  index,
+  exercise,
+  setsCompleted,
+  onDeleteExercise,
+  isNext,
+  isCompleted,
+  isActive,
+  isLastExercise,
+  onPress,
+}: Props) => {
   const { sets, name, metricType } = exercise;
 
   const getExerciseMetricText = useCallback(() => {
@@ -36,19 +51,64 @@ const NextExerciseItem = ({ index, exercise, isNext, isCompleted, onPress }: Pro
         return "entry";
     }
   }, [metricType]);
+
+  const dropDownOptions: DropdownMenuOption[] = useMemo(
+    () => [
+      {
+        onSelect: () => onDeleteExercise(exercise.id),
+        text: "Delete Exercise",
+        icon: <FontAwesome6 name="trash" size={10} color={Colors.error} />,
+        menuOptionCustomStyles: { optionText: { color: Colors.error } },
+      },
+    ],
+    [exercise, onDeleteExercise],
+  );
   return (
     <TouchableOpacity
-      style={{ ...styles.nextExerciseContainer, opacity: isCompleted ? 1 : 0.4 }}
+      style={{
+        ...styles.nextExerciseContainer,
+        opacity: isActive ? 1 : 0.4,
+        backgroundColor: isActive ? "#c6a34a0c" : Colors.background.secondary,
+        borderLeftWidth: isActive ? 3 : 0,
+        borderLeftColor: Colors.accent.primary,
+        borderBottomColor: Colors.inputBorder,
+        borderBottomWidth: isLastExercise ? 0 : 1,
+        borderBottomLeftRadius: isLastExercise ? 16 : 0,
+      }}
       onPress={onPress}
+      disabled={isActive}
     >
-      <View style={styles.listNumContainer}>
-        <ThemedText style={styles.listNumText}>{index}</ThemedText>
+      <View
+        style={{
+          ...styles.listNumContainer,
+          backgroundColor: isActive ? Colors.accent.primary : Colors.inputBorder,
+        }}
+      >
+        <ThemedText
+          style={{ ...styles.listNumText, color: isActive ? Colors.background.secondary : Colors.text.primary }}
+        >
+          {index}
+        </ThemedText>
       </View>
       <View style={{ flex: 1 }}>
-        <ThemedText style={styles.exercisesTitle}>{name}</ThemedText>
-        <ThemedText
-          style={styles.exercisesSetText}
-        >{`${sets.length} ${getExerciseMetricText()}${sets.length > 1 ? "s" : ""}`}</ThemedText>
+        <ThemedText style={[styles.exercisesTitle, { textDecorationLine: isCompleted ? "line-through" : "none" }]}>
+          {name}
+        </ThemedText>
+        {isActive ? (
+          <ThemedText
+            style={{
+              fontSize: 12,
+              fontFamily: Typography.family.secondary.regular,
+              color: Colors.accent.primary,
+            }}
+          >
+            {isCompleted ? "Completed" : `${setsCompleted} of ${exercise.sets.length} sets completed`}
+          </ThemedText>
+        ) : (
+          <ThemedText
+            style={styles.exercisesSetText}
+          >{`${sets.length} ${getExerciseMetricText()}${sets.length > 1 ? "s" : ""}`}</ThemedText>
+        )}
       </View>
       {isNext && !isCompleted && <ThemedText style={styles.nextText}>NEXT</ThemedText>}
       {isCompleted && (
@@ -56,6 +116,14 @@ const NextExerciseItem = ({ index, exercise, isNext, isCompleted, onPress }: Pro
           <Feather name="check" size={18} color={Colors.accent.primary} />
         </View>
       )}
+      {
+        <TouchableOpacity>
+          <DropdownMenu
+            renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
+            options={dropDownOptions}
+          />
+        </TouchableOpacity>
+      }
     </TouchableOpacity>
   );
 };
@@ -65,9 +133,7 @@ export default NextExerciseItem;
 const styles = StyleSheet.create({
   nextExerciseContainer: {
     backgroundColor: Colors.background.secondary,
-    borderWidth: 1,
     borderColor: Colors.cardBorder,
-    borderRadius: Border.radius.md,
     paddingVertical: 18,
     paddingHorizontal: 16,
     flexDirection: "row",

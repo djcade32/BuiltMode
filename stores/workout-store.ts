@@ -22,6 +22,7 @@ export interface WorkoutState {
     name: string;
     exercises: Exercise[];
     workoutType: WorkoutType;
+    notes?: string;
   } | null;
   activeWorkoutDraft: ActiveWorkoutDraft | null;
   workoutProgress: Record<string, { sets: ExerciseSet[]; completed: boolean }> | null;
@@ -34,24 +35,24 @@ export interface WorkoutState {
     uid: string;
     exercises: Exercise[];
     workoutType: WorkoutType;
+    notes?: string;
   }) => void;
-  updateWorkout: (payload: { sessionId: string; uid: string; exercises: Exercise[] }) => void;
-  updateWorkoutProgress: (payload: {
-    exerciseId: string;
-    sets: ExerciseSet[];
-    completed?: boolean;
-  }) => void;
+  updateWorkout: (payload: { sessionId: string; uid: string; exercises: Exercise[]; notes?: string }) => void;
+  updateWorkoutProgress: (payload: { exerciseId: string; sets: ExerciseSet[]; completed?: boolean }) => void;
+  removeExerciseFromWorkoutProgress: (exerciseId: string) => void;
   setInitialWorkout: (
     payload: {
       name: string;
       exercises: Exercise[];
       workoutType: WorkoutType;
+      notes?: string;
     } | null,
   ) => void;
   setCurrentExerciseIndex: (value: number) => void;
   logWorkout: (duration: number) => Promise<CompleteWorkoutResponse | undefined>;
   clearWorkout: () => void;
   saveWorkoutAsTemplate: (template: any) => Promise<SaveAsTemplateResponse | undefined>;
+  setIsWorkoutComplete: (value: boolean) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -64,7 +65,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       isWorkoutComplete: false,
       currentExerciseIndex: 0,
 
-      startWorkout: ({ name, sessionId, uid, exercises, workoutType }) =>
+      startWorkout: ({ name, sessionId, uid, exercises, workoutType, notes }) =>
         set({
           activeWorkoutDraft: {
             name,
@@ -75,10 +76,11 @@ export const useWorkoutStore = create<WorkoutState>()(
             status: "active",
             lastEditedAtMs: Date.now(),
             workoutType,
+            notes,
           },
         }),
 
-      updateWorkout: ({ sessionId, uid, exercises }) =>
+      updateWorkout: ({ sessionId, uid, exercises, notes }) => {
         set({
           activeWorkoutDraft: {
             ...get().activeWorkoutDraft,
@@ -88,11 +90,13 @@ export const useWorkoutStore = create<WorkoutState>()(
             startedAtMs: get().activeWorkoutDraft?.startedAtMs ?? Date.now(),
             status: "active",
             lastEditedAtMs: Date.now(),
+            notes: notes ?? undefined,
           },
-        }),
+        });
+      },
 
       setInitialWorkout: (
-        payload: { name: string; exercises: Exercise[]; workoutType: WorkoutType } | null,
+        payload: { name: string; exercises: Exercise[]; workoutType: WorkoutType; notes?: string } | null,
       ) =>
         set({
           initialWorkout: payload
@@ -100,6 +104,7 @@ export const useWorkoutStore = create<WorkoutState>()(
                 name: payload.name,
                 workoutType: payload.workoutType,
                 exercises: payload.exercises,
+                notes: payload.notes,
               }
             : null,
         }),
@@ -117,12 +122,40 @@ export const useWorkoutStore = create<WorkoutState>()(
         const isWorkoutComplete =
           get().activeWorkoutDraft?.exercises.every(
             (exercise) =>
-              updatedWorkoutProgress[exercise.id] &&
-              updatedWorkoutProgress[exercise.id].completed === true,
+              updatedWorkoutProgress[exercise.id] && updatedWorkoutProgress[exercise.id].completed === true,
           ) ?? false;
         set({
           workoutProgress: updatedWorkoutProgress,
           isWorkoutComplete,
+        });
+      },
+
+      removeExerciseFromWorkoutProgress: (exerciseId) => {
+        const workoutProgress = get().workoutProgress;
+        const activeWorkoutDraft = get().activeWorkoutDraft;
+
+        if (!workoutProgress) return null;
+        if (!workoutProgress[exerciseId]) return null;
+
+        const updatedWorkoutProgress: Record<string, { sets: ExerciseSet[]; completed: boolean }> = {};
+        let isWorkoutComplete = true;
+        Object.keys(workoutProgress).forEach((id) => {
+          if (exerciseId !== id) {
+            updatedWorkoutProgress[id] = workoutProgress[id];
+            if (!updatedWorkoutProgress[id].completed) {
+              isWorkoutComplete = false;
+            }
+          }
+        });
+
+        const isLastExerciseInList =
+          exerciseId === activeWorkoutDraft?.exercises[activeWorkoutDraft?.exercises.length - 1].id;
+        set({
+          workoutProgress: updatedWorkoutProgress,
+          isWorkoutComplete,
+          currentExerciseIndex: isLastExerciseInList
+            ? activeWorkoutDraft?.exercises.length - 2
+            : get().currentExerciseIndex,
         });
       },
 
@@ -198,6 +231,10 @@ export const useWorkoutStore = create<WorkoutState>()(
           currentExerciseIndex: 0,
           duration: undefined,
           completeWorkoutResponse: undefined,
+        }),
+      setIsWorkoutComplete: (value) =>
+        set({
+          isWorkoutComplete: value,
         }),
     }),
     {

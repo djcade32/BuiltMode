@@ -17,6 +17,8 @@ type Props = {
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
   autoFocus?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
 const WeightAndRepsSetItem = ({
@@ -30,57 +32,109 @@ const WeightAndRepsSetItem = ({
   isCompleted = false,
   containerStyle,
   autoFocus = false,
+  onBlur,
+  onFocus,
 }: Props) => {
   return (
     <View style={[styles.exerciseSetContainer, containerStyle]}>
       {isCompleted && (
         <View style={styles.checkmarkIconContainer}>
-          <Feather name="check" size={18} color={Colors.accent.primary} />
+          <Feather name="check" size={12} color={Colors.accent.primary} />
         </View>
       )}
-      <ThemedText style={styles.exerciseSetSetText}>
-        SET{"\n"}
-        {setIndex}
-      </ThemedText>
+      {isActive && isCompleted ? null : (
+        <ThemedText style={styles.exerciseSetSetText}>
+          SET{"\n"}
+          {setIndex}
+        </ThemedText>
+      )}
+
       <View style={styles.exerciseSetInputs}>
-        {usedForBuilding || isActive ? (
+        <Input
+          placeholder="0"
+          placeholderTextColor={Colors.icon}
+          value={set?.weight?.toString() ?? "0"}
+          onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, weight: Number(value) })}
+          postText="lbs"
+          postTextStyle={{ color: Colors.icon, fontSize: 12 }}
+          containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
+          keyboardType="number-pad"
+          autoFocus={autoFocus}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          style={isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}}
+          selectTextOnFocus
+        />
+
+        {/* {usedForBuilding || isActive ? (
           <Input
             placeholder="0"
             placeholderTextColor={Colors.icon}
-            value={set?.weight?.toString()}
-            onChangeText={(value) =>
-              onEditSet(exerciseId, set.id, { ...set, weight: Number(value) })
-            }
+            value={set?.weight?.toString() ?? "0"}
+            onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, weight: Number(value) })}
             postText="lbs"
             postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-            containerStyle={styles.setInput}
+            containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
             keyboardType="number-pad"
             autoFocus={autoFocus}
+            onBlur={onBlur}
+            onFocus={onFocus}
+            style={
+              isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}
+            }
+            selectTextOnFocus
           />
         ) : (
-          <ThemedText>{`${set.weight} lbs`}</ThemedText>
-        )}
-        <ThemedText style={{ color: Colors.icon }}>×</ThemedText>
+          <ThemedText>{`${set?.weight ?? "0"} lbs`}</ThemedText>
+        )} */}
+        <ThemedText style={{ color: Colors.icon }}>|</ThemedText>
+        <Input
+          placeholder="0"
+          placeholderTextColor={Colors.icon}
+          value={set?.reps?.toString() ?? "0"}
+          onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, reps: Number(value) })}
+          postText="reps"
+          postTextStyle={{ color: Colors.icon, fontSize: 12 }}
+          containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
+          keyboardType="number-pad"
+          onBlur={onBlur}
+          onFocus={onFocus}
+          style={isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}}
+          selectTextOnFocus
+        />
+
+        {/* <ThemedText style={{ color: Colors.icon }}>|</ThemedText>
         {usedForBuilding || isActive ? (
           <Input
             placeholder="0"
             placeholderTextColor={Colors.icon}
-            value={set?.reps?.toString()}
+            value={set?.reps?.toString() ?? "0"}
             onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, reps: Number(value) })}
             postText="reps"
             postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-            containerStyle={styles.setInput}
+            containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
             keyboardType="number-pad"
+            onBlur={onBlur}
+            onFocus={onFocus}
+            style={
+              isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}
+            }
+            selectTextOnFocus
           />
         ) : (
-          <ThemedText>{`${set.reps} reps`}</ThemedText>
+          <ThemedText>{`${set?.reps ?? "0"} reps`}</ThemedText>
+        )} */}
+      </View>
+
+      <View style={{ alignItems: "flex-end" }}>
+        {onDeleteSet ? (
+          <Pressable onPress={() => onDeleteSet(exerciseId, set.id)} hitSlop={15}>
+            <Feather name="x" size={16} color={Colors.icon} />
+          </Pressable>
+        ) : (
+          <View style={{ width: 16 }} />
         )}
       </View>
-      {usedForBuilding && (
-        <Pressable onPress={() => onDeleteSet && onDeleteSet(exerciseId, set.id)} hitSlop={15}>
-          <Feather name="x" size={16} color={Colors.icon} />
-        </Pressable>
-      )}
     </View>
   );
 };
@@ -105,23 +159,24 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   exerciseSetInputs: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 15,
+    justifyContent: "center",
+    gap: 10,
   },
   setInput: {
     backgroundColor: Colors.background.primary,
-    borderColor: Colors.inputBorder,
     width: 85,
     gap: 2,
     paddingHorizontal: 8,
   },
   checkmarkIconContainer: {
-    width: 32,
-    height: 32,
+    width: 20,
+    height: 20,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#c6a34a38",
-    borderRadius: Border.radius.md,
+    borderRadius: Border.radius.sm,
   },
 });
