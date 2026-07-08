@@ -64,7 +64,6 @@ const ExerciseSetItem = ({
           exerciseId={exerciseId}
           setIndex={index}
           onEditSet={onEditSet}
-          usedForBuilding={false}
           isActive={isActive}
           isCompleted={isCompleted}
           containerStyle={{

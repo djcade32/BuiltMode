@@ -59,6 +59,10 @@ const BuildExerciseItem = ({
 
   const hasNotes = Boolean(notes?.trim());
 
+  // useEffect(() => {
+  //   console.log("exercise: ", exercise);
+  // }, [exercise]);
+
   const openNotesSheet = () => {
     setDraftNotes(notes ?? "");
     setIsNotesSheetVisible(true);
@@ -84,18 +88,19 @@ const BuildExerciseItem = ({
     () => [
       {
         onSelect: openNotesSheet,
-        text: hasNotes ? "EDIT NOTE" : "ADD NOTE",
+        text: hasNotes ? "Edit Note" : "Add Note",
         icon: <FontAwesome5 name="sticky-note" size={10} color={Colors.icon} />,
       },
       {
         onSelect: () => setIsMetricSheetVisible(true),
-        text: "CHANGE METRIC",
+        text: "Change Metric",
         icon: <FontAwesome6 name="ruler" size={10} color={Colors.icon} />,
       },
       {
         onSelect: () => onDeleteExercise?.(exercise),
-        text: "DELETE",
-        icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
+        text: "Delete Set",
+        icon: <FontAwesome6 name="trash" size={10} color={Colors.error} />,
+        menuOptionCustomStyles: { optionText: { color: Colors.error } },
       },
     ],
     [hasNotes, notes, onDeleteExercise, exercise],
@@ -148,6 +153,7 @@ const BuildExerciseItem = ({
             onEditSet={onEditSet}
             onFocus={onExerciseInputFocus}
             onBlur={onExerciseInputBlur}
+            exercise={exercise}
           />
         );
 
@@ -320,7 +326,11 @@ const BuildExerciseItem = ({
 
                 <View style={styles.sheetActions}>
                   {hasNotes ? (
-                    <TouchableOpacity activeOpacity={0.85} style={styles.clearNoteButton} onPress={handleClearNotes}>
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      style={styles.clearNoteButton}
+                      onPress={handleClearNotes}
+                    >
                       <ThemedText style={styles.clearNoteButtonText}>CLEAR</ThemedText>
                     </TouchableOpacity>
                   ) : null}

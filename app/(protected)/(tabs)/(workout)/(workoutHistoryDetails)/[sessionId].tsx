@@ -53,12 +53,12 @@ const WorkoutHistoryDetails = () => {
     () => [
       {
         onSelect: () => data && handleCopyPress(data),
-        text: "COPY",
+        text: "Copy Workout",
         icon: <MaterialIcons name="content-copy" size={20} color={Colors.gray} />,
       },
       {
         onSelect: () => setIsWorkoutNameSheetVisible(true),
-        text: "SAVE AS TEMPLATE",
+        text: "Save As Template",
         icon: <MaterialIcons name="save" size={20} color={Colors.gray} />,
         disabled: !data,
       },

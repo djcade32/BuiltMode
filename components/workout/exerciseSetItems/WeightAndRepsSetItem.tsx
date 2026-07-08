@@ -1,9 +1,9 @@
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/ui/Input";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { ExerciseSet } from "@/packages/shared/src";
+import { Exercise, ExerciseSet } from "@/packages/shared/src";
 import { Feather } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 
 type Props = {
@@ -12,7 +12,7 @@ type Props = {
   setIndex: number;
   onDeleteSet?: (exerciseId: string, setId: string) => void;
   onEditSet: (exerciseId: string, setId: string, set: ExerciseSet) => void;
-  usedForBuilding?: boolean;
+  exercise: Exercise;
   isActive?: boolean;
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
@@ -27,7 +27,7 @@ const WeightAndRepsSetItem = ({
   setIndex,
   onEditSet,
   onDeleteSet,
-  usedForBuilding = true,
+  exercise,
   isActive = false,
   isCompleted = false,
   containerStyle,
@@ -35,6 +35,39 @@ const WeightAndRepsSetItem = ({
   onBlur,
   onFocus,
 }: Props) => {
+  // const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+  const [isWeightTouched, setIsWeightTouched] = useState<boolean>(false);
+  const [isRepsTouched, setIsRepsTouched] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (setIndex > 1) {
+      const indexOfPrevSet = exercise.sets.length - 2;
+
+      const weight = exercise.sets[indexOfPrevSet].weight ? exercise.sets[indexOfPrevSet].weight.toString() : 0;
+      const reps = exercise.sets[indexOfPrevSet].reps ? exercise.sets[indexOfPrevSet].reps.toString() : 0;
+
+      onEditSet(exerciseId, set.id, { ...set, weight: Number(weight), reps: Number(reps) });
+    }
+  }, []);
+
+  // useEffect(() => {
+  //   if (setIndex > 1 && !isInitialLoad) {
+  //     console.log("Sets updated: ", setIndex);
+  //   }
+  //   setIsInitialLoad(false);
+  // }, [exercise]);
+  // We can tell which set has been touched or not by looking at the sets with values within the exercise sets list. When sets are initially made they are made with undefined values.
+
+  const handleEditWeight = (weight: string) => {
+    onEditSet(exerciseId, set.id, { ...set, weight: Number(weight) });
+    setIsWeightTouched(true);
+  };
+
+  const handleEditReps = (reps: string) => {
+    onEditSet(exerciseId, set.id, { ...set, reps: Number(reps) });
+    setIsRepsTouched(true);
+  };
+
   return (
     <View style={[styles.exerciseSetContainer, containerStyle]}>
       {isCompleted && (
@@ -53,16 +86,20 @@ const WeightAndRepsSetItem = ({
         <Input
           placeholder="0"
           placeholderTextColor={Colors.icon}
-          value={set?.weight?.toString() ?? "0"}
-          onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, weight: Number(value) })}
+          value={set.weight?.toString() ?? "0"}
+          onChangeText={handleEditWeight}
           postText="lbs"
           postTextStyle={{ color: Colors.icon, fontSize: 12 }}
           containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
           keyboardType="number-pad"
-          autoFocus={autoFocus}
           onBlur={onBlur}
           onFocus={onFocus}
-          style={isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}}
+          autoFocus={autoFocus}
+          style={
+            isActive
+              ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold }
+              : { color: isWeightTouched ? Colors.text.primary : Colors.text.secondary }
+          }
           selectTextOnFocus
         />
 
@@ -91,15 +128,19 @@ const WeightAndRepsSetItem = ({
         <Input
           placeholder="0"
           placeholderTextColor={Colors.icon}
-          value={set?.reps?.toString() ?? "0"}
-          onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, reps: Number(value) })}
+          value={set.reps?.toString() ?? "0"}
+          onChangeText={handleEditReps}
           postText="reps"
           postTextStyle={{ color: Colors.icon, fontSize: 12 }}
           containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
           keyboardType="number-pad"
           onBlur={onBlur}
           onFocus={onFocus}
-          style={isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}}
+          style={
+            isActive
+              ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold }
+              : { color: isRepsTouched ? Colors.text.primary : Colors.text.secondary }
+          }
           selectTextOnFocus
         />
 

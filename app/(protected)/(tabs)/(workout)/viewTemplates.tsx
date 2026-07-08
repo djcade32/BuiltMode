@@ -36,8 +36,9 @@ const TemplateItem = ({ template, onPress, onDelete }: TemplateItemProps) => {
     () => [
       {
         onSelect: onDelete,
-        text: "DELETE",
-        icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
+        text: "Delete Template",
+        icon: <FontAwesome6 name="trash" size={10} color={Colors.error} />,
+        menuOptionCustomStyles: { optionText: { color: Colors.error } },
       },
     ],
     [onDelete],
@@ -59,7 +60,9 @@ const TemplateItem = ({ template, onPress, onDelete }: TemplateItemProps) => {
       <ThemedText
         style={[styles.templateItemNumOfExercises, { marginBottom: 5, color: Colors.gray }]}
       >{`${exercises.length} exercises`}</ThemedText>
-      <ThemedText style={styles.templateItemNumOfExercises}>{firstLetterToUpperCase(workoutType ?? "other")}</ThemedText>
+      <ThemedText style={styles.templateItemNumOfExercises}>
+        {firstLetterToUpperCase(workoutType ?? "other")}
+      </ThemedText>
     </TouchableOpacity>
   );
 };
@@ -74,7 +77,10 @@ const ViewTemplates = () => {
 
   const uid = user?.uid ?? "";
 
-  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useUserTemplatesInfinite(uid, 20);
+  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useUserTemplatesInfinite(
+    uid,
+    20,
+  );
 
   const { mutate: deleteTemplateFunc, isPending } = useMutation({
     mutationFn: async (id: string) => {

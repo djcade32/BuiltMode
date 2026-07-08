@@ -110,12 +110,23 @@ const BuildWorkout = () => {
 
       queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
 
-      showToast("Workout saved as template", "View", () => router.push("/(protected)/(tabs)/(workout)/viewTemplates"));
+      showToast("Workout saved as template", "View", () =>
+        router.push("/(protected)/(tabs)/(workout)/viewTemplates"),
+      );
     } catch (error) {
       console.error("Error saving workout as template: ", error);
       ErrorAlert();
     }
-  }, [displayWorkoutName, workoutType, exercises, workoutNotes, saveWorkoutAsTemplate, queryClient, user?.uid, router]);
+  }, [
+    displayWorkoutName,
+    workoutType,
+    exercises,
+    workoutNotes,
+    saveWorkoutAsTemplate,
+    queryClient,
+    user?.uid,
+    router,
+  ]);
 
   function ErrorAlert() {
     return Alert.alert("Oops", "There was an error saving workout as template.", [
@@ -136,17 +147,17 @@ const BuildWorkout = () => {
           setIsEditingExerciseInput(false);
           setIsWorkoutNameSheetVisible(true);
         },
-        text: "EDIT NAME",
+        text: "Edit Name",
         icon: <MaterialIcons name="edit" size={14} color={Colors.icon} />,
       },
       {
         onSelect: handleOpenWorkoutNoteSheet,
-        text: hasWorkoutNotes ? "EDIT NOTE" : "ADD NOTE",
+        text: hasWorkoutNotes ? "Edit Note" : "Add Note",
         icon: <FontAwesome5 name="sticky-note" size={14} color={Colors.icon} />,
       },
       {
         onSelect: handleSaveAsTemplate,
-        text: "SAVE AS TEMPLATE",
+        text: "Save As Template",
         icon: <MaterialIcons name="save" size={14} color={Colors.gray} />,
         disabled: !exercises.length,
       },
@@ -375,7 +386,10 @@ const BuildWorkout = () => {
   );
 
   return (
-    <KeyboardAvoidingView style={styles.keyboardAvoidingContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView
+      style={styles.keyboardAvoidingContainer}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       {isDropdownOpened && <View style={styles.dropdownOverlay} />}
 
       <SafeAreaView style={styles.container} edges={["top"]}>
@@ -412,7 +426,11 @@ const BuildWorkout = () => {
           )}
 
           {hasWorkoutNotes && !isExerciseEditingMode ? (
-            <TouchableOpacity activeOpacity={0.85} style={styles.workoutNotePreviewCard} onPress={handleOpenWorkoutNoteSheet}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.workoutNotePreviewCard}
+              onPress={handleOpenWorkoutNoteSheet}
+            >
               <View style={styles.workoutNotePreviewIcon}>
                 <FontAwesome5 name="sticky-note" size={11} color={Colors.accent.primary} />
               </View>
@@ -432,7 +450,10 @@ const BuildWorkout = () => {
                 onDragEnd={({ data }) => handleDragEnd(data)}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
-                contentContainerStyle={[styles.exerciseListContent, isExerciseEditingMode && styles.exerciseListContentEditing]}
+                contentContainerStyle={[
+                  styles.exerciseListContent,
+                  isExerciseEditingMode && styles.exerciseListContentEditing,
+                ]}
                 showsVerticalScrollIndicator={false}
                 containerStyle={styles.exerciseList}
                 onContentSizeChange={scrollToPendingTarget}

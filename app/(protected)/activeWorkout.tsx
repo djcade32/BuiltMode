@@ -159,18 +159,19 @@ const ActiveWorkout = () => {
     () => [
       {
         onSelect: () => (isRunning ? pause() : start()),
-        text: isRunning ? "PAUSE" : "RESUME",
+        text: isRunning ? "Pause" : "Resume",
         icon: <FontAwesome6 name={isRunning ? "pause" : "play"} size={14} color={Colors.icon} />,
       },
       {
-        onSelect: () => handleExit(),
-        text: "EXIT",
-        icon: <Ionicons name="exit-outline" size={14} color={Colors.icon} />,
+        onSelect: () => setIsWorkoutNoteSheetVisible(true),
+        text: Boolean(workoutNotes.trim()) ? "Edit Note" : "Add Note",
+        icon: <FontAwesome5 name="sticky-note" size={14} color={Colors.icon} />,
       },
       {
-        onSelect: () => setIsWorkoutNoteSheetVisible(true),
-        text: Boolean(workoutNotes.trim()) ? "EDIT NOTE" : "ADD NOTE",
-        icon: <FontAwesome5 name="sticky-note" size={14} color={Colors.icon} />,
+        onSelect: () => handleExit(),
+        text: "Exit",
+        icon: <Ionicons name="exit-outline" size={14} color={Colors.error} />,
+        menuOptionCustomStyles: { optionText: { color: Colors.error } },
       },
     ],
     [pause, start, isRunning, handleExit],
