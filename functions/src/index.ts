@@ -24,7 +24,7 @@ import {
 } from "./functions/social.js";
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
 import { handleCreateUserProfile, handleFetchingUserHomeTimezone } from "./functions/user.js";
-import { handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
+import { handleCompleteWorkout, handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
 import { assertValidTimezone } from "./utils/time.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekId.js";
 
@@ -81,14 +81,11 @@ export const completeWorkout = onCall(async (request: CallableRequest<CompleteWo
   }
 
   const parsed = completeWorkoutRequestSchema.safeParse(request.data);
-  console.log("parsed: ", parsed);
-  console.log("request.data: ", request.data);
 
   if (!parsed.success) {
     throw new HttpsError("invalid-argument", "Invalid complete workout payload.");
   }
-  return;
-  // return await handleCompleteWorkout(request.auth.uid, parsed.data);
+  return await handleCompleteWorkout(request.auth.uid, parsed.data);
 });
 
 export const saveAsTemplate = onCall(async (request: CallableRequest<SaveAsTemplateRequest>) => {

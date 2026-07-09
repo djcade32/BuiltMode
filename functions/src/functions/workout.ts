@@ -12,9 +12,20 @@ import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
-import { getUserByUid, getUserMonthAggregate, getUserStats, getUserWeekAggregate } from "../firestore/user.js";
+import { updateLeaderboardEntry } from "../firestore/leaderboard.js";
+import {
+  createUserMonthAggregates,
+  createUserStats,
+  createUserWeekAggregate,
+  getUserByUid,
+  getUserMonthAggregate,
+  getUserStats,
+  getUserWeekAggregate,
+} from "../firestore/user.js";
 import {
   calculateModeScore,
+  createCompleteWorkout,
+  createDayMarker,
   getDayMarker,
   getLastFourWeekAggregates,
   getLastFourWeeksAdherenceRate,
@@ -297,12 +308,12 @@ export async function handleCompleteWorkout(
       updatedAt: now,
     };
 
-    // createCompleteWorkout(tx, workoutDoc);
-    // createDayMarker(tx, dayMarkerDoc);
-    // createUserWeekAggregate(tx, uid, weekId, userWeekAggregateDoc);
-    // createUserMonthAggregates(tx, uid, monthId, userMonthAggregateDoc);
-    // createUserStats(tx, uid, userStatsDoc);
-    // updateLeaderboardEntry(tx, updatedLeaderboardEntry);
+    createCompleteWorkout(tx, workoutDoc);
+    createDayMarker(tx, dayMarkerDoc);
+    createUserWeekAggregate(tx, uid, weekId, userWeekAggregateDoc);
+    createUserMonthAggregates(tx, uid, monthId, userMonthAggregateDoc);
+    createUserStats(tx, uid, userStatsDoc);
+    updateLeaderboardEntry(tx, updatedLeaderboardEntry);
     return {
       activeDaysThisWeek,
       isOfficialWeek,
