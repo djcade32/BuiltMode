@@ -118,6 +118,7 @@ const ViewTemplates = () => {
       name: template.name ?? "",
       exercises: template.exercises,
       workoutType: template.workoutType ?? "other",
+      notes: template.notes,
     });
 
     router.push("/(protected)/(tabs)/(workout)/buildWorkout");

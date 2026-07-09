@@ -3,6 +3,7 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { formatTimeInput } from "@/lib/utils/time";
 import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
+import { FontAwesome } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -11,17 +12,9 @@ type Props = {
 };
 
 const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
-  const { name, metricType } = exercise;
+  const { name, metricType, notes } = exercise;
 
-  const SetItem = ({
-    set,
-    order,
-    type,
-  }: {
-    set: ExerciseSet;
-    order: number;
-    type: ExerciseMetricType;
-  }) => {
+  const SetItem = ({ set, order, type }: { set: ExerciseSet; order: number; type: ExerciseMetricType }) => {
     const formatNumber = (value?: number, suffix = "") =>
       value === undefined || value === null ? "—" : `${value}${suffix}`;
 
@@ -86,18 +79,29 @@ const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
           style={[
             styles.exerciseNameAccentBar,
             {
-              backgroundColor:
-                metricType === "distance" ? Colors.accent.secondary : Colors.accent.primary,
+              backgroundColor: metricType === "distance" ? Colors.accent.secondary : Colors.accent.primary,
             },
           ]}
         />
         <ThemedText style={styles.exerciseName}>{name.toLocaleUpperCase()}</ThemedText>
       </View>
+
       <View style={styles.exercisesSetsContainer}>
         {exercise.sets.map((set, index) => (
           <SetItem key={set.id} set={set} order={index + 1} type={exercise.metricType} />
         ))}
       </View>
+      {notes && (
+        <View style={styles.notesOuterContainer}>
+          <View style={styles.notesContainer}>
+            <View style={styles.notesHeaderContainer}>
+              <FontAwesome name="sticky-note" size={12} color={Colors.icon} />
+              <ThemedText style={styles.notesTitle}>{name.toLocaleUpperCase()} NOTES</ThemedText>
+            </View>
+            <ThemedText style={styles.notesText}>{notes}</ThemedText>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -141,5 +145,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Typography.family.secondary.semibold,
     color: Colors.accent.primary,
+  },
+
+  // Notes
+  notesOuterContainer: {
+    paddingLeft: 10,
+    paddingTop: 10,
+  },
+  notesContainer: {
+    gap: 5,
+    borderRadius: Border.radius.md,
+    backgroundColor: Colors.background.secondary,
+    padding: 16,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+  },
+  notesHeaderContainer: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  notesTitle: {
+    fontSize: 12,
+    fontFamily: Typography.family.primary.semibold,
+    letterSpacing: 0.6,
+    color: Colors.icon,
+  },
+  notesText: {
+    fontSize: 12,
+    color: Colors.gray,
+    lineHeight: 20.8,
   },
 });

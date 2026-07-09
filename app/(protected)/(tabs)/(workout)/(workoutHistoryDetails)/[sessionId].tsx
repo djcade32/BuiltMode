@@ -212,6 +212,18 @@ const WorkoutHistoryDetails = () => {
           </View>
         ) : null}
 
+        {data.notes && (
+          <View style={styles.notesOuterContainer}>
+            <View style={styles.notesContainer}>
+              <View style={styles.notesHeaderContainer}>
+                <FontAwesome name="sticky-note" size={12} color={Colors.icon} />
+                <ThemedText style={styles.notesTitle}>WORKOUT NOTES</ThemedText>
+              </View>
+              <ThemedText style={styles.notesText}>{data.notes}</ThemedText>
+            </View>
+          </View>
+        )}
+
         <View style={styles.sessionLogHeaderContainer}>
           <LinearGradient
             colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
@@ -288,21 +300,6 @@ const WorkoutHistoryDetails = () => {
           keyExtractor={(exercise) => exercise.id}
           ItemSeparatorComponent={() => <View style={styles.exerciseSeparator} />}
           contentContainerStyle={styles.listContentContainer}
-          ListFooterComponentStyle={styles.listFooter}
-          ListFooterComponent={() => {
-            if (!data.notes) return null;
-            return (
-              <View style={styles.notesOuterContainer}>
-                <View style={styles.notesContainer}>
-                  <View style={styles.notesHeaderContainer}>
-                    <FontAwesome name="sticky-note" size={12} color={Colors.icon} />
-                    <ThemedText style={styles.notesTitle}>NOTES</ThemedText>
-                  </View>
-                  <ThemedText style={styles.notesText}>{data.notes}</ThemedText>
-                </View>
-              </View>
-            );
-          }}
         />
       )}
       <WorkoutNameSheet
