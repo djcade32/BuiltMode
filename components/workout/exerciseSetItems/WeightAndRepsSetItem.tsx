@@ -108,9 +108,6 @@ const WeightAndRepsSetItem = ({
     if (updatedSet.weight === set.weight && updatedSet.reps === set.reps) return;
 
     onEditSet(exerciseId, set.id, updatedSet);
-
-    // Only run this when the row first mounts.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -148,9 +145,6 @@ const WeightAndRepsSetItem = ({
     if (!hasChanges) return;
 
     onEditSet(exerciseId, set.id, updatedSet);
-
-    // This should only react to transaction changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setUpdateTransactions]);
 
   const handleEditMetric = (metric: CascadingMetric, value: string) => {

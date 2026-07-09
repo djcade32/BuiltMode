@@ -24,7 +24,7 @@ import DurationSetItem from "./exerciseSetItems/DurationSetItem";
 import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
 import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
 
-export type TransactionMetricTypes = "weight" | "reps";
+export type TransactionMetricTypes = "weight" | "reps" | "distanceMiles" | "durationSec";
 export type SetUpdateTransaction = {
   setIndex: number;
   metric: TransactionMetricTypes;
@@ -174,6 +174,9 @@ const BuildExerciseItem = ({
             exerciseId={id}
             onFocus={onExerciseInputFocus}
             onBlur={onExerciseInputBlur}
+            exercise={exercise}
+            setUpdateTransactions={setUpdateTransactions}
+            setSetUpdateTransactions={setSetUpdateTransactions}
           />
         );
 
@@ -182,12 +185,15 @@ const BuildExerciseItem = ({
           <RepsOnlySetItem
             key={set.id}
             set={set}
+            exerciseId={exercise.id}
             setIndex={setIndex}
             onDeleteSet={onDeleteSet}
             onEditSet={onEditSet}
-            exerciseId={id}
             onFocus={onExerciseInputFocus}
             onBlur={onExerciseInputBlur}
+            exercise={exercise}
+            setUpdateTransactions={setUpdateTransactions}
+            setSetUpdateTransactions={setSetUpdateTransactions}
           />
         );
 
@@ -202,6 +208,9 @@ const BuildExerciseItem = ({
             exerciseId={id}
             onFocus={onExerciseInputFocus}
             onBlur={onExerciseInputBlur}
+            exercise={exercise}
+            setUpdateTransactions={setUpdateTransactions}
+            setSetUpdateTransactions={setSetUpdateTransactions}
           />
         );
 

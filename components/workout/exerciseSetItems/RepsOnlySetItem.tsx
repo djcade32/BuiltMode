@@ -1,10 +1,11 @@
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/ui/Input";
 import { Border, Colors, Typography } from "@/constants/theme";
-import { ExerciseSet } from "@/packages/shared/src";
+import { Exercise, ExerciseSet } from "@/packages/shared/src";
 import { Feather } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
+import { SetUpdateTransaction } from "../BuildExerciseItem";
 
 type Props = {
   exerciseId: string;
@@ -12,7 +13,11 @@ type Props = {
   setIndex: number;
   onDeleteSet?: (exerciseId: string, setId: string) => void;
   onEditSet: (exerciseId: string, setId: string, set: ExerciseSet) => void;
+  exercise: Exercise;
   usedForBuilding?: boolean;
+  setUpdateTransactions?: SetUpdateTransaction[] | null;
+  setSetUpdateTransactions?: React.Dispatch<React.SetStateAction<SetUpdateTransaction[] | null>>;
+  cascade?: boolean;
   isActive?: boolean;
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
@@ -21,13 +26,36 @@ type Props = {
   onBlur?: () => void;
 };
 
+const getNearestTouchedRepsAbove = (transactions: SetUpdateTransaction[] | null | undefined, setIndex: number) => {
+  if (!transactions) return null;
+
+  return transactions.reduce<SetUpdateTransaction | null>((nearestTransaction, transaction) => {
+    const isRepsTransaction = transaction.metric === "reps";
+    const isAboveCurrentSet = transaction.setIndex < setIndex;
+
+    if (!isRepsTransaction || !isAboveCurrentSet) {
+      return nearestTransaction;
+    }
+
+    if (!nearestTransaction || transaction.setIndex > nearestTransaction.setIndex) {
+      return transaction;
+    }
+
+    return nearestTransaction;
+  }, null);
+};
+
 const RepsOnlySetItem = ({
   set,
   setIndex,
   onDeleteSet,
   onEditSet,
   exerciseId,
+  exercise,
   usedForBuilding = true,
+  setUpdateTransactions,
+  setSetUpdateTransactions,
+  cascade = true,
   isActive = false,
   isCompleted = false,
   containerStyle,
@@ -35,41 +63,170 @@ const RepsOnlySetItem = ({
   onBlur,
   onFocus,
 }: Props) => {
+  const hasMountedRef = useRef(false);
+
+  const [isRepsTouched, setIsRepsTouched] = useState(false);
+
+  const hasRepsBeenTouched = () => {
+    return (
+      isRepsTouched ||
+      !!setUpdateTransactions?.some((transaction) => {
+        return transaction.setIndex === setIndex && transaction.metric === "reps";
+      })
+    );
+  };
+
+  useEffect(() => {
+    if (setIndex <= 1) return;
+
+    const previousSet = exercise.sets[setIndex - 2];
+
+    if (!previousSet) return;
+
+    const shouldInheritReps = set.reps === undefined || set.reps === null || set.reps === 0;
+
+    if (!shouldInheritReps) return;
+
+    const nextReps = Number(previousSet.reps ?? 0);
+
+    if (set.reps === nextReps) return;
+
+    onEditSet(exerciseId, set.id, {
+      ...set,
+      reps: nextReps,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
+    if (!cascade) return;
+
+    if (setIndex <= 1 || !setUpdateTransactions?.length) return;
+
+    if (hasRepsBeenTouched()) return;
+
+    const nearestTransaction = getNearestTouchedRepsAbove(setUpdateTransactions, setIndex);
+
+    if (!nearestTransaction) return;
+
+    const nextReps = Number(nearestTransaction.value || 0);
+
+    if (set.reps === nextReps) return;
+
+    onEditSet(exerciseId, set.id, {
+      ...set,
+      reps: nextReps,
+    });
+  }, [setUpdateTransactions]);
+
+  const handleEditReps = (value: string) => {
+    setIsRepsTouched(true);
+
+    cascade &&
+      setSetUpdateTransactions &&
+      setSetUpdateTransactions((currentTransactions) => {
+        const existingTransactions = currentTransactions ?? [];
+
+        const transactionsWithoutCurrentReps = existingTransactions.filter((transaction) => {
+          return !(transaction.setIndex === setIndex && transaction.metric === "reps");
+        });
+
+        const updatedTransaction: SetUpdateTransaction = {
+          setIndex,
+          metric: "reps",
+          value,
+        };
+
+        return [updatedTransaction, ...transactionsWithoutCurrentReps];
+      });
+
+    onEditSet(exerciseId, set.id, {
+      ...set,
+      reps: Number(value || 0),
+    });
+  };
+
+  const handleDeleteSet = (exerciseId: string, id: string) => {
+    if (!onDeleteSet) return;
+
+    onDeleteSet(exerciseId, id);
+
+    cascade &&
+      setSetUpdateTransactions &&
+      setSetUpdateTransactions((currentTransactions) => {
+        if (!currentTransactions) return currentTransactions;
+
+        return currentTransactions
+          .filter((transaction) => transaction.setIndex !== setIndex)
+          .map((transaction) => {
+            if (transaction.setIndex < setIndex) {
+              return transaction;
+            }
+
+            return {
+              ...transaction,
+              setIndex: transaction.setIndex - 1,
+            };
+          });
+      });
+  };
+
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View style={[styles.exerciseSetContainer, containerStyle]}>
       {isCompleted && (
         <View style={styles.checkmarkIconContainer}>
-          <Feather name="check" size={18} color={Colors.accent.primary} />
+          <Feather name="check" size={12} color={Colors.accent.primary} />
         </View>
       )}
-      <ThemedText style={styles.exerciseSetSetText}>
-        ROUND{"\n"}
-        {setIndex}
-      </ThemedText>
-      {usedForBuilding || isActive ? (
+
+      {isActive && isCompleted ? null : (
+        <ThemedText style={styles.exerciseSetSetText}>
+          ROUND{"\n"}
+          {setIndex}
+        </ThemedText>
+      )}
+
+      <View style={styles.exerciseSetInputs}>
         <Input
           placeholder="0"
           placeholderTextColor={Colors.icon}
-          value={set?.reps?.toString() ?? "0"}
-          onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, reps: Number(value) })}
-          postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-          containerStyle={{ ...styles.setInput, flex: 1, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
-          keyboardType="numeric"
+          value={set.reps?.toString() ?? "0"}
+          onChangeText={handleEditReps}
           postText="reps"
-          autoFocus={autoFocus}
+          postTextStyle={{ color: Colors.icon, fontSize: 12 }}
+          containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
+          keyboardType="number-pad"
           onBlur={onBlur}
           onFocus={onFocus}
-          style={isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}}
+          autoFocus={autoFocus}
+          style={
+            isActive
+              ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold }
+              : {
+                  color: usedForBuilding
+                    ? hasRepsBeenTouched()
+                      ? Colors.text.primary
+                      : Colors.text.secondary
+                    : Colors.text.primary,
+                }
+          }
           selectTextOnFocus
         />
-      ) : (
-        <ThemedText>{`${set?.reps ?? "0"} reps`}</ThemedText>
-      )}
-      {usedForBuilding && (
-        <Pressable onPress={() => onDeleteSet && onDeleteSet(exerciseId, set.id)} hitSlop={15}>
-          <Feather name="x" size={16} color={Colors.icon} />
-        </Pressable>
-      )}
+      </View>
+
+      <View style={{ alignItems: "flex-end" }}>
+        {onDeleteSet ? (
+          <Pressable onPress={() => handleDeleteSet(exerciseId, set.id)} hitSlop={15}>
+            <Feather name="x" size={16} color={Colors.icon} />
+          </Pressable>
+        ) : (
+          <View style={{ width: 16 }} />
+        )}
+      </View>
     </View>
   );
 };
@@ -77,21 +234,14 @@ const RepsOnlySetItem = ({
 export default RepsOnlySetItem;
 
 const styles = StyleSheet.create({
-  container: {
+  exerciseSetContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-around",
     backgroundColor: "#1f222888",
     borderRadius: Border.radius.md,
     padding: 10,
     gap: 10,
-  },
-  checkmarkIconContainer: {
-    width: 32,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#c6a34a38",
-    borderRadius: Border.radius.md,
   },
   exerciseSetSetText: {
     color: Colors.icon,
@@ -100,10 +250,24 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     lineHeight: 16,
   },
+  exerciseSetInputs: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
   setInput: {
     backgroundColor: Colors.background.primary,
-    width: 75,
+    width: "100%",
     gap: 2,
     paddingHorizontal: 8,
+  },
+  checkmarkIconContainer: {
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#c6a34a38",
+    borderRadius: Border.radius.sm,
   },
 });

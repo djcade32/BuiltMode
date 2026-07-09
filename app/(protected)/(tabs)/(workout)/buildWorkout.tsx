@@ -320,7 +320,6 @@ const BuildWorkout = () => {
 
   const handleCompleteBuild = () => {
     console.log("Build Workout: ", exercises);
-    console.log("notes saved: ", workoutNotes);
 
     setInitialWorkout({
       name: displayWorkoutName,

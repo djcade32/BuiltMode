@@ -52,7 +52,6 @@ const ExerciseSetItem = ({
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      // opacity: withTiming(isActive || isCompleted ? 1 : 0.2, { duration: 180 }),
       transform: [{ scale: withTiming(isActive || isCompleted ? 1 : 0.98, { duration: 180 }) }],
     };
   }, [isActive, isCompleted]);
@@ -86,7 +85,6 @@ const ExerciseSetItem = ({
           setIndex={index}
           onEditSet={onEditSet}
           exerciseId={exerciseId}
-          usedForBuilding={false}
           isActive={isActive}
           containerStyle={{
             padding: 0,
@@ -94,6 +92,10 @@ const ExerciseSetItem = ({
             gap: 15,
           }}
           onDeleteSet={onDeleteSet}
+          exercise={exercise}
+          cascade={false}
+          usedForBuilding={false}
+          isCompleted={isCompleted}
         />
       );
     } else if (type === "duration") {
@@ -104,7 +106,6 @@ const ExerciseSetItem = ({
           setIndex={index}
           onEditSet={onEditSet}
           exerciseId={exerciseId}
-          usedForBuilding={false}
           isActive={isActive}
           isCompleted={isCompleted}
           containerStyle={{
@@ -113,6 +114,9 @@ const ExerciseSetItem = ({
             gap: 15,
           }}
           onDeleteSet={onDeleteSet}
+          exercise={exercise}
+          cascade={false}
+          usedForBuilding={false}
         />
       );
     } else if (type === "reps_only") {
@@ -123,7 +127,6 @@ const ExerciseSetItem = ({
           setIndex={index}
           onEditSet={onEditSet}
           exerciseId={exerciseId}
-          usedForBuilding={false}
           isActive={isActive}
           isCompleted={isCompleted}
           containerStyle={{
@@ -132,6 +135,9 @@ const ExerciseSetItem = ({
             gap: 15,
           }}
           onDeleteSet={onDeleteSet}
+          exercise={exercise}
+          cascade={false}
+          usedForBuilding={false}
         />
       );
     }
@@ -555,7 +561,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    // ...Debug[1],
     gap: 15,
   },
   setInput: {
