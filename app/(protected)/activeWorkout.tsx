@@ -76,6 +76,7 @@ const ActiveWorkout = () => {
     activeWorkoutDraft?.name ?? `${firstLetterToUpperCase(activeWorkoutDraft?.workoutType ?? "")} Workout`;
 
   const hydratedStopwatchStartedAtRef = useRef<number | null>(null);
+  const scrollViewRef = useRef<ScrollView | null>(null);
 
   const opacity = useSharedValue(0.4);
   const scale = useSharedValue(1);
@@ -199,6 +200,7 @@ const ActiveWorkout = () => {
         ? activeWorkoutDraft.exercises.findIndex((e) => e.id === exerciseLeftToComplete?.id)
         : nextExerciseIndex,
     );
+    scrollViewRef.current?.scrollToEnd({ animated: true });
   };
 
   const handleCompleteWorkout = async () => {
@@ -410,7 +412,7 @@ const ActiveWorkout = () => {
             </View>
           ) : null}
         </View>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef}>
           <View style={styles.exercisesContainer}>
             {workoutNotes ? (
               <TouchableOpacity
