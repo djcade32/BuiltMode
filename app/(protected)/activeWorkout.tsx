@@ -10,7 +10,7 @@ import { StopwatchDisplay } from "@/components/workout/StopwatchDisplay";
 import WorkoutNoteSheet from "@/components/workout/WorkoutNoteSheet";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
-import { Exercise } from "@/packages/shared/src";
+import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -249,6 +249,35 @@ const ActiveWorkout = () => {
     setIsWorkoutComplete(isWorkoutComplete);
   };
 
+  const handleChangeMetricType = (exerciseId: string, metricType: ExerciseMetricType) => {
+    if (!user?.uid || !activeWorkoutDraft) return;
+
+    const updatedExercises = activeWorkoutDraft.exercises.map((exercise) => {
+      if (exerciseId === exercise.id) {
+        return {
+          ...exercise,
+          metricType,
+          sets: [],
+        };
+      }
+      return exercise;
+    });
+
+    updateWorkout({
+      sessionId: activeWorkoutDraft.sessionId,
+      uid: user.uid,
+      exercises: updatedExercises,
+    });
+
+    if (!workoutProgress || !workoutProgress[exerciseId]) return;
+
+    updateWorkoutProgress({
+      exerciseId,
+      sets: [],
+      completed: false,
+    });
+  };
+
   const handleChangeExerciseNotes = (note: string, exerciseId: string) => {
     if (!user?.uid || !activeWorkoutDraft) return;
 
@@ -406,6 +435,8 @@ const ActiveWorkout = () => {
                 index={currentExerciseIndex + 1}
                 onExerciseComplete={handleExerciseCompleted}
                 onChangeExerciseNote={handleChangeExerciseNotes}
+                onDeleteExercise={handleDeleteExercise}
+                onChangeMetricType={handleChangeMetricType}
               />
             )}
 

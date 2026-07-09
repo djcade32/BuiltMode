@@ -121,6 +121,9 @@ const NextExerciseItem = ({
           <DropdownMenu
             renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
             options={dropDownOptions}
+            menuOptionsCustomStyles={{
+              optionsContainer: { width: 150 },
+            }}
           />
         </TouchableOpacity>
       }

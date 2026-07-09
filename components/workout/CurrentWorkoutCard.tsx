@@ -2,26 +2,20 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
-import { Entypo, FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+import { Entypo, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { v4 as uuidv4 } from "uuid";
 import { ThemedText } from "../themed-text";
+import DropdownMenu, { DropdownMenuOption } from "../ui/DropdownMenu";
 import ThemedButton from "../ui/ThemedButton";
+import ChangeMetricTypeSheet from "./ChangeMetricTypeSheet";
 import ExerciseNoteSheet from "./ExerciseNoteSheet";
 import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
 import DurationSetItem from "./exerciseSetItems/DurationSetItem";
 import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
 import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
-
-type Props = {
-  exercise: Exercise;
-  index: number;
-  onChangeExerciseNote: (note: string, exerciseId: string) => void;
-
-  onExerciseComplete: (exercise: Exercise) => void;
-};
 
 type ExerciseSetItemProps = {
   exerciseId: string;
@@ -162,7 +156,23 @@ const ExerciseSetItem = ({
   );
 };
 
-const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete, onChangeExerciseNote }: Props) => {
+type Props = {
+  exercise: Exercise;
+  index: number;
+  onChangeExerciseNote: (note: string, exerciseId: string) => void;
+  onDeleteExercise: (exerciseId: string) => void;
+  onExerciseComplete: (exercise: Exercise) => void;
+  onChangeMetricType: (exerciseId: string, metricType: ExerciseMetricType) => void;
+};
+
+const CurrentWorkoutCard = ({
+  exercise,
+  index,
+  onExerciseComplete,
+  onChangeExerciseNote,
+  onDeleteExercise,
+  onChangeMetricType,
+}: Props) => {
   const { updateWorkout, activeWorkoutDraft, updateWorkoutProgress, workoutProgress } = useWorkoutStore();
   const { user } = useUserStore();
 
@@ -172,11 +182,13 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete, onChangeExerc
   const [activeSetIndex, setActiveSetIndex] = useState(0);
   const [isNotesSheetVisible, setIsNotesSheetVisible] = useState(false);
   const [exerciseNotes, setExerciseNotes] = useState<string>(notes ?? "");
+  const [isMetricSheetVisible, setIsMetricSheetVisible] = useState(false);
 
   const listRef = useRef<FlatList<ExerciseSet>>(null);
 
   const currentSet = useMemo(() => sets[activeSetIndex], [sets, activeSetIndex]);
   const hasNotes = Boolean(notes?.trim());
+
   useEffect(() => {
     let sets = workoutProgress && workoutProgress[exercise.id] ? workoutProgress[exercise.id].sets : [];
     setCompletedSets(sets ?? []);
@@ -186,6 +198,24 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete, onChangeExerc
   useEffect(() => {
     setExerciseNotes(notes ?? "");
   }, [exercise]);
+
+  const handleChangeMetricType = useCallback(
+    (exerciseId: string, metricType: ExerciseMetricType) => {
+      if (workoutProgress && workoutProgress[exerciseId].sets.length > 0) {
+        return Alert.alert("Are You Sure?", "All exercise progress will be lost.", [
+          {
+            text: "Continue",
+            onPress: () => onChangeMetricType(exerciseId, metricType),
+            style: "destructive",
+          },
+          { text: "Cancel" },
+        ]);
+      }
+
+      onChangeMetricType(exerciseId, metricType);
+    },
+    [onChangeMetricType, workoutProgress],
+  );
 
   const handleCompleteSet = () => {
     if (!currentSet) return;
@@ -359,6 +389,28 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete, onChangeExerc
     });
   };
 
+  const dropDownOptions: DropdownMenuOption[] = useMemo(
+    () => [
+      {
+        onSelect: () => setIsNotesSheetVisible(true),
+        text: hasNotes ? "Edit Note" : "Add Note",
+        icon: <FontAwesome5 name="sticky-note" size={10} color={Colors.icon} />,
+      },
+      {
+        onSelect: () => setIsMetricSheetVisible(true),
+        text: "Change Metric",
+        icon: <FontAwesome6 name="ruler" size={10} color={Colors.icon} />,
+      },
+      {
+        onSelect: () => onDeleteExercise(exercise.id),
+        text: "Delete Exercise",
+        icon: <FontAwesome6 name="trash" size={10} color={Colors.error} />,
+        menuOptionCustomStyles: { optionText: { color: Colors.error } },
+      },
+    ],
+    [],
+  );
+
   if (!exercise) return null;
 
   return (
@@ -374,27 +426,15 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete, onChangeExerc
             <ThemedText style={styles.setTrackerText}>
               {`${getExerciseMetricText()} ${Math.min(activeSetIndex + 1, sets.length)}`} of {sets.length}
             </ThemedText>
-            <TouchableOpacity
-              style={{
-                backgroundColor: Colors.cardBorder,
-                borderColor: Colors.inputBorder,
-                borderWidth: 1,
-                borderRadius: Border.radius.md,
-                flexDirection: "row",
-                alignItems: "center",
-                paddingVertical: 5,
-                paddingHorizontal: 7,
-                gap: 3,
+
+            <DropdownMenu
+              renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
+              options={dropDownOptions}
+              menuOptionsCustomStyles={{
+                optionsContainer: { width: 140 },
               }}
-              onPress={() => setIsNotesSheetVisible(true)}
-            >
-              <MaterialIcons name="edit" size={12} color={Colors.accent.primary} />
-              <ThemedText
-                style={{ fontSize: 12, color: Colors.icon, fontFamily: Typography.family.secondary.regular }}
-              >
-                {hasNotes ? "Edit" : "Add"} Note
-              </ThemedText>
-            </TouchableOpacity>
+              menuTriggerStyle={styles.iconContainer}
+            />
           </View>
         </View>
       </View>
@@ -464,6 +504,14 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete, onChangeExerc
           setExerciseNotes(note);
           onChangeExerciseNote(note, exercise.id);
         }}
+      />
+
+      <ChangeMetricTypeSheet
+        visible={isMetricSheetVisible}
+        exerciseName={name}
+        currentMetricType={metricType}
+        onClose={() => setIsMetricSheetVisible(false)}
+        onSelectMetricType={(metricType) => handleChangeMetricType(exercise.id, metricType)}
       />
     </View>
   );
@@ -618,5 +666,15 @@ const styles = StyleSheet.create({
     color: Colors.icon,
     fontFamily: Typography.family.primary.semibold,
     fontSize: 12,
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    backgroundColor: Colors.background.secondary,
+    borderColor: Colors.cardBorder,
+    borderWidth: 1,
+    borderRadius: Border.radius.md,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
