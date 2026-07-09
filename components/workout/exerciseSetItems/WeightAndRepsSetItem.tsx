@@ -3,8 +3,9 @@ import Input from "@/components/ui/Input";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Exercise, ExerciseSet } from "@/packages/shared/src";
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
+import { SetUpdateTransaction } from "../BuildExerciseItem";
 
 type Props = {
   exerciseId: string;
@@ -13,12 +14,43 @@ type Props = {
   onDeleteSet?: (exerciseId: string, setId: string) => void;
   onEditSet: (exerciseId: string, setId: string, set: ExerciseSet) => void;
   exercise: Exercise;
+  usedForBuilding?: boolean;
+  setUpdateTransactions?: SetUpdateTransaction[] | null;
+  setSetUpdateTransactions?: React.Dispatch<React.SetStateAction<SetUpdateTransaction[] | null>>;
+  cascade?: boolean;
   isActive?: boolean;
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
   autoFocus?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
+};
+
+type CascadingMetric = "weight" | "reps";
+
+const CASCADING_METRICS: CascadingMetric[] = ["weight", "reps"];
+
+const getNearestTouchedMetricAbove = (
+  transactions: SetUpdateTransaction[] | null,
+  metric: CascadingMetric,
+  setIndex: number,
+) => {
+  if (!transactions) return null;
+
+  return transactions.reduce<SetUpdateTransaction | null>((nearestTransaction, transaction) => {
+    const isSameMetric = transaction.metric === metric;
+    const isAboveCurrentSet = transaction.setIndex < setIndex;
+
+    if (!isSameMetric || !isAboveCurrentSet) {
+      return nearestTransaction;
+    }
+
+    if (!nearestTransaction || transaction.setIndex > nearestTransaction.setIndex) {
+      return transaction;
+    }
+
+    return nearestTransaction;
+  }, null);
 };
 
 const WeightAndRepsSetItem = ({
@@ -28,6 +60,10 @@ const WeightAndRepsSetItem = ({
   onEditSet,
   onDeleteSet,
   exercise,
+  usedForBuilding = true,
+  setUpdateTransactions,
+  setSetUpdateTransactions,
+  cascade = true,
   isActive = false,
   isCompleted = false,
   containerStyle,
@@ -35,37 +71,149 @@ const WeightAndRepsSetItem = ({
   onBlur,
   onFocus,
 }: Props) => {
-  // const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
-  const [isWeightTouched, setIsWeightTouched] = useState<boolean>(false);
-  const [isRepsTouched, setIsRepsTouched] = useState<boolean>(false);
+  const hasMountedRef = useRef(false);
+
+  const [touchedMetrics, setTouchedMetrics] = useState<Record<CascadingMetric, boolean>>({
+    weight: false,
+    reps: false,
+  });
+
+  const hasMetricBeenTouched = (metric: CascadingMetric) => {
+    return (
+      touchedMetrics[metric] ||
+      !!setUpdateTransactions?.some((transaction) => {
+        return transaction.setIndex === setIndex && transaction.metric === metric;
+      })
+    );
+  };
 
   useEffect(() => {
-    if (setIndex > 1) {
-      const indexOfPrevSet = exercise.sets.length - 2;
+    if (setIndex <= 1) return;
 
-      const weight = exercise.sets[indexOfPrevSet].weight ? exercise.sets[indexOfPrevSet].weight.toString() : 0;
-      const reps = exercise.sets[indexOfPrevSet].reps ? exercise.sets[indexOfPrevSet].reps.toString() : 0;
+    const previousSet = exercise.sets[setIndex - 2];
 
-      onEditSet(exerciseId, set.id, { ...set, weight: Number(weight), reps: Number(reps) });
-    }
+    if (!previousSet) return;
+
+    const shouldInheritWeight = set.weight === undefined || set.weight === null || set.weight === 0;
+    const shouldInheritReps = set.reps === undefined || set.reps === null || set.reps === 0;
+
+    if (!shouldInheritWeight && !shouldInheritReps) return;
+
+    const updatedSet: ExerciseSet = {
+      ...set,
+      weight: shouldInheritWeight ? Number(previousSet.weight ?? 0) : set.weight,
+      reps: shouldInheritReps ? Number(previousSet.reps ?? 0) : set.reps,
+    };
+
+    if (updatedSet.weight === set.weight && updatedSet.reps === set.reps) return;
+
+    onEditSet(exerciseId, set.id, updatedSet);
+
+    // Only run this when the row first mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // useEffect(() => {
-  //   if (setIndex > 1 && !isInitialLoad) {
-  //     console.log("Sets updated: ", setIndex);
-  //   }
-  //   setIsInitialLoad(false);
-  // }, [exercise]);
-  // We can tell which set has been touched or not by looking at the sets with values within the exercise sets list. When sets are initially made they are made with undefined values.
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
+    if (!cascade) return;
+
+    if (setIndex <= 1 || !setUpdateTransactions?.length) return;
+
+    let updatedSet: ExerciseSet = { ...set };
+    let hasChanges = false;
+
+    CASCADING_METRICS.forEach((metric) => {
+      if (hasMetricBeenTouched(metric)) return;
+
+      const nearestTransaction = getNearestTouchedMetricAbove(setUpdateTransactions, metric, setIndex);
+
+      if (!nearestTransaction) return;
+
+      const nextValue = Number(nearestTransaction.value || 0);
+
+      if (updatedSet[metric] === nextValue) return;
+
+      updatedSet = {
+        ...updatedSet,
+        [metric]: nextValue,
+      };
+
+      hasChanges = true;
+    });
+
+    if (!hasChanges) return;
+
+    onEditSet(exerciseId, set.id, updatedSet);
+
+    // This should only react to transaction changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setUpdateTransactions]);
+
+  const handleEditMetric = (metric: CascadingMetric, value: string) => {
+    setTouchedMetrics((currentTouchedMetrics) => ({
+      ...currentTouchedMetrics,
+      [metric]: true,
+    }));
+
+    cascade &&
+      setSetUpdateTransactions &&
+      setSetUpdateTransactions((currentTransactions) => {
+        const existingTransactions = currentTransactions ?? [];
+
+        const transactionsWithoutCurrentMetric = existingTransactions.filter((transaction) => {
+          return !(transaction.setIndex === setIndex && transaction.metric === metric);
+        });
+
+        const updatedTransaction: SetUpdateTransaction = {
+          setIndex,
+          metric,
+          value,
+        };
+
+        return [updatedTransaction, ...transactionsWithoutCurrentMetric];
+      });
+
+    onEditSet(exerciseId, set.id, {
+      ...set,
+      [metric]: Number(value || 0),
+    });
+  };
 
   const handleEditWeight = (weight: string) => {
-    onEditSet(exerciseId, set.id, { ...set, weight: Number(weight) });
-    setIsWeightTouched(true);
+    handleEditMetric("weight", weight);
   };
 
   const handleEditReps = (reps: string) => {
-    onEditSet(exerciseId, set.id, { ...set, reps: Number(reps) });
-    setIsRepsTouched(true);
+    handleEditMetric("reps", reps);
+  };
+
+  const handleDeleteSet = (exerciseId: string, id: string) => {
+    if (!onDeleteSet) return;
+
+    onDeleteSet(exerciseId, id);
+
+    cascade &&
+      setSetUpdateTransactions &&
+      setSetUpdateTransactions((currentTransactions) => {
+        if (!currentTransactions) return currentTransactions;
+
+        return currentTransactions
+          .filter((transaction) => transaction.setIndex !== setIndex)
+          .map((transaction) => {
+            if (transaction.setIndex < setIndex) {
+              return transaction;
+            }
+
+            return {
+              ...transaction,
+              setIndex: transaction.setIndex - 1,
+            };
+          });
+      });
   };
 
   return (
@@ -75,6 +223,7 @@ const WeightAndRepsSetItem = ({
           <Feather name="check" size={12} color={Colors.accent.primary} />
         </View>
       )}
+
       {isActive && isCompleted ? null : (
         <ThemedText style={styles.exerciseSetSetText}>
           SET{"\n"}
@@ -98,33 +247,19 @@ const WeightAndRepsSetItem = ({
           style={
             isActive
               ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold }
-              : { color: isWeightTouched ? Colors.text.primary : Colors.text.secondary }
+              : {
+                  color: usedForBuilding
+                    ? hasMetricBeenTouched("weight")
+                      ? Colors.text.primary
+                      : Colors.text.secondary
+                    : Colors.text.primary,
+                }
           }
           selectTextOnFocus
         />
 
-        {/* {usedForBuilding || isActive ? (
-          <Input
-            placeholder="0"
-            placeholderTextColor={Colors.icon}
-            value={set?.weight?.toString() ?? "0"}
-            onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, weight: Number(value) })}
-            postText="lbs"
-            postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-            containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
-            keyboardType="number-pad"
-            autoFocus={autoFocus}
-            onBlur={onBlur}
-            onFocus={onFocus}
-            style={
-              isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}
-            }
-            selectTextOnFocus
-          />
-        ) : (
-          <ThemedText>{`${set?.weight ?? "0"} lbs`}</ThemedText>
-        )} */}
         <ThemedText style={{ color: Colors.icon }}>|</ThemedText>
+
         <Input
           placeholder="0"
           placeholderTextColor={Colors.icon}
@@ -139,37 +274,21 @@ const WeightAndRepsSetItem = ({
           style={
             isActive
               ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold }
-              : { color: isRepsTouched ? Colors.text.primary : Colors.text.secondary }
+              : {
+                  color: usedForBuilding
+                    ? hasMetricBeenTouched("reps")
+                      ? Colors.text.primary
+                      : Colors.text.secondary
+                    : Colors.text.primary,
+                }
           }
           selectTextOnFocus
         />
-
-        {/* <ThemedText style={{ color: Colors.icon }}>|</ThemedText>
-        {usedForBuilding || isActive ? (
-          <Input
-            placeholder="0"
-            placeholderTextColor={Colors.icon}
-            value={set?.reps?.toString() ?? "0"}
-            onChangeText={(value) => onEditSet(exerciseId, set.id, { ...set, reps: Number(value) })}
-            postText="reps"
-            postTextStyle={{ color: Colors.icon, fontSize: 12 }}
-            containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
-            keyboardType="number-pad"
-            onBlur={onBlur}
-            onFocus={onFocus}
-            style={
-              isActive ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold } : {}
-            }
-            selectTextOnFocus
-          />
-        ) : (
-          <ThemedText>{`${set?.reps ?? "0"} reps`}</ThemedText>
-        )} */}
       </View>
 
       <View style={{ alignItems: "flex-end" }}>
         {onDeleteSet ? (
-          <Pressable onPress={() => onDeleteSet(exerciseId, set.id)} hitSlop={15}>
+          <Pressable onPress={() => handleDeleteSet(exerciseId, set.id)} hitSlop={15}>
             <Feather name="x" size={16} color={Colors.icon} />
           </Pressable>
         ) : (

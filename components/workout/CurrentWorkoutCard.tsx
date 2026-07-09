@@ -30,6 +30,7 @@ type ExerciseSetItemProps = {
   isActive: boolean;
   type: ExerciseMetricType;
   completedSets: ExerciseSet[];
+  exercise: Exercise;
   onEditSet: (exerciseId: string, setId: string, set: ExerciseSet) => void;
   onDeleteSet?: (exerciseId: string, setId: string) => void;
 };
@@ -41,6 +42,7 @@ const ExerciseSetItem = ({
   type,
   completedSets,
   exerciseId,
+  exercise,
   onEditSet,
   onDeleteSet,
 }: ExerciseSetItemProps) => {
@@ -71,6 +73,9 @@ const ExerciseSetItem = ({
             backgroundColor: "transparent",
           }}
           onDeleteSet={onDeleteSet}
+          exercise={exercise}
+          cascade={false}
+          usedForBuilding={false}
         />
       );
     } else if (type === "distance") {
@@ -145,17 +150,6 @@ const ExerciseSetItem = ({
               backgroundColor: isActive ? "#c6a34a0c" : Colors.input,
             },
       ]}
-      // style={[
-      //   styles.exerciseSetContainer,
-      //   animatedStyle,
-      //   isCompleted
-      //     ? { backgroundColor: Colors.background.primary }
-      //     : {
-      //         borderColor: isActive ? "#c6a34a50" : "transparent",
-      //         borderWidth: isActive ? 2 : 0,
-      //         backgroundColor: isActive ? "#c6a34a0c" : Colors.background.primary,
-      //       },
-      // ]}
     >
       {content()}
     </Animated.View>
@@ -430,6 +424,7 @@ const CurrentWorkoutCard = ({ exercise, index, onExerciseComplete, onChangeExerc
               exerciseId={exercise.id}
               onEditSet={handleOnEdit}
               onDeleteSet={index > 0 ? handleDeleteSet : undefined}
+              exercise={exercise}
             />
           ))}
         </View>

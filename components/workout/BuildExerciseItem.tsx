@@ -24,6 +24,13 @@ import DurationSetItem from "./exerciseSetItems/DurationSetItem";
 import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
 import WeightAndRepsSetItem from "./exerciseSetItems/WeightAndRepsSetItem";
 
+export type TransactionMetricTypes = "weight" | "reps";
+export type SetUpdateTransaction = {
+  setIndex: number;
+  metric: TransactionMetricTypes;
+  value: string;
+};
+
 type Props = {
   exercise: Exercise & {
     notes?: string;
@@ -56,12 +63,9 @@ const BuildExerciseItem = ({
   const [isMetricSheetVisible, setIsMetricSheetVisible] = useState(false);
   const [isNotesSheetVisible, setIsNotesSheetVisible] = useState(false);
   const [draftNotes, setDraftNotes] = useState(notes ?? "");
+  const [setUpdateTransactions, setSetUpdateTransactions] = useState<SetUpdateTransaction[] | null>(null);
 
   const hasNotes = Boolean(notes?.trim());
-
-  // useEffect(() => {
-  //   console.log("exercise: ", exercise);
-  // }, [exercise]);
 
   const openNotesSheet = () => {
     setDraftNotes(notes ?? "");
@@ -154,6 +158,8 @@ const BuildExerciseItem = ({
             onFocus={onExerciseInputFocus}
             onBlur={onExerciseInputBlur}
             exercise={exercise}
+            setUpdateTransactions={setUpdateTransactions}
+            setSetUpdateTransactions={setSetUpdateTransactions}
           />
         );
 
