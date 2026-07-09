@@ -5,14 +5,7 @@ export type ExerciseType = "strength" | "conditioning" | "cardio";
 
 type WorkoutFeedStatus = "pending_publish" | "published";
 
-export type WorkoutType =
-  | "strength"
-  | "conditioning"
-  | "mixed"
-  | "skill"
-  | "recovery"
-  | "cardio"
-  | "other";
+export type WorkoutType = "strength" | "conditioning" | "mixed" | "skill" | "recovery" | "cardio" | "other";
 
 export type ExerciseMetricType =
   | "weight_reps"

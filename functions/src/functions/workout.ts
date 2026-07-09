@@ -12,20 +12,9 @@ import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
-import { updateLeaderboardEntry } from "../firestore/leaderboard.js";
-import {
-  createUserMonthAggregates,
-  createUserStats,
-  createUserWeekAggregate,
-  getUserByUid,
-  getUserMonthAggregate,
-  getUserStats,
-  getUserWeekAggregate,
-} from "../firestore/user.js";
+import { getUserByUid, getUserMonthAggregate, getUserStats, getUserWeekAggregate } from "../firestore/user.js";
 import {
   calculateModeScore,
-  createCompleteWorkout,
-  createDayMarker,
   getDayMarker,
   getLastFourWeekAggregates,
   getLastFourWeeksAdherenceRate,
@@ -88,7 +77,10 @@ const getWorkoutTimezoneFields = (completedAt: Date, workoutTimezone: string) =>
   @param {CompleteWorkoutRequest} workout Workout object to save in Firestore
   @return On success return user's workout metrics
 */
-export async function handleCompleteWorkout(uid: string, workout: CompleteWorkoutRequest): Promise<CompleteWorkoutResponse> {
+export async function handleCompleteWorkout(
+  uid: string,
+  workout: CompleteWorkoutRequest,
+): Promise<CompleteWorkoutResponse> {
   const { sessionId, workoutType, notes, exercises, name, duration } = workout;
 
   const now = Timestamp.now();
@@ -127,11 +119,14 @@ export async function handleCompleteWorkout(uid: string, workout: CompleteWorkou
 
     const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
     const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(tx, uid, localDateKey);
-    const completedWorkoutsLast30Days = dayMarkerExists ? numOfCompletedWorkoutsLast30Days : numOfCompletedWorkoutsLast30Days + 1;
+    const completedWorkoutsLast30Days = dayMarkerExists
+      ? numOfCompletedWorkoutsLast30Days
+      : numOfCompletedWorkoutsLast30Days + 1;
     const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
     const weekAggregateExists = weekAggregate.exists;
 
     const last4WeekAggregates = await getLastFourWeekAggregates(tx, uid, weekId);
+    console.log("last4WeekAggregates: ", last4WeekAggregates);
     const lastFourWeeksAdherenceRate = getLastFourWeeksAdherenceRate(last4WeekAggregates);
 
     let streakStatus = weekAggregateExists ? weekAggregate.get("streakStatus") : "inactive";
@@ -164,7 +159,11 @@ export async function handleCompleteWorkout(uid: string, workout: CompleteWorkou
       completedWorkoutsLast30Days,
       weeklyAdherenceStreak: streakWeeks,
       completedWorkoutsThisWeek: activeDaysThisWeek,
+      completedWorkoutsLastFinalizedWeek: last4WeekAggregates[0].activeDaysThisWeek,
+      weeklyTargetLastFinalizedWeek: last4WeekAggregates[0].weeklyTargetDays,
     });
+
+    console.log("calculatedStats: ", calculatedStats);
 
     const modeScore = isOfficialWeek ? calculatedStats.modeScore : null;
 
@@ -298,12 +297,12 @@ export async function handleCompleteWorkout(uid: string, workout: CompleteWorkou
       updatedAt: now,
     };
 
-    createCompleteWorkout(tx, workoutDoc);
-    createDayMarker(tx, dayMarkerDoc);
-    createUserWeekAggregate(tx, uid, weekId, userWeekAggregateDoc);
-    createUserMonthAggregates(tx, uid, monthId, userMonthAggregateDoc);
-    createUserStats(tx, uid, userStatsDoc);
-    updateLeaderboardEntry(tx, updatedLeaderboardEntry);
+    // createCompleteWorkout(tx, workoutDoc);
+    // createDayMarker(tx, dayMarkerDoc);
+    // createUserWeekAggregate(tx, uid, weekId, userWeekAggregateDoc);
+    // createUserMonthAggregates(tx, uid, monthId, userMonthAggregateDoc);
+    // createUserStats(tx, uid, userStatsDoc);
+    // updateLeaderboardEntry(tx, updatedLeaderboardEntry);
     return {
       activeDaysThisWeek,
       isOfficialWeek,
