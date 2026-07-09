@@ -19,6 +19,7 @@ import { Alert, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, Vi
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import { v4 as uuidv4 } from "uuid";
 
 const OPTIONS: WorkoutType[] = ["strength", "conditioning", "cardio", "mixed"];
 
@@ -38,7 +39,7 @@ const BuildWorkout = () => {
   const exerciseInputBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingScrollActionRef = useRef<PendingScrollAction | null>(null);
 
-  const { setInitialWorkout, initialWorkout, saveWorkoutAsTemplate } = useWorkoutStore();
+  const { setInitialWorkout, initialWorkout, saveWorkoutAsTemplate, startWorkout } = useWorkoutStore();
   const { user } = useUserStore();
 
   const [exercises, setExercises] = useState<Exercise[]>(initialWorkout?.exercises ?? []);
@@ -331,6 +332,19 @@ const BuildWorkout = () => {
     router.push("/(protected)/(tabs)/(workout)/confirmWorkout");
   };
 
+  const handleStartWorkout = () => {
+    if (!user) return;
+    const id = `${uuidv4()}-workout`;
+    startWorkout({
+      name: displayWorkoutName,
+      sessionId: id,
+      uid: user?.uid,
+      exercises,
+      workoutType,
+      notes: workoutNotes,
+    });
+  };
+
   const handleBackPress = () => {
     router.back();
     setInitialWorkout(null);
@@ -366,21 +380,46 @@ const BuildWorkout = () => {
   const noExercisesView = (
     <View style={styles.noExercisesContainer}>
       <View style={styles.noExercisesIconContainer}>
-        <FontAwesome6 name="dumbbell" size={24} color={Colors.icon} />
+        <FontAwesome6 name="dumbbell" size={24} color={Colors.accent.primary} />
       </View>
 
-      <ThemedText type="defaultSemiBold">No exercises added</ThemedText>
+      <ThemedText style={styles.noExercisesTitle}>Start empty or build first</ThemedText>
 
-      <ThemedText style={styles.noExercisesSubtext}>Add at least one exercise to begin.</ThemedText>
+      <ThemedText style={styles.noExercisesSubtext}>
+        Begin your workout now and add exercises as you go, or build your workout first.
+      </ThemedText>
 
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={[styles.addExerciseButton, { width: "100%", marginTop: 25 }]}
-        onPress={handleOpenAddExerciseSheet}
-      >
-        <Entypo name="plus" size={18} color={Colors.icon} />
-        <ThemedText style={styles.addExerciseButtonText}>ADD EXERCISE</ThemedText>
-      </TouchableOpacity>
+      <View style={styles.noExercisesActions}>
+        {/* <TouchableOpacity activeOpacity={0.9} style={styles.startWorkoutEmptyButton} onPress={handleCompleteBuild}>
+          <FontAwesome6 name="play" size={13} color={Colors.background.primary} />
+          <ThemedText style={styles.startWorkoutEmptyButtonText}>START WORKOUT EMPTY</ThemedText>
+        </TouchableOpacity> */}
+        <ThemedButton
+          title="START WORKOUT EMPTY"
+          fontSize={Typography.size.sm}
+          preIcon={{
+            familyIcon: FontAwesome6,
+            name: "play",
+          }}
+          onPress={handleStartWorkout}
+        />
+
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.addExerciseButton, styles.emptyAddExerciseButton]}
+          onPress={handleOpenAddExerciseSheet}
+        >
+          <Entypo name="plus" size={18} color={Colors.icon} />
+          <ThemedText style={styles.addExerciseButtonText}>ADD EXERCISE</ThemedText>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.emptyStateHelper}>
+        <FontAwesome6 name="circle-info" size={13} color={Colors.accent.secondary} />
+        <ThemedText style={styles.emptyStateHelperText}>
+          You can add exercises anytime during the workout.
+        </ThemedText>
+      </View>
     </View>
   );
 
@@ -671,24 +710,84 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 12,
+    paddingBottom: 52,
   },
 
   noExercisesIconContainer: {
-    borderColor: Colors.cardBorder,
+    borderColor: "rgba(198, 163, 74, 0.24)",
     borderWidth: 1,
-    backgroundColor: Colors.background.secondary,
-    width: 64,
-    height: 64,
-    borderRadius: 64 / 2,
+    backgroundColor: "rgba(198, 163, 74, 0.08)",
+    width: 72,
+    height: 72,
+    borderRadius: 72 / 2,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 30,
+  },
+
+  noExercisesTitle: {
+    textAlign: "center",
+    fontSize: 24,
+    lineHeight: 32,
+    fontFamily: Typography.family.primary.semibold,
+    letterSpacing: 0.2,
   },
 
   noExercisesSubtext: {
-    fontSize: 14,
+    fontSize: 16,
+    lineHeight: 24,
     color: Colors.icon,
-    marginTop: 8,
+    marginTop: 12,
+    textAlign: "center",
+    maxWidth: 320,
+  },
+
+  noExercisesActions: {
+    width: "100%",
+    gap: 12,
+    marginTop: 36,
+  },
+
+  startWorkoutEmptyButton: {
+    width: "100%",
+    backgroundColor: Colors.accent.primary,
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 17,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+    borderRadius: Border.radius.md,
+  },
+
+  startWorkoutEmptyButtonText: {
+    color: Colors.background.primary,
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 18,
+    letterSpacing: 0.8,
+    fontFamily: Typography.family.primary.semibold,
+  },
+
+  emptyAddExerciseButton: {
+    width: "100%",
+  },
+
+  emptyStateHelper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 22,
+  },
+
+  emptyStateHelperText: {
+    color: Colors.icon,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
+    flexShrink: 1,
   },
 
   footerActions: {
