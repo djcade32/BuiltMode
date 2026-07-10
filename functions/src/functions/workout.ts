@@ -175,8 +175,6 @@ export async function handleCompleteWorkout(
       weeklyTargetLastFinalizedWeek: lastFinalizedWeek?.weeklyTargetDays,
     });
 
-    console.log("calculatedStats: ", calculatedStats);
-
     const modeScore = isOfficialWeek ? calculatedStats.modeScore : null;
 
     const activity30DayRate = isOfficialWeek ? calculatedStats.activity30DayScore : 0;

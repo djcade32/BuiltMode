@@ -102,7 +102,7 @@ const BuildExerciseItem = ({
       },
       {
         onSelect: () => onDeleteExercise?.(exercise),
-        text: "Delete Set",
+        text: "Delete Exercise",
         icon: <FontAwesome6 name="trash" size={10} color={Colors.error} />,
         menuOptionCustomStyles: { optionText: { color: Colors.error } },
       },
