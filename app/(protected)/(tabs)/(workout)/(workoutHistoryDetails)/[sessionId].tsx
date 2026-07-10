@@ -126,11 +126,6 @@ const WorkoutHistoryDetails = () => {
     setInitialWorkout({
       name: workout.name ?? "",
       exercises: workout.exercises.map((exercise) => {
-        console.log("copy exercises: ", {
-          ...exercise,
-          ...(user?.uid === workout.uid && exercise.notes && { notes: exercise.notes }),
-        });
-
         return {
           ...exercise,
           ...(user?.uid === workout.uid && exercise.notes && { notes: exercise.notes }),
