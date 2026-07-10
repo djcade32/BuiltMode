@@ -27,12 +27,7 @@ export const getUserLeaderboardEntry = (tx: Transaction, uid: string) => {
   return tx.get(db.collection("leaderboardEntries").doc(uid));
 };
 
-export const getDayMarker = (
-  tx: Transaction,
-  uid: string,
-  weekId: string,
-  localDateKey: string,
-) => {
+export const getDayMarker = (tx: Transaction, uid: string, weekId: string, localDateKey: string) => {
   return tx.get(db.collection(`userWeekDays/${uid}_${weekId}/days`).doc(localDateKey));
 };
 
@@ -43,21 +38,27 @@ export const calculateModeScore = (input: ModeScoreInput): ModeScoreBreakdown =>
     completedWorkoutsLast30Days,
     weeklyTarget,
     streakMaxWeeks = 12,
+    completedWorkoutsLastFinalizedWeek,
+    weeklyTargetLastFinalizedWeek,
   } = input;
 
   const streakScore = calculateStreakScore(weeklyAdherenceStreak, streakMaxWeeks);
 
-  const weeklyAdherenceRateScore = calculateWeeklyAdherenceRateScore(
-    completedWorkoutsThisWeek,
-    weeklyTarget,
-  );
+  const currentWeekProgressScore = calculateWeeklyAdherenceRateScore(completedWorkoutsThisWeek, weeklyTarget);
 
-  const { activity30DayScore, numOfdaysWorkedout } = calculate30DayActivityScore(
-    completedWorkoutsLast30Days,
-  );
+  const finalizedWeeklyAdherenceRateScore =
+    completedWorkoutsLastFinalizedWeek !== undefined && weeklyTargetLastFinalizedWeek !== undefined
+      ? calculateWeeklyAdherenceRateScore(completedWorkoutsLastFinalizedWeek, weeklyTargetLastFinalizedWeek)
+      : currentWeekProgressScore;
 
-  const rawModeScore =
-    streakScore * 0.45 + weeklyAdherenceRateScore * 0.3 + activity30DayScore * 0.25;
+  /**
+   * Current week can help Mode Score, but should not hurt it.
+   */
+  const weeklyAdherenceRateScore = Math.max(finalizedWeeklyAdherenceRateScore, currentWeekProgressScore);
+
+  const { activity30DayScore, numOfdaysWorkedout } = calculate30DayActivityScore(completedWorkoutsLast30Days);
+
+  const rawModeScore = streakScore * 0.45 + weeklyAdherenceRateScore * 0.3 + activity30DayScore * 0.25;
 
   return {
     modeScore: roundToNearestInt(rawModeScore),
@@ -108,9 +109,7 @@ export const getLastFourWeekAggregates = async (
   });
 };
 
-export function getLastFourWeeksAdherenceRate(
-  weekRecords: UserWeekAggregate[],
-): WeeklyAdherenceResult {
+export function getLastFourWeeksAdherenceRate(weekRecords: UserWeekAggregate[]): WeeklyAdherenceResult {
   const eligibleWeeks = weekRecords
     .filter((week) => {
       return week.isOfficialWeek && !week.isDeloadWeek && week.weeklyTargetDays > 0;
@@ -158,18 +157,13 @@ export const getLast30DayDateKeys = (todayLocalDateKey: string): Set<string> => 
   return result;
 };
 
-export const getWorkoutsWithinLast30Days = async (
-  tx: Transaction,
-  uid: string,
-  todayLocalDateKey: string,
-) => {
+export const getWorkoutsWithinLast30Days = async (tx: Transaction, uid: string, todayLocalDateKey: string) => {
   // Turn set into array to better iterate over
   const validWindowKeys = [...getLast30DayDateKeys(todayLocalDateKey)];
   let daysWorkedout = 0;
   for (const dateKey of validWindowKeys) {
     const weekId = dayjs(dateKey).startOf("week").add(1, "day");
-    const dayMarkerExists = (await getDayMarker(tx, uid, weekId.format("YYYY-MM-DD"), dateKey))
-      .exists;
+    const dayMarkerExists = (await getDayMarker(tx, uid, weekId.format("YYYY-MM-DD"), dateKey)).exists;
     dayMarkerExists && daysWorkedout++;
   }
 
@@ -184,7 +178,6 @@ export const getDateKeysForMonth = (date: Date | string): Set<string> => {
   for (let i = 0; i < numOfDaysInMonth; i++) {
     result.add(dayjs(startOfMonth).add(i, "day").format("YYYY-MM-DD"));
   }
-  console.log("results: ", result);
   return result;
 };
 
@@ -198,9 +191,7 @@ export const getTotalActiveDaysInMonth = async (
   let daysWorkedout = 0;
   for (const dateKey of validWindowKeys) {
     const weekId = dayjs(dateKey).startOf("week").add(1, "day");
-    console.log("looking for weekId: ", weekId.format("YYYY-MM-DD"), " with date key: ", dateKey);
-    const dayMarkerExists = (await getDayMarker(tx, uid, weekId.format("YYYY-MM-DD"), dateKey))
-      .exists;
+    const dayMarkerExists = (await getDayMarker(tx, uid, weekId.format("YYYY-MM-DD"), dateKey)).exists;
     dayMarkerExists && daysWorkedout++;
     dayMarkerExists && console.log("found workout");
   }
@@ -217,19 +208,13 @@ const calculate30DayActivityScore = (numOfdaysWorkedout: number) => {
   };
 };
 
-const calculateWeeklyAdherenceRateScore = (
-  completedWorkoutsThisWeek: number,
-  weeklyTarget: number,
-): number => {
+const calculateWeeklyAdherenceRateScore = (completedWorkoutsThisWeek: number, weeklyTarget: number): number => {
   if (weeklyTarget <= 0) return 0;
 
   return clamp((completedWorkoutsThisWeek / weeklyTarget) * 100, 0, 100);
 };
 
-const calculateStreakScore = (
-  weeklyAdherenceStreak: number,
-  streakMaxWeeks: number = 12,
-): number => {
+const calculateStreakScore = (weeklyAdherenceStreak: number, streakMaxWeeks: number = 12): number => {
   if (streakMaxWeeks <= 0) return 0;
 
   return clamp((weeklyAdherenceStreak / streakMaxWeeks) * 100, 0, 100);

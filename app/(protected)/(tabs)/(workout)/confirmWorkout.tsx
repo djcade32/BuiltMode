@@ -34,10 +34,7 @@ const ExerciseListRow = ({ exercise, index }: { exercise: Exercise; index: numbe
     }
   };
 
-  const setValue =
-    exercise.metricType === "distance"
-      ? (exercise.sets[0]?.distanceMiles ?? 0)
-      : exercise.sets.length;
+  const setValue = exercise.metricType === "distance" ? (exercise.sets[0]?.distanceMiles ?? 0) : exercise.sets.length;
   return (
     <View key={exercise.id} style={styles.exerciseListRowContainer}>
       <View style={styles.listNumberContainer}>
@@ -70,6 +67,7 @@ const Ready = () => {
       uid: user?.uid,
       exercises: initialWorkout.exercises,
       workoutType: initialWorkout.workoutType,
+      notes: initialWorkout.notes,
     });
   };
 

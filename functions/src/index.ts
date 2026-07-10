@@ -85,7 +85,6 @@ export const completeWorkout = onCall(async (request: CallableRequest<CompleteWo
   if (!parsed.success) {
     throw new HttpsError("invalid-argument", "Invalid complete workout payload.");
   }
-
   return await handleCompleteWorkout(request.auth.uid, parsed.data);
 });
 

@@ -15,6 +15,7 @@ import { MenuProvider } from "react-native-popup-menu";
 const ProtectedLayout = () => {
   // useUserStore.persist.clearStorage();
   // useAuthStore.persist.clearStorage();
+  // useWorkoutStore.persist.clearStorage();
   const { isAuthenticated, isHydrated, user } = useAuthStore();
   const { activeWorkoutDraft } = useWorkoutStore();
 
@@ -36,7 +37,8 @@ const ProtectedLayout = () => {
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !activeWorkoutDraft) return;
 
-    const targetPath = activeWorkoutDraft.status === "finishing" ? "/(protected)/workoutComplete" : "/(protected)/activeWorkout";
+    const targetPath =
+      activeWorkoutDraft.status === "finishing" ? "/(protected)/workoutComplete" : "/(protected)/activeWorkout";
 
     const currentPath =
       pathname === "/workoutComplete"

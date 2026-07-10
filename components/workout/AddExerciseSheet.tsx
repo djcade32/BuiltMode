@@ -52,9 +52,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
 
     SECTION_TITLES.forEach((title) => {
       if (EXERCISES_GROUPED[title]) {
-        const sortedExercises = [...EXERCISES_GROUPED[title]].sort((a, b) =>
-          a.name.localeCompare(b.name),
-        );
+        const sortedExercises = [...EXERCISES_GROUPED[title]].sort((a, b) => a.name.localeCompare(b.name));
 
         initialGroups.push({
           title: title.toUpperCase(),
@@ -95,11 +93,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
     onClose();
   };
 
-  const buildExerciseObject = (item: {
-    name: string;
-    type: ExerciseType;
-    metricType: ExerciseMetricType;
-  }) => {
+  const buildExerciseObject = (item: { name: string; type: ExerciseType; metricType: ExerciseMetricType }) => {
     const { name, metricType } = item;
     const id = `${uuidv4()}-exercise`;
     const exercise: Exercise = {
@@ -107,15 +101,12 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
       name,
       metricType,
       sets: [],
+      // notes: "",
     };
     return exercise;
   };
 
-  const buildNewExerciseObject = (item: {
-    name: string;
-    type: ExerciseType;
-    metricType: ExerciseMetricType;
-  }) => {
+  const buildNewExerciseObject = (item: { name: string; type: ExerciseType; metricType: ExerciseMetricType }) => {
     const { name, metricType } = item;
     const id = `${uuidv4()}-exercise`;
     const exercise: Exercise = {
@@ -133,11 +124,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
       type: ExerciseType;
       metricType: ExerciseMetricType;
     },
-    buildFunc: (item: {
-      name: string;
-      type: ExerciseType;
-      metricType: ExerciseMetricType;
-    }) => Exercise,
+    buildFunc: (item: { name: string; type: ExerciseType; metricType: ExerciseMetricType }) => Exercise,
   ) => {
     const exercise = buildFunc(item);
 
@@ -168,10 +155,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
       presentationStyle="overFullScreen"
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <Pressable style={styles.backdrop} onPress={handleClose}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View style={styles.handle} />
@@ -226,9 +210,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
                           {
                             justifyContent: "center",
                             borderColor:
-                              newExerciseWorkoutType === title
-                                ? Colors.accent.primary
-                                : Colors.cardBorder,
+                              newExerciseWorkoutType === title ? Colors.accent.primary : Colors.cardBorder,
                           },
                         ]}
                         onPress={() => setNewExerciseWorkoutType(title)}
@@ -248,17 +230,12 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
                           styles.row,
                           {
                             justifyContent: "center",
-                            borderColor:
-                              newExerciseMetric === metric
-                                ? Colors.accent.primary
-                                : Colors.cardBorder,
+                            borderColor: newExerciseMetric === metric ? Colors.accent.primary : Colors.cardBorder,
                           },
                         ]}
                         onPress={() => setNewExerciseMetric(metric)}
                       >
-                        <ThemedText style={{ fontFamily: Typography.family.primary.bold }}>
-                          {metric}
-                        </ThemedText>
+                        <ThemedText style={{ fontFamily: Typography.family.primary.bold }}>{metric}</ThemedText>
                       </Pressable>
                     ))}
                   </View>
@@ -288,10 +265,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
             ) : (
               <>
                 <View style={styles.header}>
-                  <TouchableOpacity
-                    style={{ width: 50 }}
-                    onPress={() => setShowAddExerciseView(true)}
-                  >
+                  <TouchableOpacity style={{ width: 50 }} onPress={() => setShowAddExerciseView(true)}>
                     <Entypo name="plus" size={20} color={Colors.accent.primary} />
                   </TouchableOpacity>
 
@@ -325,16 +299,11 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
                   keyExtractor={(item, index) => `${item.name}_${index}`}
                   renderSectionHeader={({ section }) => (
                     <ThemedView style={{ marginBottom: 5, paddingTop: 15 }}>
-                      <ThemedText style={styles.exerciseSectionSubtitle}>
-                        {section.title}
-                      </ThemedText>
+                      <ThemedText style={styles.exerciseSectionSubtitle}>{section.title}</ThemedText>
                     </ThemedView>
                   )}
                   renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.row}
-                      onPress={() => handleSelect(item, buildExerciseObject)}
-                    >
+                    <TouchableOpacity style={styles.row} onPress={() => handleSelect(item, buildExerciseObject)}>
                       <ThemedText>{item.name}</ThemedText>
                       <MaterialIcons name="keyboard-arrow-right" size={24} color={Colors.icon} />
                     </TouchableOpacity>

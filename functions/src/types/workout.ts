@@ -60,6 +60,8 @@ export type ModeScoreInput = {
   weeklyTarget: number;
   completedWorkoutsLast30Days: number;
   streakMaxWeeks?: number; // configurable cap for streak normalization
+  completedWorkoutsLastFinalizedWeek?: number;
+  weeklyTargetLastFinalizedWeek?: number;
 };
 
 export type ModeScoreBreakdown = {

@@ -3,13 +3,14 @@ import Input from "@/components/ui/Input";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { timeStringToSeconds } from "@/lib/utils/conversions";
 import { durationTimeString, formatTimeInput } from "@/lib/utils/time";
-import { ExerciseSet } from "@/packages/shared/src";
+import { Exercise, ExerciseSet } from "@/packages/shared/src";
 import { Feather, FontAwesome6 } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
 import * as Haptics from "expo-haptics";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
 import { useTimer } from "react-timer-hook";
+import { SetUpdateTransaction } from "../BuildExerciseItem";
 import { StopwatchDisplay } from "../StopwatchDisplay";
 
 type Props = {
@@ -18,17 +19,45 @@ type Props = {
   setIndex: number;
   onDeleteSet?: (exerciseId: string, setId: string) => void;
   onEditSet: (exerciseId: string, setId: string, set: ExerciseSet) => void;
+  exercise: Exercise;
   usedForBuilding?: boolean;
+  setUpdateTransactions?: SetUpdateTransaction[] | null;
+  setSetUpdateTransactions?: React.Dispatch<React.SetStateAction<SetUpdateTransaction[] | null>>;
+  cascade?: boolean;
   isActive?: boolean;
   isCompleted?: boolean;
   containerStyle?: ViewStyle;
   autoFocus?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
 const getExpiryTimestamp = (durationSec: number) => {
   const time = new Date();
   time.setSeconds(time.getSeconds() + durationSec);
   return time;
+};
+
+const getNearestTouchedDurationAbove = (
+  transactions: SetUpdateTransaction[] | null | undefined,
+  setIndex: number,
+) => {
+  if (!transactions) return null;
+
+  return transactions.reduce<SetUpdateTransaction | null>((nearestTransaction, transaction) => {
+    const isDurationTransaction = transaction.metric === "durationSec";
+    const isAboveCurrentSet = transaction.setIndex < setIndex;
+
+    if (!isDurationTransaction || !isAboveCurrentSet) {
+      return nearestTransaction;
+    }
+
+    if (!nearestTransaction || transaction.setIndex > nearestTransaction.setIndex) {
+      return transaction;
+    }
+
+    return nearestTransaction;
+  }, null);
 };
 
 const timer_sound = require("@/assets/sounds/double_bell.mp3");
@@ -39,16 +68,34 @@ const DurationSetItem = ({
   setIndex,
   onEditSet,
   onDeleteSet,
+  exercise,
   usedForBuilding = true,
+  setUpdateTransactions,
+  setSetUpdateTransactions,
+  cascade = true,
   isActive = false,
   isCompleted = false,
   containerStyle,
   autoFocus = false,
+  onBlur,
+  onFocus,
 }: Props) => {
+  const hasMountedRef = useRef(false);
+
+  const [isDurationTouched, setIsDurationTouched] = useState(false);
   const [isTimerStarted, setIsTimerStarted] = useState(false);
   const [isTimerExpired, setIsTimerExpired] = useState(false);
 
   const timerCompletePlayer = useAudioPlayer(timer_sound);
+
+  const hasDurationBeenTouched = () => {
+    return (
+      isDurationTouched ||
+      !!setUpdateTransactions?.some((transaction) => {
+        return transaction.setIndex === setIndex && transaction.metric === "durationSec";
+      })
+    );
+  };
 
   const playTimerCompleteSound = () => {
     try {
@@ -72,6 +119,55 @@ const DurationSetItem = ({
   });
 
   useEffect(() => {
+    if (setIndex <= 1) return;
+
+    const previousSet = exercise.sets[setIndex - 2];
+
+    if (!previousSet) return;
+
+    const shouldInheritDuration =
+      set.durationSec === undefined || set.durationSec === null || set.durationSec === 0;
+
+    if (!shouldInheritDuration) return;
+
+    const nextDurationSec = Number(previousSet.durationSec ?? 0);
+
+    if (set.durationSec === nextDurationSec) return;
+
+    onEditSet(exerciseId, set.id, {
+      ...set,
+      durationSec: nextDurationSec,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
+    if (!cascade) return;
+
+    if (setIndex <= 1 || !setUpdateTransactions?.length) return;
+
+    if (hasDurationBeenTouched()) return;
+    if (isTimerStarted) return;
+
+    const nearestTransaction = getNearestTouchedDurationAbove(setUpdateTransactions, setIndex);
+
+    if (!nearestTransaction) return;
+
+    const nextDurationSec = Number(nearestTransaction.value || 0);
+
+    if (set.durationSec === nextDurationSec) return;
+
+    onEditSet(exerciseId, set.id, {
+      ...set,
+      durationSec: nextDurationSec,
+    });
+  }, [setUpdateTransactions]);
+
+  useEffect(() => {
     if (isTimerStarted) return;
 
     restart(getExpiryTimestamp(set.durationSec ?? 0), false);
@@ -84,13 +180,59 @@ const DurationSetItem = ({
   }, [set.durationSec]);
 
   const handleChangeValue = (value: string) => {
+    setIsDurationTouched(true);
+
     const stripped = value.replace(":", "");
     const restructured = formatTimeInput(stripped);
+    const durationSec = timeStringToSeconds(restructured);
+
+    cascade &&
+      setSetUpdateTransactions &&
+      setSetUpdateTransactions((currentTransactions) => {
+        const existingTransactions = currentTransactions ?? [];
+
+        const transactionsWithoutCurrentDuration = existingTransactions.filter((transaction) => {
+          return !(transaction.setIndex === setIndex && transaction.metric === "durationSec");
+        });
+
+        const updatedTransaction: SetUpdateTransaction = {
+          setIndex,
+          metric: "durationSec",
+          value: durationSec.toString(),
+        };
+
+        return [updatedTransaction, ...transactionsWithoutCurrentDuration];
+      });
 
     onEditSet(exerciseId, set.id, {
       ...set,
-      durationSec: timeStringToSeconds(restructured),
+      durationSec,
     });
+  };
+
+  const handleDeleteSet = (exerciseId: string, id: string) => {
+    if (!onDeleteSet) return;
+
+    onDeleteSet(exerciseId, id);
+
+    cascade &&
+      setSetUpdateTransactions &&
+      setSetUpdateTransactions((currentTransactions) => {
+        if (!currentTransactions) return currentTransactions;
+
+        return currentTransactions
+          .filter((transaction) => transaction.setIndex !== setIndex)
+          .map((transaction) => {
+            if (transaction.setIndex < setIndex) {
+              return transaction;
+            }
+
+            return {
+              ...transaction,
+              setIndex: transaction.setIndex - 1,
+            };
+          });
+      });
   };
 
   const handleStartTimer = () => {
@@ -105,58 +247,64 @@ const DurationSetItem = ({
     <View style={[styles.exerciseSetContainer, containerStyle]}>
       {(isCompleted || isTimerExpired) && (
         <View style={styles.checkmarkIconContainer}>
-          <Feather name="check" size={18} color={Colors.accent.primary} />
+          <Feather name="check" size={12} color={Colors.accent.primary} />
         </View>
       )}
 
-      <ThemedText style={styles.exerciseSetSetText}>
-        ROUND{"\n"}
-        {setIndex}
-      </ThemedText>
-
-      {usedForBuilding || isActive ? (
-        <View style={styles.inputAndTimerContainer}>
-          {isTimerStarted ? (
-            <StopwatchDisplay
-              hours={hours}
-              minutes={minutes}
-              seconds={seconds}
-              style={styles.stopwatchText}
-            />
-          ) : (
-            <Input
-              placeholder="00:00:00"
-              placeholderTextColor={Colors.icon}
-              style={styles.inputText}
-              value={getDurationString}
-              onChangeText={handleChangeValue}
-              postText="duration"
-              postTextStyle={styles.postText}
-              containerStyle={styles.inputContainer}
-              keyboardType="number-pad"
-              autoFocus={autoFocus}
-            />
-          )}
-
-          {!usedForBuilding && !isTimerExpired && (
-            <TouchableOpacity style={styles.timerButton} onPress={handleStartTimer}>
-              <FontAwesome6
-                name={isRunning ? "pause" : "play"}
-                size={20}
-                color={Colors.accent.primary}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      ) : (
-        <ThemedText>{`${durationTimeString(set.durationSec ?? 0)} duration`}</ThemedText>
+      {isActive && isCompleted ? null : (
+        <ThemedText style={styles.exerciseSetSetText}>
+          ROUND{"\n"}
+          {setIndex}
+        </ThemedText>
       )}
 
-      {usedForBuilding && (
-        <Pressable onPress={() => onDeleteSet?.(exerciseId, set.id)} hitSlop={15}>
-          <Feather name="x" size={16} color={Colors.icon} />
-        </Pressable>
-      )}
+      <View style={styles.exerciseSetInputs}>
+        {isTimerStarted ? (
+          <StopwatchDisplay hours={hours} minutes={minutes} seconds={seconds} style={styles.stopwatchText} />
+        ) : (
+          <Input
+            placeholder="00:00:00"
+            placeholderTextColor={Colors.icon}
+            value={getDurationString}
+            onChangeText={handleChangeValue}
+            postText="duration"
+            postTextStyle={{ color: Colors.icon, fontSize: 12 }}
+            containerStyle={{ ...styles.setInput, borderColor: isActive ? "#c6a34a50" : Colors.inputBorder }}
+            keyboardType="number-pad"
+            onBlur={onBlur}
+            onFocus={onFocus}
+            autoFocus={autoFocus}
+            style={
+              isActive
+                ? { color: Colors.accent.primary, fontFamily: Typography.family.primary.semibold }
+                : {
+                    color: usedForBuilding
+                      ? hasDurationBeenTouched()
+                        ? Colors.text.primary
+                        : Colors.text.secondary
+                      : Colors.text.primary,
+                  }
+            }
+            selectTextOnFocus
+          />
+        )}
+
+        {!usedForBuilding && !isTimerExpired && isActive && (
+          <TouchableOpacity style={styles.timerButton} onPress={handleStartTimer}>
+            <FontAwesome6 name={isRunning ? "pause" : "play"} size={16} color={Colors.accent.primary} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={{ alignItems: "flex-end" }}>
+        {onDeleteSet ? (
+          <Pressable onPress={() => handleDeleteSet(exerciseId, set.id)} hitSlop={15}>
+            <Feather name="x" size={16} color={Colors.icon} />
+          </Pressable>
+        ) : (
+          <View style={{ width: 16 }} />
+        )}
+      </View>
     </View>
   );
 };
@@ -167,11 +315,10 @@ const styles = StyleSheet.create({
   exerciseSetContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     backgroundColor: "#1f222888",
     borderRadius: Border.radius.md,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    padding: 10,
     gap: 10,
   },
   exerciseSetSetText: {
@@ -181,43 +328,34 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     lineHeight: 16,
   },
-  checkmarkIconContainer: {
-    width: 32,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#c6a34a38",
-    borderRadius: Border.radius.md,
-  },
-  inputAndTimerContainer: {
+  exerciseSetInputs: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 20,
-    justifyContent: "space-between",
+    gap: 10,
+  },
+  setInput: {
+    backgroundColor: Colors.background.primary,
+    width: 150,
+    gap: 2,
+    paddingHorizontal: 8,
+  },
+  checkmarkIconContainer: {
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#c6a34a38",
+    borderRadius: Border.radius.sm,
   },
   stopwatchText: {
     fontFamily: Typography.family.secondary.semibold,
     fontSize: 24,
   },
-  inputText: {
-    letterSpacing: 0.6,
-  },
-  postText: {
-    color: Colors.icon,
-    fontSize: 12,
-  },
-  inputContainer: {
-    backgroundColor: Colors.background.primary,
-    borderColor: Colors.inputBorder,
-    gap: 2,
-    paddingHorizontal: 8,
-    flex: 1,
-  },
   timerButton: {
     borderRadius: 6,
     backgroundColor: Colors.background.secondary,
-    padding: 10,
+    padding: 8,
     justifyContent: "center",
     alignItems: "center",
   },

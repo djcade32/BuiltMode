@@ -49,8 +49,8 @@ describe("BuildWorkout", () => {
   it("renders empty state initially", () => {
     const { getByText } = render(<BuildWorkout />);
 
-    expect(getByText("No exercises added")).toBeTruthy();
-    expect(getByText("Add at least one exercise to begin.")).toBeTruthy();
+    expect(getByText("Start empty or build first")).toBeTruthy();
+    expect(getByText("Begin your workout now and add exercises as you go, or build your workout first.")).toBeTruthy();
   });
 
   it("opens sheet, adds exercise, and enables build flow", () => {
@@ -80,6 +80,7 @@ describe("BuildWorkout", () => {
         }),
       ],
       name: "Strength Workout",
+      notes: "",
     });
 
     expect(mockPush).toHaveBeenCalledWith("/(protected)/(tabs)/(workout)/confirmWorkout");
@@ -92,7 +93,7 @@ describe("BuildWorkout", () => {
 
     fireEvent.press(getByText("ADD EXERCISE"));
     fireEvent.press(getByText("SELECT_EXERCISE"));
-    fireEvent.press(getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(getByText("Save As Template"));
 
     await waitFor(() => {
       expect(saveTemplateSpy).toHaveBeenCalledWith({
@@ -114,7 +115,7 @@ describe("BuildWorkout", () => {
 
     fireEvent.press(getByText("ADD EXERCISE"));
     fireEvent.press(getByText("SELECT_EXERCISE"));
-    fireEvent.press(getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(getByText("Save As Template"));
 
     await waitFor(() => {
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
@@ -128,7 +129,7 @@ describe("BuildWorkout", () => {
 
     fireEvent.press(getByText("ADD EXERCISE"));
     fireEvent.press(getByText("SELECT_EXERCISE"));
-    fireEvent.press(getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(getByText("Save As Template"));
 
     await waitFor(() => {
       expect(Toast.show).toHaveBeenCalledWith(
@@ -148,7 +149,7 @@ describe("BuildWorkout", () => {
 
     fireEvent.press(getByText("ADD EXERCISE"));
     fireEvent.press(getByText("SELECT_EXERCISE"));
-    fireEvent.press(getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(getByText("Save As Template"));
 
     await waitFor(() => {
       expect(Toast.show).toHaveBeenCalled();

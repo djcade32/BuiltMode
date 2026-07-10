@@ -53,12 +53,12 @@ const WorkoutHistoryDetails = () => {
     () => [
       {
         onSelect: () => data && handleCopyPress(data),
-        text: "COPY",
+        text: "Copy Workout",
         icon: <MaterialIcons name="content-copy" size={20} color={Colors.gray} />,
       },
       {
         onSelect: () => setIsWorkoutNameSheetVisible(true),
-        text: "SAVE AS TEMPLATE",
+        text: "Save As Template",
         icon: <MaterialIcons name="save" size={20} color={Colors.gray} />,
         disabled: !data,
       },
@@ -71,7 +71,10 @@ const WorkoutHistoryDetails = () => {
   };
 
   const dateInfo = () => {
-    return data?.workoutLocalDisplayTime && data.workoutLocalDate && data.workoutTimezone && data.workoutLocalDisplayDate
+    return data?.workoutLocalDisplayTime &&
+      data.workoutLocalDate &&
+      data.workoutTimezone &&
+      data.workoutLocalDisplayDate
       ? `${data.workoutLocalDisplayDate.split(",")[0]} • ${formatWorkoutLocalDate(data.workoutLocalDate)} • ${data.workoutLocalDisplayTime}`
       : "";
   };
@@ -110,7 +113,9 @@ const WorkoutHistoryDetails = () => {
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });
-      showToast("Workout saved as template", "View", () => router.push("/(protected)/(tabs)/(workout)/viewTemplates"));
+      showToast("Workout saved as template", "View", () =>
+        router.push("/(protected)/(tabs)/(workout)/viewTemplates"),
+      );
     } catch (error) {
       console.error("Error saving workout as template: ", error);
       ErrorAlert();
@@ -120,8 +125,11 @@ const WorkoutHistoryDetails = () => {
   const handleCopyPress = (workout: Workout) => {
     setInitialWorkout({
       name: workout.name ?? "",
-      exercises: workout.exercises,
+      exercises: workout.exercises.map(({ notes, ...exercise }) =>
+        user?.uid === workout.uid && notes ? { ...exercise, notes } : exercise,
+      ),
       workoutType: workout.workoutType ?? "other",
+      notes: user?.uid === workout.uid ? workout.notes : undefined,
     });
 
     router.push("/(protected)/(tabs)/(workout)/buildWorkout");
@@ -201,10 +209,32 @@ const WorkoutHistoryDetails = () => {
           </View>
         ) : null}
 
+        {data.notes && (
+          <View style={styles.notesOuterContainer}>
+            <View style={styles.notesContainer}>
+              <View style={styles.notesHeaderContainer}>
+                <FontAwesome name="sticky-note" size={12} color={Colors.icon} />
+                <ThemedText style={styles.notesTitle}>WORKOUT NOTES</ThemedText>
+              </View>
+              <ThemedText style={styles.notesText}>{data.notes}</ThemedText>
+            </View>
+          </View>
+        )}
+
         <View style={styles.sessionLogHeaderContainer}>
-          <LinearGradient colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]} start={{ x: 1.0, y: 0.5 }} end={{ x: 0.0, y: 0.5 }} style={styles.titleUnderline} />
+          <LinearGradient
+            colors={[SECONDARY_GRADIENT_COLOR, PRIMARY_GRADIENT_COLOR]}
+            start={{ x: 1.0, y: 0.5 }}
+            end={{ x: 0.0, y: 0.5 }}
+            style={styles.titleUnderline}
+          />
           <ThemedText style={styles.sessionLogTitle}>SESSION LOG</ThemedText>
-          <LinearGradient colors={[PRIMARY_GRADIENT_COLOR, SECONDARY_GRADIENT_COLOR]} start={{ x: 1.0, y: 0.5 }} end={{ x: 0.0, y: 0.5 }} style={styles.titleUnderline} />
+          <LinearGradient
+            colors={[PRIMARY_GRADIENT_COLOR, SECONDARY_GRADIENT_COLOR]}
+            start={{ x: 1.0, y: 0.5 }}
+            end={{ x: 0.0, y: 0.5 }}
+            style={styles.titleUnderline}
+          />
         </View>
       </>
     );
@@ -233,14 +263,13 @@ const WorkoutHistoryDetails = () => {
         </TouchableOpacity>
 
         <ThemedText style={styles.headerText}>WORKOUT</ThemedText>
-        <TouchableOpacity style={styles.iconContainer}>
-          <DropdownMenu
-            onOpen={() => setIsDropdownOpened(true)}
-            onClose={() => setIsDropdownOpened(false)}
-            renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
-            options={dropDownOptions}
-          />
-        </TouchableOpacity>
+        <DropdownMenu
+          onOpen={() => setIsDropdownOpened(true)}
+          onClose={() => setIsDropdownOpened(false)}
+          renderTriggerItem={<MaterialIcons name="more-horiz" size={22} color={Colors.icon} />}
+          options={dropDownOptions}
+          menuTriggerStyle={styles.iconContainer}
+        />
       </View>
       {isLoading ? (
         <View style={styles.centerState}>
@@ -268,21 +297,6 @@ const WorkoutHistoryDetails = () => {
           keyExtractor={(exercise) => exercise.id}
           ItemSeparatorComponent={() => <View style={styles.exerciseSeparator} />}
           contentContainerStyle={styles.listContentContainer}
-          ListFooterComponentStyle={styles.listFooter}
-          ListFooterComponent={() => {
-            if (!data.notes) return null;
-            return (
-              <View style={styles.notesOuterContainer}>
-                <View style={styles.notesContainer}>
-                  <View style={styles.notesHeaderContainer}>
-                    <FontAwesome name="sticky-note" size={12} color={Colors.icon} />
-                    <ThemedText style={styles.notesTitle}>NOTES</ThemedText>
-                  </View>
-                  <ThemedText style={styles.notesText}>{data.notes}</ThemedText>
-                </View>
-              </View>
-            );
-          }}
         />
       )}
       <WorkoutNameSheet

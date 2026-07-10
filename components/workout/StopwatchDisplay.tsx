@@ -1,4 +1,4 @@
-import { Typography } from "@/constants/theme";
+import { Colors, Typography } from "@/constants/theme";
 import React from "react";
 import { StyleProp, StyleSheet, TextStyle, View } from "react-native";
 import { ThemedText } from "../themed-text";
@@ -23,8 +23,8 @@ export const StopwatchDisplay = ({ hours, minutes, seconds, style }: Props) => {
 const styles = StyleSheet.create({
   timer: {
     fontFamily: Typography.family.secondary.semibold,
-    fontSize: 60,
-    letterSpacing: -1.5,
-    textAlign: "center",
+    fontSize: 14,
+    letterSpacing: -0.35,
+    color: Colors.accent.primary,
   },
 });

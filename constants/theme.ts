@@ -24,6 +24,7 @@ export const Colors = {
   input: "#1F2228",
   cardBorder: "#1F2228",
   inputBorder: "#2A2E35",
+  error: "#FF6347",
 };
 
 export const Typography = {

@@ -44,17 +44,18 @@ const DropdownMenu = ({
       rendererProps={{ placement: "bottom" }}
       onClose={onClose}
       onOpen={onOpen}
-      style={{ ...menuTriggerStyle }}
+      // style={{ ...menuTriggerStyle }}
     >
-      <MenuTrigger customStyles={{ TriggerTouchableComponent: TouchableOpacity }} onPress={onClose}>
+      <MenuTrigger
+        style={{ ...menuTriggerStyle }}
+        customStyles={{ TriggerTouchableComponent: TouchableOpacity }}
+        onPress={onClose}
+      >
         {renderTriggerItem}
       </MenuTrigger>
       <MenuOptions
         customStyles={{
-          optionsContainer: [
-            styles.dropdownOptionsContainer,
-            menuOptionsCustomStyles?.optionsContainer,
-          ],
+          optionsContainer: [styles.dropdownOptionsContainer, menuOptionsCustomStyles?.optionsContainer],
           optionText: menuOptionsCustomStyles?.optionText,
           optionTouchable: menuOptionsCustomStyles?.optionTouchable,
         }}
@@ -79,7 +80,9 @@ const DropdownMenu = ({
             disabled={option.disabled}
           >
             {option.icon ? <View>{option.icon}</View> : null}
-            <ThemedText style={styles.dropdownOptionText}>{option.text}</ThemedText>
+            <ThemedText style={[styles.dropdownOptionText, option?.menuOptionCustomStyles?.optionText]}>
+              {option.text}
+            </ThemedText>
           </MenuOption>
         ))}
       </MenuOptions>

@@ -36,8 +36,9 @@ const TemplateItem = ({ template, onPress, onDelete }: TemplateItemProps) => {
     () => [
       {
         onSelect: onDelete,
-        text: "DELETE",
-        icon: <FontAwesome6 name="trash" size={10} color={Colors.icon} />,
+        text: "Delete Template",
+        icon: <FontAwesome6 name="trash" size={10} color={Colors.error} />,
+        menuOptionCustomStyles: { optionText: { color: Colors.error } },
       },
     ],
     [onDelete],
@@ -45,12 +46,10 @@ const TemplateItem = ({ template, onPress, onDelete }: TemplateItemProps) => {
 
   return (
     <TouchableOpacity style={styles.templateItemContainer} onPress={() => onPress(template)}>
-      <DropdownMenu
-        options={dropDownOptions}
-        menuOptionsCustomStyles={{ optionsContainer: { width: 100 } }}
-        menuTriggerStyle={{ position: "absolute", alignSelf: "flex-end", right: 10 }}
-      />
-      <View style={{ flexDirection: "row", justifyContent: "space-between", paddingTop: 10 }}>
+      <View style={{ alignItems: "flex-end" }}>
+        <DropdownMenu options={dropDownOptions} menuOptionsCustomStyles={{ optionsContainer: { width: 145 } }} />
+      </View>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         <ThemedText style={styles.templateItemTitle} ellipsizeMode="tail" numberOfLines={1}>
           {name}
         </ThemedText>
@@ -59,7 +58,9 @@ const TemplateItem = ({ template, onPress, onDelete }: TemplateItemProps) => {
       <ThemedText
         style={[styles.templateItemNumOfExercises, { marginBottom: 5, color: Colors.gray }]}
       >{`${exercises.length} exercises`}</ThemedText>
-      <ThemedText style={styles.templateItemNumOfExercises}>{firstLetterToUpperCase(workoutType ?? "other")}</ThemedText>
+      <ThemedText style={styles.templateItemNumOfExercises}>
+        {firstLetterToUpperCase(workoutType ?? "other")}
+      </ThemedText>
     </TouchableOpacity>
   );
 };
@@ -74,7 +75,10 @@ const ViewTemplates = () => {
 
   const uid = user?.uid ?? "";
 
-  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useUserTemplatesInfinite(uid, 20);
+  const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useUserTemplatesInfinite(
+    uid,
+    20,
+  );
 
   const { mutate: deleteTemplateFunc, isPending } = useMutation({
     mutationFn: async (id: string) => {
@@ -112,6 +116,7 @@ const ViewTemplates = () => {
       name: template.name ?? "",
       exercises: template.exercises,
       workoutType: template.workoutType ?? "other",
+      notes: template.notes,
     });
 
     router.push("/(protected)/(tabs)/(workout)/buildWorkout");

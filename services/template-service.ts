@@ -20,13 +20,8 @@ type DeleteTemplateResult = {
   message?: string;
 };
 
-export const saveAsTemplate = async (
-  template: SaveAsTemplateRequest,
-): Promise<SaveAsTemplateResponse> => {
-  const saveAsTemplateFunction = httpsCallable<SaveAsTemplateRequest, SaveAsTemplateResponse>(
-    functions,
-    "saveAsTemplate",
-  );
+export const saveAsTemplate = async (template: SaveAsTemplateRequest): Promise<SaveAsTemplateResponse> => {
+  const saveAsTemplateFunction = httpsCallable<SaveAsTemplateRequest, SaveAsTemplateResponse>(functions, "saveAsTemplate");
   const response = await saveAsTemplateFunction(template);
   return response.data;
 };
@@ -53,12 +48,7 @@ export const getUserTemplates = async ({
           startAfter(pageParam),
           limit(pageSize),
         )
-      : query(
-          templatesRef,
-          where("uid", "==", params.uid),
-          orderBy("completedAt", "desc"),
-          limit(pageSize),
-        );
+      : query(templatesRef, where("uid", "==", params.uid), orderBy("completedAt", "desc"), limit(pageSize));
 
     const snapshot = await getDocs(templatesQuery);
 
@@ -85,19 +75,14 @@ export const getUserTemplates = async ({
 };
 
 export const deleteTemplate = async (id: string): Promise<DeleteTemplateResult> => {
-  const deleteTemplateFunction = httpsCallable<{ id: string }, boolean>(
-    functions,
-    "deleteTemplate",
-  );
+  const deleteTemplateFunction = httpsCallable<{ id: string }, boolean>(functions, "deleteTemplate");
   if (!id.trim()) {
     return { success: false, message: "Template id is required." };
   }
 
   try {
     const response = await deleteTemplateFunction({ id });
-    return response.data
-      ? { success: true }
-      : { success: false, message: `Error deleting template ${id}.` };
+    return response.data ? { success: true } : { success: false, message: `Error deleting template ${id}.` };
   } catch (err) {
     return {
       success: false,

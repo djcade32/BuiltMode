@@ -43,35 +43,76 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
       : dayjs(formatFirestoreDateTimeISO(completedAt)).fromNow();
 
   const targetMet =
-    weeklyProgress === null || weeklyTargetDays === null ? false : weeklyProgress === weeklyTargetDays && !isPractice;
+    weeklyProgress === null || weeklyTargetDays === null
+      ? false
+      : weeklyProgress === weeklyTargetDays && !isPractice;
 
   const navigateToFriendProfile = (uid: string) =>
     currentUserUid === uid ? router.push("/(profile)/profile") : router.push(`/(friendProfile)/${uid}`);
 
   const WorkoutSummary = ({ overlay = false }: { overlay?: boolean }) => (
     <View style={overlay ? styles.overlayWorkoutContent : styles.workoutContent}>
-      <ThemedText style={overlay ? styles.overlayWorkoutName : styles.workoutName} numberOfLines={2} ellipsizeMode="tail">
+      <ThemedText
+        style={overlay ? styles.overlayWorkoutName : styles.workoutName}
+        numberOfLines={2}
+        ellipsizeMode="tail"
+      >
         {workoutName}
       </ThemedText>
 
       <View style={styles.workoutStats}>
         <View style={[styles.workoutStatContainer, overlay && styles.overlayWorkoutStatContainer]}>
-          <ThemedText style={[styles.workoutStatNumber, overlay && styles.overlayWorkoutStatNumber]}>{exerciseCount}</ThemedText>
-          <ThemedText style={[styles.workoutStatLabel, overlay && styles.overlayWorkoutStatLabel]}>EXERCISES</ThemedText>
+          <ThemedText
+            style={[styles.workoutStatNumber, overlay && styles.overlayWorkoutStatNumber]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.72}
+          >
+            {exerciseCount}
+          </ThemedText>
+          <ThemedText style={[styles.workoutStatLabel, overlay && styles.overlayWorkoutStatLabel]}>
+            EXERCISES
+          </ThemedText>
         </View>
 
         {durationSeconds ? (
-          <View style={[styles.workoutStatContainer, overlay && styles.overlayWorkoutStatContainer]}>
-            <ThemedText style={[styles.workoutStatNumber, overlay && styles.overlayWorkoutStatNumber]}>
+          <View
+            style={[
+              styles.workoutStatContainer,
+              styles.durationWorkoutStatContainer,
+              overlay && styles.overlayWorkoutStatContainer,
+            ]}
+          >
+            <ThemedText
+              style={[styles.workoutStatNumber, overlay && styles.overlayWorkoutStatNumber]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.72}
+            >
               {durationTimeString(durationSeconds)}
             </ThemedText>
-            <ThemedText style={[styles.workoutStatLabel, overlay && styles.overlayWorkoutStatLabel]}>DURATION</ThemedText>
+
+            <ThemedText style={[styles.workoutStatLabel, overlay && styles.overlayWorkoutStatLabel]}>
+              DURATION
+            </ThemedText>
           </View>
         ) : null}
 
         <View style={[styles.workoutStatContainer, overlay && styles.overlayWorkoutStatContainer]}>
-          <ThemedText style={[styles.workoutStatNumber, overlay && styles.overlayWorkoutStatNumber]}>{totalSets ?? 0}</ThemedText>
-          <ThemedText style={[styles.workoutStatLabel, overlay && styles.overlayWorkoutStatLabel]}>WORKING SETS</ThemedText>
+          <ThemedText
+            style={[styles.workoutStatNumber, overlay && styles.overlayWorkoutStatNumber]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.72}
+          >
+            {totalSets ?? 0}
+          </ThemedText>
+          <ThemedText
+            style={[styles.workoutStatLabel, overlay && styles.overlayWorkoutStatLabel]}
+            numberOfLines={1}
+          >
+            WORKING SETS
+          </ThemedText>
         </View>
       </View>
     </View>
@@ -89,7 +130,11 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     >
       <View style={styles.cardBody}>
         <View style={styles.headerRow}>
-          <Avatar avatarUrl={actorAvatarUrl} displayName={actorDisplayName} onPress={() => navigateToFriendProfile(actorUid)} />
+          <Avatar
+            avatarUrl={actorAvatarUrl}
+            displayName={actorDisplayName}
+            onPress={() => navigateToFriendProfile(actorUid)}
+          />
 
           <View style={styles.headerContent}>
             <View style={styles.nameRow}>
@@ -156,7 +201,9 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
 
         <View style={styles.weeklyProgressContainer}>
           <View style={styles.weeklyProgressHeader}>
-            <ThemedText style={styles.weeklyProgressTitle}>{isPractice ? "RHYTHM BUILDING" : "WEEKLY PROGRESS"}</ThemedText>
+            <ThemedText style={styles.weeklyProgressTitle}>
+              {isPractice ? "RHYTHM BUILDING" : "WEEKLY PROGRESS"}
+            </ThemedText>
 
             <ThemedText
               style={[
@@ -171,7 +218,11 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
           </View>
 
           {weeklyProgress != null && weeklyTargetDays != null ? (
-            <WeeklyProgressBar weeklyProgress={weeklyProgress} weeklyTarget={weeklyTargetDays} isPractice={isPractice} />
+            <WeeklyProgressBar
+              weeklyProgress={weeklyProgress}
+              weeklyTarget={weeklyTargetDays}
+              isPractice={isPractice}
+            />
           ) : null}
         </View>
 
@@ -179,7 +230,9 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
           <View style={styles.practiceNote}>
             <FontAwesome5 name="info-circle" size={12} color={Colors.accent.secondary} />
 
-            <ThemedText style={styles.practiceNoteText}>Official tracking starts after practice week ends</ThemedText>
+            <ThemedText style={styles.practiceNoteText}>
+              Official tracking starts after practice week ends
+            </ThemedText>
           </View>
         ) : null}
       </View>
@@ -306,8 +359,8 @@ const styles = StyleSheet.create({
 
   overlayWorkoutContent: {
     position: "absolute",
-    left: 14,
-    right: 14,
+    left: 7,
+    right: 7,
     bottom: 14,
     zIndex: 2,
   },
@@ -340,7 +393,8 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     backgroundColor: "#0f111391",
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -354,6 +408,11 @@ const styles = StyleSheet.create({
 
   workoutStatNumber: {
     fontFamily: Typography.family.secondary.bold,
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: "center",
+    includeFontPadding: false,
+    maxWidth: "100%",
   },
 
   overlayWorkoutStatNumber: {
@@ -426,5 +485,9 @@ const styles = StyleSheet.create({
     fontFamily: Typography.family.primary.bold,
     letterSpacing: 0.5,
     textAlign: "right",
+  },
+
+  durationWorkoutStatContainer: {
+    flex: 1.35,
   },
 });

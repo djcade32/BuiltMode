@@ -88,7 +88,10 @@ const getWorkoutTimezoneFields = (completedAt: Date, workoutTimezone: string) =>
   @param {CompleteWorkoutRequest} workout Workout object to save in Firestore
   @return On success return user's workout metrics
 */
-export async function handleCompleteWorkout(uid: string, workout: CompleteWorkoutRequest): Promise<CompleteWorkoutResponse> {
+export async function handleCompleteWorkout(
+  uid: string,
+  workout: CompleteWorkoutRequest,
+): Promise<CompleteWorkoutResponse> {
   const { sessionId, workoutType, notes, exercises, name, duration } = workout;
 
   const now = Timestamp.now();
@@ -127,11 +130,14 @@ export async function handleCompleteWorkout(uid: string, workout: CompleteWorkou
 
     const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
     const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(tx, uid, localDateKey);
-    const completedWorkoutsLast30Days = dayMarkerExists ? numOfCompletedWorkoutsLast30Days : numOfCompletedWorkoutsLast30Days + 1;
+    const completedWorkoutsLast30Days = dayMarkerExists
+      ? numOfCompletedWorkoutsLast30Days
+      : numOfCompletedWorkoutsLast30Days + 1;
     const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
     const weekAggregateExists = weekAggregate.exists;
 
     const last4WeekAggregates = await getLastFourWeekAggregates(tx, uid, weekId);
+
     const lastFourWeeksAdherenceRate = getLastFourWeeksAdherenceRate(last4WeekAggregates);
 
     let streakStatus = weekAggregateExists ? weekAggregate.get("streakStatus") : "inactive";
@@ -159,11 +165,14 @@ export async function handleCompleteWorkout(uid: string, workout: CompleteWorkou
       streakWeeks = streakWeeks;
     }
 
+    const lastFinalizedWeek = last4WeekAggregates[0];
     const calculatedStats = calculateModeScore({
       weeklyTarget: weeklyTargetDays,
       completedWorkoutsLast30Days,
       weeklyAdherenceStreak: streakWeeks,
       completedWorkoutsThisWeek: activeDaysThisWeek,
+      completedWorkoutsLastFinalizedWeek: lastFinalizedWeek?.activeDaysThisWeek,
+      weeklyTargetLastFinalizedWeek: lastFinalizedWeek?.weeklyTargetDays,
     });
 
     const modeScore = isOfficialWeek ? calculatedStats.modeScore : null;
