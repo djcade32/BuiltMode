@@ -357,7 +357,7 @@ const ActiveWorkout = () => {
                 ACTIVE WORKOUT
               </ThemedText>
               <ThemedText style={{ fontFamily: Typography.family.primary.bold, fontSize: 14 }}>
-                {activeWorkoutDraft.name ?? `${activeWorkoutDraft.workoutType} Workout`}
+                {displayWorkoutName}
               </ThemedText>
             </View>
 

@@ -137,7 +137,7 @@ export async function handleCompleteWorkout(
     const weekAggregateExists = weekAggregate.exists;
 
     const last4WeekAggregates = await getLastFourWeekAggregates(tx, uid, weekId);
-    console.log("last4WeekAggregates: ", last4WeekAggregates);
+
     const lastFourWeeksAdherenceRate = getLastFourWeeksAdherenceRate(last4WeekAggregates);
 
     let streakStatus = weekAggregateExists ? weekAggregate.get("streakStatus") : "inactive";
@@ -165,13 +165,14 @@ export async function handleCompleteWorkout(
       streakWeeks = streakWeeks;
     }
 
+    const lastFinalizedWeek = last4WeekAggregates[0];
     const calculatedStats = calculateModeScore({
       weeklyTarget: weeklyTargetDays,
       completedWorkoutsLast30Days,
       weeklyAdherenceStreak: streakWeeks,
       completedWorkoutsThisWeek: activeDaysThisWeek,
-      completedWorkoutsLastFinalizedWeek: last4WeekAggregates[0].activeDaysThisWeek,
-      weeklyTargetLastFinalizedWeek: last4WeekAggregates[0].weeklyTargetDays,
+      completedWorkoutsLastFinalizedWeek: lastFinalizedWeek?.activeDaysThisWeek,
+      weeklyTargetLastFinalizedWeek: lastFinalizedWeek?.weeklyTargetDays,
     });
 
     console.log("calculatedStats: ", calculatedStats);

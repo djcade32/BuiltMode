@@ -125,12 +125,9 @@ const WorkoutHistoryDetails = () => {
   const handleCopyPress = (workout: Workout) => {
     setInitialWorkout({
       name: workout.name ?? "",
-      exercises: workout.exercises.map((exercise) => {
-        return {
-          ...exercise,
-          ...(user?.uid === workout.uid && exercise.notes && { notes: exercise.notes }),
-        };
-      }),
+      exercises: workout.exercises.map(({ notes, ...exercise }) =>
+        user?.uid === workout.uid && notes ? { ...exercise, notes } : exercise,
+      ),
       workoutType: workout.workoutType ?? "other",
       notes: user?.uid === workout.uid ? workout.notes : undefined,
     });

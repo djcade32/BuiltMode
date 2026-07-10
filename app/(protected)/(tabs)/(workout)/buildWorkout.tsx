@@ -107,6 +107,7 @@ const BuildWorkout = () => {
 
       if (!template) {
         ErrorAlert();
+        return;
       }
 
       queryClient.invalidateQueries({ queryKey: ["templates", user?.uid ?? ""] });

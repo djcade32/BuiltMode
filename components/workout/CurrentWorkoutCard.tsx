@@ -234,15 +234,6 @@ const CurrentWorkoutCard = ({
 
     if (nextIndex < sets.length) {
       setActiveSetIndex(nextIndex);
-
-      requestAnimationFrame(() => {
-        listRef.current?.scrollToIndex({
-          index: nextIndex,
-          animated: true,
-          viewPosition: 0,
-          viewOffset: 10,
-        });
-      });
     }
   };
 
@@ -408,7 +399,7 @@ const CurrentWorkoutCard = ({
         menuOptionCustomStyles: { optionText: { color: Colors.error } },
       },
     ],
-    [],
+    [hasNotes, exercise.id, onDeleteExercise],
   );
 
   if (!exercise) return null;
