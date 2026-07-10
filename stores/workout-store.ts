@@ -28,6 +28,7 @@ export interface WorkoutState {
   workoutProgress: Record<string, { sets: ExerciseSet[]; completed: boolean }> | null;
   isWorkoutComplete: boolean;
   currentExerciseIndex: number;
+  durationSetTimer: { expiresAtMs: number; notificationId: string } | null;
   completeWorkoutResponse?: CompleteWorkoutResponse;
   startWorkout: (payload: {
     name: string;
@@ -53,6 +54,7 @@ export interface WorkoutState {
   clearWorkout: () => void;
   saveWorkoutAsTemplate: (template: any) => Promise<SaveAsTemplateResponse | undefined>;
   setIsWorkoutComplete: (value: boolean) => void;
+  setDurationSetTimer: (timer: { expiresAtMs: number; notificationId: string } | null) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -64,6 +66,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       workoutProgress: null,
       isWorkoutComplete: false,
       currentExerciseIndex: 0,
+      durationSetTimer: null,
 
       startWorkout: ({ name, sessionId, uid, exercises, workoutType, notes }) =>
         set({
@@ -236,6 +239,16 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({
           isWorkoutComplete: value,
         }),
+
+      setDurationSetTimer: (value) => {
+        if (!value) return;
+        set({
+          durationSetTimer: {
+            expiresAtMs: value?.expiresAtMs,
+            notificationId: value?.notificationId,
+          },
+        });
+      },
     }),
     {
       name: "workout-store",
@@ -247,6 +260,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         currentExerciseIndex: state.currentExerciseIndex,
         duration: state.duration,
         completeWorkoutResponse: state.completeWorkoutResponse,
+        durationSetTimer: state.durationSetTimer,
       }),
     },
   ),

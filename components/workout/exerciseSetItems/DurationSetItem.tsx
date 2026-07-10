@@ -4,6 +4,8 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { timeStringToSeconds } from "@/lib/utils/conversions";
 import { durationTimeString, formatTimeInput } from "@/lib/utils/time";
 import { Exercise, ExerciseSet } from "@/packages/shared/src";
+import { scheduleDurationTimerExpiredNotification } from "@/services/notification-service";
+import { useWorkoutStore } from "@/stores/workout-store";
 import { Feather, FontAwesome6 } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
 import * as Haptics from "expo-haptics";
@@ -81,6 +83,7 @@ const DurationSetItem = ({
   onFocus,
 }: Props) => {
   const hasMountedRef = useRef(false);
+  const { setDurationSetTimer } = useWorkoutStore();
 
   const [isDurationTouched, setIsDurationTouched] = useState(false);
   const [isTimerStarted, setIsTimerStarted] = useState(false);
@@ -235,9 +238,19 @@ const DurationSetItem = ({
       });
   };
 
-  const handleStartTimer = () => {
+  const handleStartTimer = async () => {
     if (!isTimerStarted) {
       setIsTimerStarted(true);
+      if (set.durationSec) {
+        const notificationId = await scheduleDurationTimerExpiredNotification({
+          secondsUntilExpiration: set.durationSec,
+        });
+
+        setDurationSetTimer({
+          expiresAtMs: Date.now() + set.durationSec * 1000,
+          notificationId,
+        });
+      }
     }
 
     isRunning ? pause() : start();

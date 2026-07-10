@@ -67,6 +67,12 @@
         }
       ],
       [
+        "expo-notifications",
+        {
+          "sounds": ["./assets/sounds/double_bell.mp3"]
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "BuiltMode accesses your photos to let you share them with your friends."
