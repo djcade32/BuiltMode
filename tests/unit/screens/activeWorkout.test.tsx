@@ -68,8 +68,8 @@ describe("activeWorkout", () => {
   });
 
   it("renders current exercise", () => {
-    const { getByText } = render(<ActiveWorkout />);
-    expect(getByText("Bench Press")).toBeTruthy();
+    const { getAllByText } = render(<ActiveWorkout />);
+    expect(getAllByText("Bench Press").length).toBeGreaterThan(0);
   });
 
   it("advances current exercise when current exercise is completed", () => {
@@ -113,7 +113,7 @@ describe("activeWorkout", () => {
     const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {});
     const { getByText } = render(<ActiveWorkout />);
 
-    fireEvent.press(getByText("EXIT"));
+    fireEvent.press(getByText("Exit"));
 
     expect(alertSpy).toHaveBeenCalledWith(
       "Are You Sure?",
@@ -131,7 +131,7 @@ describe("activeWorkout", () => {
     });
 
     const { getByText } = render(<ActiveWorkout />);
-    fireEvent.press(getByText("EXIT"));
+    fireEvent.press(getByText("Exit"));
 
     expect(clearWorkoutSpy).toHaveBeenCalled();
   });

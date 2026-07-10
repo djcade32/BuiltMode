@@ -234,7 +234,7 @@ describe("WorkoutHistoryDetails", () => {
     expect(screen.getByText("2 exercises")).toBeTruthy();
     expect(screen.getByText("Bench Press")).toBeTruthy();
     expect(screen.getByText("Incline DB Press")).toBeTruthy();
-    expect(screen.getByText("NOTES")).toBeTruthy();
+    expect(screen.getByText("WORKOUT NOTES")).toBeTruthy();
     expect(screen.getByText("Felt strong today.")).toBeTruthy();
   });
 
@@ -272,7 +272,7 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    expect(screen.queryByText("NOTES")).toBeNull();
+    expect(screen.queryByText("WORKOUT NOTES")).toBeNull();
   });
 
   it("navigates back when back button is pressed", () => {
@@ -294,8 +294,8 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    expect(screen.getByText("COPY")).toBeTruthy();
-    expect(screen.getByText("SAVE AS TEMPLATE")).toBeTruthy();
+    expect(screen.getByText("Copy Workout")).toBeTruthy();
+    expect(screen.getByText("Save As Template")).toBeTruthy();
   });
 
   it("sets the selected workout as the initial workout when COPY is pressed", () => {
@@ -303,7 +303,7 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    fireEvent.press(screen.getByText("COPY"));
+    fireEvent.press(screen.getByText("Copy Workout"));
 
     expect(mockSetInitialWorkout).toHaveBeenCalledTimes(1);
     expect(mockSetInitialWorkout).toHaveBeenCalledWith(
@@ -323,7 +323,7 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    fireEvent.press(screen.getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(screen.getByText("Save As Template"));
 
     expect(screen.getByText("Workout Name Sheet")).toBeTruthy();
   });
@@ -333,7 +333,7 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    fireEvent.press(screen.getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(screen.getByText("Save As Template"));
     expect(screen.getByText("Workout Name Sheet")).toBeTruthy();
 
     fireEvent.press(screen.getByText("Close Template Sheet"));
@@ -346,7 +346,7 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    fireEvent.press(screen.getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(screen.getByText("Save As Template"));
     fireEvent.press(screen.getByText("Save Template Name"));
 
     await waitFor(() => {
@@ -366,7 +366,7 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    fireEvent.press(screen.getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(screen.getByText("Save As Template"));
     fireEvent.press(screen.getByText("Save Template Name"));
 
     await waitFor(() => {
@@ -379,7 +379,7 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    fireEvent.press(screen.getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(screen.getByText("Save As Template"));
     fireEvent.press(screen.getByText("Save Template Name"));
 
     await waitFor(() => {
@@ -396,7 +396,7 @@ describe("WorkoutHistoryDetails", () => {
 
     render(<WorkoutHistoryDetails />);
 
-    fireEvent.press(screen.getByText("SAVE AS TEMPLATE"));
+    fireEvent.press(screen.getByText("Save As Template"));
     expect(mockSaveWorkoutAsTemplate).not.toHaveBeenCalled();
   });
 });
