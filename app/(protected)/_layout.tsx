@@ -91,6 +91,7 @@ const ProtectedLayout = () => {
             animation: "fade",
           }}
         />
+        <Stack.Screen name="(workoutHistoryDetails)/[sessionId]" options={{ headerShown: false }} />
       </Stack>
     </MenuProvider>
   );

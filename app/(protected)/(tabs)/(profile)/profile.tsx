@@ -46,11 +46,7 @@ const profile = () => {
   });
 
   const { data: userWeekAggregate, isLoading: isLoadingUserWeekAggregate } = useQuery({
-    queryKey: [
-      "user-week-aggregate",
-      usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "",
-      uid,
-    ],
+    queryKey: ["user-week-aggregate", usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "", uid],
     queryFn: fetchUserWeekAggregate,
     params: {
       uid,
@@ -59,10 +55,7 @@ const profile = () => {
     enabled: !!usersHomeTimezone,
   });
 
-  const { data: recentWorkouts, isLoading: isLoadingRecentWorkouts } = useUserWorkoutsInfinite(
-    uid,
-    3,
-  );
+  const { data: recentWorkouts, isLoading: isLoadingRecentWorkouts } = useUserWorkoutsInfinite(uid, 3);
 
   const accountabilitySummaryData = useMemo(() => {
     if (!userStats) return null;
@@ -100,9 +93,7 @@ const profile = () => {
         <View style={{ width: 40, height: 40 }} />
 
         <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
-          <ThemedText style={styles.headerText}>
-            {user?.username?.toLocaleLowerCase() ?? ""}
-          </ThemedText>
+          <ThemedText style={styles.headerText}>{user?.username?.toLocaleLowerCase() ?? ""}</ThemedText>
         </View>
 
         <TouchableOpacity
@@ -123,10 +114,7 @@ const profile = () => {
           <ThemedText style={styles.unavailableText}>Profile unavailable</ThemedText>
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.mainContentContainer}>
             {/* USER INFO */}
             <View style={styles.userInfoContainer}>
@@ -139,9 +127,7 @@ const profile = () => {
 
               <View style={styles.userNameContainer}>
                 <ThemedText style={styles.displayName}>{user?.displayName}</ThemedText>
-                <ThemedText style={styles.username}>
-                  @{user?.username?.toLocaleLowerCase() ?? ""}
-                </ThemedText>
+                <ThemedText style={styles.username}>@{user?.username?.toLocaleLowerCase() ?? ""}</ThemedText>
               </View>
 
               <View style={styles.badgeRow}>
@@ -200,8 +186,7 @@ const profile = () => {
                       workout={workout}
                       onPress={() =>
                         router.push({
-                          pathname:
-                            "/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]",
+                          pathname: "/(protected)/(workoutHistoryDetails)/[sessionId]",
                           params: {
                             sessionId: workout.sessionId,
                             returnTo: "/(protected)/(tabs)/profile",

@@ -15,6 +15,7 @@ import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -214,6 +215,8 @@ const ActiveWorkout = () => {
 
       if (response) {
         console.log("Workout logged: ", response);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
         router.replace("/(protected)/workoutComplete");
       }
     } catch (error) {

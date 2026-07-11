@@ -27,7 +27,6 @@ const findFriends = () => {
 
   const {
     mutate: searchUserByUsernameFunc,
-    isError,
     isPending,
     data,
   } = useMutation({
@@ -53,13 +52,7 @@ const findFriends = () => {
   });
 
   const { mutate: respondToFriendRequestFunc, isPending: isPendingResponse } = useMutation({
-    mutationFn: async ({
-      requestId,
-      action,
-    }: {
-      requestId: string;
-      action: "accepted" | "declined";
-    }) => {
+    mutationFn: async ({ requestId, action }: { requestId: string; action: "accepted" | "declined" }) => {
       const result = await respondToFriendRequest(requestId, action);
       if (!result.success) {
         throw new Error(result.message ?? "Failed to respond to friend request.");
@@ -148,10 +141,7 @@ const findFriends = () => {
               onSubmitEditing={handleSearchForUserButtonPress}
             />
             <TouchableOpacity
-              style={[
-                styles.usernameSearchButton,
-                { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 },
-              ]}
+              style={[styles.usernameSearchButton, { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 }]}
               onPress={handleSearchForUserButtonPress}
               disabled={!isValidUsername(searchQuery)}
             >
@@ -160,9 +150,7 @@ const findFriends = () => {
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingTop: 12 }}>
             <FontAwesome5 name="info-circle" size={12} color={Colors.accent.secondary} />
-            <ThemedText style={styles.usernameSearchInfoText}>
-              Search requires exact username match.{" "}
-            </ThemedText>
+            <ThemedText style={styles.usernameSearchInfoText}>Search requires exact username match. </ThemedText>
           </View>
         </View>
 
@@ -173,18 +161,14 @@ const findFriends = () => {
           ) : (
             <>
               {data === undefined ? (
-                <ThemedText style={styles.searchEmptyStateText}>
-                  Find people you train with.
-                </ThemedText>
+                <ThemedText style={styles.searchEmptyStateText}>Find people you train with.</ThemedText>
               ) : data === null && searchQuery ? (
                 <ThemedText style={styles.searchEmptyStateText}>User not found.</ThemedText>
               ) : (
                 data !== null && (
                   <FriendCard
                     data={data}
-                    isPending={
-                      isPendingCancel || isPendingSent || isPendingResponse || isPendingRemove
-                    }
+                    isPending={isPendingCancel || isPendingSent || isPendingResponse || isPendingRemove}
                     onAccept={(requestId) =>
                       respondToFriendRequestFunc({
                         requestId,

@@ -47,11 +47,7 @@ const FriendsEmptyState = ({ onFindFriends }: { onFindFriends: () => void }) => 
         Add friends to see their activity, stay accountable, and compete together.
       </ThemedText>
 
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={styles.emptyFindFriendsButton}
-        onPress={onFindFriends}
-      >
+      <TouchableOpacity activeOpacity={0.85} style={styles.emptyFindFriendsButton} onPress={onFindFriends}>
         <FontAwesome6 name="user-plus" size={14} color={Colors.accent.primary} />
         <ThemedText style={styles.emptyFindFriendsText}>FIND FRIENDS</ThemedText>
       </TouchableOpacity>
@@ -129,7 +125,7 @@ const friendsList = () => {
     enabled: !!uid,
   });
 
-  const { mutate: cancelFriendRequestFunc } = useMutation({
+  const { mutate: cancelFriendRequestFunc, isPending: isPendingCancel } = useMutation({
     mutationFn: async (requestId: string) => {
       const result = await cancelFriendRequest(requestId);
       if (!result.success) {
@@ -142,14 +138,8 @@ const friendsList = () => {
     },
   });
 
-  const { mutate: respondToFriendRequestFunc } = useMutation({
-    mutationFn: async ({
-      requestId,
-      action,
-    }: {
-      requestId: string;
-      action: "accepted" | "declined";
-    }) => {
+  const { mutate: respondToFriendRequestFunc, isPending: isPendingResponse } = useMutation({
+    mutationFn: async ({ requestId, action }: { requestId: string; action: "accepted" | "declined" }) => {
       const result = await respondToFriendRequest(requestId, action);
       if (!result.success) {
         throw new Error(result.message ?? "Failed to respond to friend request.");
@@ -162,7 +152,7 @@ const friendsList = () => {
     },
   });
 
-  const { mutate: removeFriendFunc } = useMutation({
+  const { mutate: removeFriendFunc, isPending: isPendingRemoveFriend } = useMutation({
     mutationFn: async (friendUid: string) => {
       setRemoveFriendUid(friendUid);
       const result = await removeFriend(friendUid);
@@ -235,10 +225,7 @@ const friendsList = () => {
 
           <TouchableOpacity
             activeOpacity={0.85}
-            style={[
-              styles.usernameSearchButton,
-              { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 },
-            ]}
+            style={[styles.usernameSearchButton, { opacity: !isValidUsername(searchQuery) ? 0.5 : 1 }]}
             onPress={handleSearchForUserButtonPress}
             disabled={!isValidUsername(searchQuery) && !!friends?.total}
           >
@@ -257,11 +244,7 @@ const friendsList = () => {
       <SafeAreaView style={styles.container} edges={["top"]}>
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.iconContainer}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity activeOpacity={0.8} style={styles.iconContainer} onPress={() => router.back()}>
             <FontAwesome6 name="arrow-left" size={14} color={Colors.gray} />
           </TouchableOpacity>
 
@@ -270,11 +253,7 @@ const friendsList = () => {
             <ThemedText style={styles.headerSubtitle}>YOUR TRAINING CIRCLE</ThemedText>
           </View>
 
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.iconContainer}
-            onPress={navigateToFindFriends}
-          >
+          <TouchableOpacity activeOpacity={0.8} style={styles.iconContainer} onPress={navigateToFindFriends}>
             <FontAwesome6 name="user-plus" size={14} color={Colors.gray} />
           </TouchableOpacity>
         </View>
@@ -316,16 +295,12 @@ const friendsList = () => {
                     displayName={item.displayName}
                     username={item.usernameLower}
                     removeFriend={() => removeFriendFunc(item.uid)}
-                    isPending={removeFriendUid === item.uid}
+                    isPending={isPendingRemoveFriend && removeFriendUid === item.uid}
                   />
                 )}
                 ListHeaderComponent={listHeaderComponent}
                 ListEmptyComponent={
-                  isSearching ? (
-                    <SearchEmptyState />
-                  ) : (
-                    <FriendsEmptyState onFindFriends={navigateToFindFriends} />
-                  )
+                  isSearching ? <SearchEmptyState /> : <FriendsEmptyState onFindFriends={navigateToFindFriends} />
                 }
                 contentContainerStyle={styles.friendsListContent}
                 showsVerticalScrollIndicator={false}
@@ -340,6 +315,7 @@ const friendsList = () => {
           incomingRequests={incomingRequests ?? []}
           sentRequests={sentRequests ?? []}
           isLoading={isLoadingIncomingRequests || isLoadingSentRequests}
+          isPendingAction={isPendingResponse || isPendingCancel}
           onClose={() => setRequestsSheetVisible(false)}
           onAccept={(requestId) => {
             respondToFriendRequestFunc({

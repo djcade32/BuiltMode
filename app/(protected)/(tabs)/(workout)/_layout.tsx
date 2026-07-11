@@ -12,7 +12,6 @@ const WorkoutLayout = () => {
         <Stack.Screen name="log" />
         <Stack.Screen name="buildWorkout" />
         <Stack.Screen name="confirmWorkout" />
-        <Stack.Screen name="(workoutHistoryDetails)/[sessionId]" />
         <Stack.Screen name="(viewHistory)/[id]" />
         <Stack.Screen name="viewTemplates" />
       </Stack>

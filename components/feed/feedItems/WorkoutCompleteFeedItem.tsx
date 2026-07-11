@@ -244,7 +244,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
           onPress={() =>
             workoutId &&
             router.push({
-              pathname: "/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]",
+              pathname: "/(protected)/(workoutHistoryDetails)/[sessionId]",
               params: {
                 sessionId: workoutId,
                 returnTo: `/(protected)/(tabs)/(feed)/feed`,

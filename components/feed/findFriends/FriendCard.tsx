@@ -4,17 +4,8 @@ import { Colors, Typography } from "@/constants/theme";
 import { useUserStore } from "@/stores/user-store";
 import { SearchUserResult } from "@builtmode/shared";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleProp,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native";
+import { ActivityIndicator, Alert, StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
 
 type FriendCardProps = {
   data: SearchUserResult;
@@ -26,17 +17,8 @@ type FriendCardProps = {
   onSend: (uid: string) => void;
 };
 
-const FriendCard = ({
-  data,
-  isPending,
-  onAccept,
-  onCancel,
-  onDecline,
-  onRemove,
-  onSend,
-}: FriendCardProps) => {
+const FriendCard = ({ data, isPending, onAccept, onCancel, onDecline, onRemove, onSend }: FriendCardProps) => {
   const { user } = useUserStore();
-  const router = useRouter();
   const { displayName, avatarUrl, username, relationshipStatus, uid } = data;
 
   const RequestButton = useMemo(() => {
@@ -103,11 +85,7 @@ const FriendCard = ({
           ) : (
             <>
               {relationshipStatus === "request_sent" && (
-                <MaterialCommunityIcons
-                  name="clock-time-four"
-                  size={14}
-                  color={Colors.background.secondary}
-                />
+                <MaterialCommunityIcons name="clock-time-four" size={14} color={Colors.background.secondary} />
               )}
               <ThemedText style={textStyle}>{text}</ThemedText>
             </>

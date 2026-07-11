@@ -100,8 +100,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
       id,
       name,
       metricType,
-      sets: [],
-      // notes: "",
+      sets: [{ id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }],
     };
     return exercise;
   };

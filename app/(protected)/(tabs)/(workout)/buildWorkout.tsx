@@ -347,7 +347,7 @@ const BuildWorkout = () => {
   };
 
   const handleBackPress = () => {
-    router.back();
+    router.dismiss();
     setInitialWorkout(null);
   };
 

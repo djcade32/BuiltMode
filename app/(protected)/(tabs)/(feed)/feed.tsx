@@ -6,12 +6,15 @@ import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Image,
-  RefreshControl,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  PanResponder,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -20,13 +23,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const FeedFilterOptions = ["ALL", "WORKOUTS", "MILESTONES"];
 
-function EmptyFeedState({
-  onFindFriends,
-  onLogWorkout,
-}: {
-  onFindFriends: () => void;
-  onLogWorkout: () => void;
-}) {
+const PULL_DISTANCE_TO_REFRESH = 85;
+const MAX_PULL_DISTANCE = 120;
+const REFRESH_HOLD_DISTANCE = 58;
+
+function EmptyFeedState({ onFindFriends, onLogWorkout }: { onFindFriends: () => void; onLogWorkout: () => void }) {
   return (
     <View style={styles.emptyStateContainer}>
       <View style={styles.emptyIllustration}>
@@ -74,19 +75,11 @@ function EmptyFeedState({
         Add friends to see completed workouts, milestones, and weekly progress show up here.
       </ThemedText>
 
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={styles.primaryEmptyButton}
-        onPress={onFindFriends}
-      >
+      <TouchableOpacity activeOpacity={0.85} style={styles.primaryEmptyButton} onPress={onFindFriends}>
         <ThemedText style={styles.primaryEmptyButtonText}>Find Friends</ThemedText>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={styles.secondaryEmptyButton}
-        onPress={onLogWorkout}
-      >
+      <TouchableOpacity activeOpacity={0.85} style={styles.secondaryEmptyButton} onPress={onLogWorkout}>
         <ThemedText style={styles.secondaryEmptyButtonText}>Log a Workout</ThemedText>
       </TouchableOpacity>
 
@@ -105,17 +98,14 @@ export default function feed() {
   const uid = user?.uid ?? "";
 
   const [feedFilter, setFeedFilter] = useState(FeedFilterOptions[0]);
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
 
-  const {
-    data,
-    error,
-    isLoading,
-    isPending,
-    refetch,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useUserFeedInfinite(uid);
+  const pullDistance = useRef(new Animated.Value(0)).current;
+  const pullDistanceRef = useRef(0);
+  const listScrollYRef = useRef(0);
+
+  const { data, error, isLoading, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useUserFeedInfinite(uid);
 
   const feedItems = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
@@ -130,6 +120,93 @@ export default function feed() {
         return null;
     }
   };
+
+  const animatePullDistance = useCallback(
+    (toValue: number) => {
+      Animated.spring(pullDistance, {
+        toValue,
+        useNativeDriver: true,
+        tension: 80,
+        friction: 10,
+      }).start();
+    },
+    [pullDistance],
+  );
+
+  const resetPullDistance = useCallback(() => {
+    pullDistanceRef.current = 0;
+    animatePullDistance(0);
+  }, [animatePullDistance]);
+
+  const handleCustomRefresh = useCallback(async () => {
+    if (isPullRefreshing) return;
+
+    setIsPullRefreshing(true);
+    animatePullDistance(REFRESH_HOLD_DISTANCE);
+
+    try {
+      await refetch();
+    } catch (error) {
+      console.error("Error refreshing feed", error);
+    } finally {
+      setIsPullRefreshing(false);
+      resetPullDistance();
+    }
+  }, [animatePullDistance, isPullRefreshing, refetch, resetPullDistance]);
+
+  const handleListScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    listScrollYRef.current = Math.max(0, event.nativeEvent.contentOffset.y);
+  }, []);
+
+  const pullPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+
+        onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+          const isAtTop = listScrollYRef.current <= 0;
+          const isPullingDown = gestureState.dy > 8;
+          const isMostlyVertical = Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+
+          return isAtTop && isPullingDown && isMostlyVertical && !isPullRefreshing;
+        },
+
+        onPanResponderMove: (_, gestureState) => {
+          if (gestureState.dy <= 0) return;
+
+          const dampenedPullDistance = Math.min(MAX_PULL_DISTANCE, gestureState.dy * 0.45);
+
+          pullDistanceRef.current = dampenedPullDistance;
+          pullDistance.setValue(dampenedPullDistance);
+        },
+
+        onPanResponderRelease: () => {
+          if (pullDistanceRef.current >= PULL_DISTANCE_TO_REFRESH) {
+            handleCustomRefresh();
+            return;
+          }
+
+          resetPullDistance();
+        },
+
+        onPanResponderTerminate: () => {
+          resetPullDistance();
+        },
+      }),
+    [handleCustomRefresh, isPullRefreshing, pullDistance, resetPullDistance],
+  );
+
+  const refreshLoaderOpacity = pullDistance.interpolate({
+    inputRange: [0, 25, REFRESH_HOLD_DISTANCE],
+    outputRange: [0, 0.35, 1],
+    extrapolate: "clamp",
+  });
+
+  const refreshLoaderTranslateY = pullDistance.interpolate({
+    inputRange: [0, REFRESH_HOLD_DISTANCE],
+    outputRange: [-26, 4],
+    extrapolate: "clamp",
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -156,36 +233,46 @@ export default function feed() {
             <ThemedText style={styles.errorText}>Error loading feed</ThemedText>
           </View>
         ) : (
-          <FlatList
-            data={feedItems}
-            keyExtractor={(item) => item.feedItemId}
-            renderItem={({ item }) => renderFeedItem(item)}
-            contentContainerStyle={[
-              styles.feedList,
-              feedItems.length === 0 && styles.feedListEmpty,
-            ]}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <EmptyFeedState
-                onFindFriends={() => router.push("/(protected)/(tabs)/(feed)/findFriends")}
-                onLogWorkout={() => router.push("/(protected)/(tabs)/(workout)/log" as any)}
+          <View style={styles.pullRefreshContainer} {...pullPanResponder.panHandlers}>
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.customRefreshLoader,
+                {
+                  opacity: refreshLoaderOpacity,
+                  transform: [{ translateY: refreshLoaderTranslateY }],
+                },
+              ]}
+            >
+              <ActivityIndicator color={Colors.accent.primary} />
+            </Animated.View>
+
+            <Animated.View style={{ flex: 1, transform: [{ translateY: pullDistance }] }}>
+              <FlatList
+                data={feedItems}
+                keyExtractor={(item) => item.feedItemId}
+                renderItem={({ item }) => renderFeedItem(item)}
+                contentContainerStyle={[styles.feedList, feedItems.length === 0 && styles.feedListEmpty]}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                  <EmptyFeedState
+                    onFindFriends={() => router.push("/(protected)/(tabs)/(feed)/findFriends")}
+                    onLogWorkout={() => router.push("/(protected)/(tabs)/(workout)/log" as any)}
+                  />
+                }
+                onScroll={handleListScroll}
+                scrollEventThrottle={16}
+                bounces={false}
+                overScrollMode="never"
+                onEndReachedThreshold={0.5}
+                onEndReached={() => {
+                  if (hasNextPage && !isFetchingNextPage && !isPullRefreshing) {
+                    fetchNextPage();
+                  }
+                }}
               />
-            }
-            refreshControl={
-              <RefreshControl
-                refreshing={isPending}
-                onRefresh={refetch}
-                colors={["#6B7280"]}
-                tintColor="#6B7280"
-              />
-            }
-            onEndReachedThreshold={0.5}
-            onEndReached={() => {
-              if (hasNextPage && !isFetchingNextPage) {
-                fetchNextPage();
-              }
-            }}
-          />
+            </Animated.View>
+          </View>
         )}
       </View>
     </SafeAreaView>
@@ -211,6 +298,22 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
+  },
+
+  pullRefreshContainer: {
+    flex: 1,
+    overflow: "hidden",
+  },
+
+  customRefreshLoader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
   },
 
   builtmodeText: {

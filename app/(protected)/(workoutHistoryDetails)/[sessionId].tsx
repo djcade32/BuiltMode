@@ -137,10 +137,10 @@ const WorkoutHistoryDetails = () => {
   };
 
   const handleBack = () => {
-    if (returnTo) {
-      router.replace(returnTo);
-      return;
-    }
+    // if (returnTo) {
+    //   router.replace(returnTo);
+    //   return;
+    // }
 
     router.back();
   };
