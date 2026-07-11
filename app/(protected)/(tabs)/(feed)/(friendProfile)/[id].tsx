@@ -263,7 +263,7 @@ const FriendProfile = () => {
                       workout={workout}
                       onPress={() =>
                         router.push({
-                          pathname: "/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]",
+                          pathname: "/(protected)/(workoutHistoryDetails)/[sessionId]",
                           params: {
                             sessionId: workout.sessionId,
                             returnTo: `/(protected)/(tabs)/(feed)/(friendProfile)/${id}`,
