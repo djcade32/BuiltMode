@@ -18,7 +18,7 @@ import { getWeekId } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -46,6 +46,8 @@ const FriendProfile = () => {
   const { returnTo } = useLocalSearchParams<{ returnTo?: RelativePathString }>();
 
   const queryClient = useQueryClient();
+
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const { data: userInfo, isLoading: isLoadingUserInfo } = useQuery({
     queryKey: ["user-leaderboard-entry", id],
@@ -101,6 +103,11 @@ const FriendProfile = () => {
 
   const { data: recentWorkouts, isLoading: isLoadingRecentWorkouts } = useUserWorkoutsInfinite(id, 3);
 
+  useEffect(() => {
+    if (isLoadingUserInfo || isLoadingUserStats || isLoadingUserWeekAggregate || isLoadingRecentWorkouts) return;
+    setIsLoadingData(false);
+  }, [isLoadingUserInfo, isLoadingUserStats, isLoadingUserWeekAggregate, isLoadingRecentWorkouts]);
+
   const accountabilitySummaryData = useMemo(() => {
     if (!userStats) return null;
 
@@ -136,8 +143,9 @@ const FriendProfile = () => {
     router.back();
   };
 
-  const isLoadingData =
-    isLoadingUserInfo || isLoadingUserStats || isLoadingUserWeekAggregate || isLoadingRecentWorkouts;
+  // const isLoadingData =
+  //   isLoadingUserInfo || isLoadingUserStats || isLoadingUserWeekAggregate || isLoadingRecentWorkouts;
+  // const isLoadingData = false;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
