@@ -11,7 +11,6 @@ import { ThemedText } from "../themed-text";
 import DropdownMenu, { DropdownMenuOption } from "../ui/DropdownMenu";
 import ThemedButton from "../ui/ThemedButton";
 import ChangeMetricTypeSheet from "./ChangeMetricTypeSheet";
-import ExerciseNoteSheet from "./ExerciseNoteSheet";
 import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
 import DurationSetItem from "./exerciseSetItems/DurationSetItem";
 import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
@@ -159,7 +158,6 @@ const ExerciseSetItem = ({
 type Props = {
   exercise: Exercise;
   index: number;
-  onChangeExerciseNote: (note: string, exerciseId: string) => void;
   onDeleteExercise: (exerciseId: string) => void;
   onExerciseComplete: (
     workoutProgress: Record<
@@ -171,15 +169,16 @@ type Props = {
     > | null,
   ) => void;
   onChangeMetricType: (exerciseId: string, metricType: ExerciseMetricType) => void;
+  setIsNotesSheetVisible: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const CurrentWorkoutCard = ({
   exercise,
   index,
   onExerciseComplete,
-  onChangeExerciseNote,
   onDeleteExercise,
   onChangeMetricType,
+  setIsNotesSheetVisible,
 }: Props) => {
   const { updateWorkout, activeWorkoutDraft, updateWorkoutProgress, workoutProgress } = useWorkoutStore();
   const { user } = useUserStore();
@@ -188,8 +187,6 @@ const CurrentWorkoutCard = ({
 
   const [completedSets, setCompletedSets] = useState<ExerciseSet[]>([]);
   const [activeSetIndex, setActiveSetIndex] = useState(0);
-  const [isNotesSheetVisible, setIsNotesSheetVisible] = useState(false);
-  const [exerciseNotes, setExerciseNotes] = useState<string>(notes ?? "");
   const [isMetricSheetVisible, setIsMetricSheetVisible] = useState(false);
 
   const currentSet = useMemo(() => sets[activeSetIndex], [sets, activeSetIndex]);
@@ -200,10 +197,6 @@ const CurrentWorkoutCard = ({
     setCompletedSets(sets ?? []);
     setActiveSetIndex(sets.length);
   }, [index, exercise.id, workoutProgress]);
-
-  useEffect(() => {
-    setExerciseNotes(notes ?? "");
-  }, [exercise]);
 
   const handleChangeMetricType = useCallback(
     (exerciseId: string, metricType: ExerciseMetricType) => {
@@ -473,19 +466,6 @@ const CurrentWorkoutCard = ({
           />
         )}
       </View>
-
-      <ExerciseNoteSheet
-        visible={isNotesSheetVisible}
-        name={name}
-        initialValue={exerciseNotes}
-        onClose={() => {
-          setIsNotesSheetVisible(false);
-        }}
-        onSave={(note) => {
-          setExerciseNotes(note);
-          onChangeExerciseNote(note, exercise.id);
-        }}
-      />
 
       <ChangeMetricTypeSheet
         visible={isMetricSheetVisible}

@@ -5,6 +5,7 @@ import Progressbar from "@/components/ui/Progressbar";
 import ThemedButton from "@/components/ui/ThemedButton";
 import AddExerciseSheet from "@/components/workout/AddExerciseSheet";
 import CurrentWorkoutCard from "@/components/workout/CurrentWorkoutCard";
+import ExerciseNoteSheet from "@/components/workout/ExerciseNoteSheet";
 import NextExerciseItem from "@/components/workout/NextExerciseItem";
 import { StopwatchDisplay } from "@/components/workout/StopwatchDisplay";
 import WorkoutNoteSheet from "@/components/workout/WorkoutNoteSheet";
@@ -71,6 +72,7 @@ const ActiveWorkout = () => {
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
   const [workoutNotes, setWorkoutNotes] = useState<string>(activeWorkoutDraft?.notes ?? "");
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
+  const [isNotesSheetVisible, setIsNotesSheetVisible] = useState(false);
 
   const displayWorkoutName =
     activeWorkoutDraft?.name ?? `${firstLetterToUpperCase(activeWorkoutDraft?.workoutType ?? "")} Workout`;
@@ -437,7 +439,7 @@ const ActiveWorkout = () => {
                 exercise={activeWorkoutDraft.exercises[currentExerciseIndex]}
                 index={currentExerciseIndex + 1}
                 onExerciseComplete={handleExerciseCompleted}
-                onChangeExerciseNote={handleChangeExerciseNotes}
+                setIsNotesSheetVisible={setIsNotesSheetVisible}
                 onDeleteExercise={handleDeleteExercise}
                 onChangeMetricType={handleChangeMetricType}
               />
@@ -591,6 +593,18 @@ const ActiveWorkout = () => {
         </ScrollView>
       </ThemedView>
 
+      <ExerciseNoteSheet
+        visible={isNotesSheetVisible}
+        name={activeWorkoutDraft.exercises[currentExerciseIndex].name}
+        initialValue={activeWorkoutDraft.exercises[currentExerciseIndex].notes}
+        onClose={() => {
+          setIsNotesSheetVisible(false);
+        }}
+        onSave={(note) => {
+          handleChangeExerciseNotes(note, activeWorkoutDraft.exercises[currentExerciseIndex].id);
+        }}
+      />
+
       <AddExerciseSheet
         visible={isAddExerciseSheetOpen}
         onClose={() => {
@@ -602,9 +616,7 @@ const ActiveWorkout = () => {
         visible={isWorkoutNoteSheetVisible}
         workoutName={displayWorkoutName}
         initialValue={workoutNotes}
-        onClose={() => {
-          setIsWorkoutNoteSheetVisible(false);
-        }}
+        onClose={() => setIsWorkoutNoteSheetVisible(false)}
         onSave={handleChangeWorkoutNotes}
       />
     </KeyboardAvoidingView>
