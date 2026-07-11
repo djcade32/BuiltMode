@@ -20,6 +20,7 @@ type Props = {
   initialTab: RequestTab;
   incomingRequests: FriendRequest[];
   sentRequests: FriendRequest[];
+  isPendingAction?: boolean;
   isLoading?: boolean;
   onClose: () => void;
   onAccept: (requestId: string) => void;
@@ -32,6 +33,7 @@ const FriendRequestsSheet = ({
   initialTab,
   incomingRequests,
   sentRequests,
+  isPendingAction = false,
   isLoading = false,
   onClose,
   onAccept,
@@ -58,9 +60,7 @@ const FriendRequestsSheet = ({
       : "Track requests you have already sent.";
 
   const emptyText =
-    activeTab === "incoming"
-      ? "No incoming friend requests right now."
-      : "No sent friend requests right now.";
+    activeTab === "incoming" ? "No incoming friend requests right now." : "No sent friend requests right now.";
 
   const handleClose = () => {
     onClose();
@@ -95,21 +95,14 @@ const FriendRequestsSheet = ({
               onPress={() => setActiveTab("incoming")}
               activeOpacity={0.8}
             >
-              <ThemedText
-                style={[styles.tabText, activeTab === "incoming" && styles.tabTextActive]}
-              >
+              <ThemedText style={[styles.tabText, activeTab === "incoming" && styles.tabTextActive]}>
                 INCOMING
               </ThemedText>
 
               {incomingRequests.length > 0 ? (
-                <View
-                  style={[styles.countPill, activeTab === "incoming" && styles.countPillActive]}
-                >
+                <View style={[styles.countPill, activeTab === "incoming" && styles.countPillActive]}>
                   <ThemedText
-                    style={[
-                      styles.countPillText,
-                      activeTab === "incoming" && styles.countPillTextActive,
-                    ]}
+                    style={[styles.countPillText, activeTab === "incoming" && styles.countPillTextActive]}
                   >
                     {incomingRequests.length}
                   </ThemedText>
@@ -122,18 +115,11 @@ const FriendRequestsSheet = ({
               onPress={() => setActiveTab("sent")}
               activeOpacity={0.8}
             >
-              <ThemedText style={[styles.tabText, activeTab === "sent" && styles.tabTextActive]}>
-                SENT
-              </ThemedText>
+              <ThemedText style={[styles.tabText, activeTab === "sent" && styles.tabTextActive]}>SENT</ThemedText>
 
               {sentRequests.length > 0 ? (
                 <View style={[styles.countPill, activeTab === "sent" && styles.countPillActive]}>
-                  <ThemedText
-                    style={[
-                      styles.countPillText,
-                      activeTab === "sent" && styles.countPillTextActive,
-                    ]}
-                  >
+                  <ThemedText style={[styles.countPillText, activeTab === "sent" && styles.countPillTextActive]}>
                     {sentRequests.length}
                   </ThemedText>
                 </View>
@@ -162,6 +148,7 @@ const FriendRequestsSheet = ({
                   key={request.requestId}
                   request={request}
                   type={activeTab}
+                  isPending={isPendingAction}
                   onAccept={onAccept}
                   onDecline={onDecline}
                   onCancel={onCancel}
@@ -180,18 +167,14 @@ export default FriendRequestsSheet;
 type FriendRequestRowProps = {
   request: FriendRequest;
   type: RequestTab;
+  isPending: boolean;
   onAccept: (requestId: string) => void;
   onDecline: (requestId: string) => void;
   onCancel: (requestId: string) => void;
 };
 
-const FriendRequestRow = ({
-  request,
-  type,
-  onAccept,
-  onDecline,
-  onCancel,
-}: FriendRequestRowProps) => {
+const FriendRequestRow = ({ request, type, isPending, onAccept, onDecline, onCancel }: FriendRequestRowProps) => {
+  const [actionPressed, setActionPressed] = useState<"accept" | "decline" | null>(null);
   const isIncoming = type === "incoming";
 
   const displayName = isIncoming ? request.fromDisplayName : request.toDisplayName;
@@ -218,18 +201,34 @@ const FriendRequestRow = ({
         <View style={styles.incomingActions}>
           <TouchableOpacity
             style={styles.acceptButton}
-            onPress={() => onAccept(request.requestId)}
+            onPress={() => {
+              setActionPressed("accept");
+              onAccept(request.requestId);
+            }}
             activeOpacity={0.85}
+            disabled={isPending}
           >
-            <ThemedText style={styles.acceptButtonText}>ACCEPT</ThemedText>
+            {isPending && actionPressed === "accept" ? (
+              <ActivityIndicator color={Colors.background.primary} />
+            ) : (
+              <ThemedText style={styles.acceptButtonText}>ACCEPT</ThemedText>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.declineButton}
-            onPress={() => onDecline(request.requestId)}
+            onPress={() => {
+              setActionPressed("decline");
+              onDecline(request.requestId);
+            }}
             activeOpacity={0.85}
+            disabled={isPending}
           >
-            <ThemedText style={styles.declineButtonText}>DECLINE</ThemedText>
+            {isPending && actionPressed === "decline" ? (
+              <ActivityIndicator color={Colors.icon} />
+            ) : (
+              <ThemedText style={styles.declineButtonText}>DECLINE</ThemedText>
+            )}
           </TouchableOpacity>
         </View>
       ) : (
@@ -237,8 +236,13 @@ const FriendRequestRow = ({
           style={styles.cancelButton}
           onPress={() => onCancel(request.requestId)}
           activeOpacity={0.85}
+          disabled={isPending}
         >
-          <ThemedText style={styles.cancelButtonText}>CANCEL</ThemedText>
+          {isPending ? (
+            <ActivityIndicator color={Colors.icon} />
+          ) : (
+            <ThemedText style={styles.cancelButtonText}>CANCEL</ThemedText>
+          )}
         </TouchableOpacity>
       )}
     </View>

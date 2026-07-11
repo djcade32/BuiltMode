@@ -14,24 +14,13 @@ type Props = {
   isPending: boolean;
 };
 
-const FriendsListCard = ({
-  uid,
-  avatarUrl,
-  displayName,
-  username,
-  removeFriend,
-  isPending,
-}: Props) => {
+const FriendsListCard = ({ uid, avatarUrl, displayName, username, removeFriend, isPending }: Props) => {
   const router = useRouter();
   const navigateToFriendProfile = (uid: string) => router.push(`/(friendProfile)/${uid}`);
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-        <Avatar
-          avatarUrl={avatarUrl}
-          displayName={displayName}
-          onPress={() => navigateToFriendProfile(uid)}
-        />
+        <Avatar avatarUrl={avatarUrl} displayName={displayName} onPress={() => navigateToFriendProfile(uid)} />
         <TouchableOpacity onPress={() => navigateToFriendProfile(uid)}>
           <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
             {displayName}
@@ -43,7 +32,7 @@ const FriendsListCard = ({
       </View>
       <TouchableOpacity style={styles.button} onPress={removeFriend} disabled={isPending}>
         {isPending ? (
-          <ActivityIndicator color={Colors.icon} />
+          <ActivityIndicator color={Colors.text.secondary} />
         ) : (
           <ThemedText style={styles.buttonText}>UNFRIEND</ThemedText>
         )}
@@ -66,11 +55,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     padding: 20,
-    // shadowColor: "#000",
-    // shadowOffset: { width: 0, height: 4 },
-    // shadowOpacity: 0.65,
-    // shadowRadius: 6,
-    // elevation: 6,
   },
 
   avatarContainer: {
