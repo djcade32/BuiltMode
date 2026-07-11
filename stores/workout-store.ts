@@ -255,12 +255,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         }),
 
       setDurationSetTimer: (value) => {
-        if (!value) return;
-        set({
-          durationSetTimer: {
-            ...value,
-          },
-        });
+        set({ durationSetTimer: value });
       },
     }),
     {

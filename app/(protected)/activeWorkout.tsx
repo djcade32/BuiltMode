@@ -593,17 +593,15 @@ const ActiveWorkout = () => {
         </ScrollView>
       </ThemedView>
 
-      <ExerciseNoteSheet
-        visible={isNotesSheetVisible}
-        name={activeWorkoutDraft.exercises[currentExerciseIndex].name}
-        initialValue={activeWorkoutDraft.exercises[currentExerciseIndex].notes}
-        onClose={() => {
-          setIsNotesSheetVisible(false);
-        }}
-        onSave={(note) => {
-          handleChangeExerciseNotes(note, activeWorkoutDraft.exercises[currentExerciseIndex].id);
-        }}
-      />
+      {activeWorkoutDraft.exercises[currentExerciseIndex] && (
+        <ExerciseNoteSheet
+          visible={isNotesSheetVisible}
+          name={activeWorkoutDraft.exercises[currentExerciseIndex].name}
+          initialValue={activeWorkoutDraft.exercises[currentExerciseIndex].notes}
+          onClose={() => setIsNotesSheetVisible(false)}
+          onSave={(note) => handleChangeExerciseNotes(note, activeWorkoutDraft.exercises[currentExerciseIndex].id)}
+        />
+      )}
 
       <AddExerciseSheet
         visible={isAddExerciseSheetOpen}

@@ -339,22 +339,32 @@ const DurationSetItem = ({
       return;
     }
 
-    const notificationId = await scheduleDurationTimerExpiredNotification({
-      secondsUntilExpiration,
-    });
+    // Cancel any existing notification before scheduling a new one
+    if (currentDurationSetTimer?.notificationId) {
+      await cancelDurationTimerNotification(currentDurationSetTimer.notificationId);
+    }
 
-    persistDurationSetTimer({
-      exerciseId,
-      setId: set.id,
-      status: "running",
-      startedAtMs: Date.now(),
-      expiresAtMs: Date.now() + secondsUntilExpiration * 1000,
-      notificationId,
-      durationSeconds: currentDurationSetTimer?.durationSeconds ?? initialDurationSeconds,
-      pausedRemainingSeconds: null,
-    });
+    try {
+      const notificationId = await scheduleDurationTimerExpiredNotification({
+        secondsUntilExpiration,
+      });
 
-    restart(getExpiryTimestamp(secondsUntilExpiration), true);
+      persistDurationSetTimer({
+        exerciseId,
+        setId: set.id,
+        status: "running",
+        startedAtMs: Date.now(),
+        expiresAtMs: Date.now() + secondsUntilExpiration * 1000,
+        notificationId,
+        durationSeconds: currentDurationSetTimer?.durationSeconds ?? initialDurationSeconds,
+        pausedRemainingSeconds: null,
+      });
+
+      restart(getExpiryTimestamp(secondsUntilExpiration), true);
+    } catch (error) {
+      console.warn("Failed to schedule timer notification:", error);
+      setIsTimerStarted(false);
+    }
   };
 
   const handlePauseTimer = async () => {
