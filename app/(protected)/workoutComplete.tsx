@@ -107,7 +107,9 @@ const workoutComplete = () => {
     try {
       let convertedUrl = null;
       if (workoutPhotoUri) {
-        convertedUrl = (await uploadImageAsync(workoutPhotoUri, `workouts/${uid}_${completeWorkoutResponse.sessionId}`)) ?? null;
+        convertedUrl =
+          (await uploadImageAsync(workoutPhotoUri, `workouts/${uid}_${completeWorkoutResponse.sessionId}`)) ??
+          null;
 
         if (!convertedUrl) {
           console.warn("Avatar upload failed; creating profile without avatar");
@@ -120,7 +122,7 @@ const workoutComplete = () => {
       }
 
       clearWorkout();
-      router.replace("/(protected)/(tabs)/(workout)/log");
+      router.replace("/(protected)/(tabs)/(feed)/feed");
     } catch (error) {
       console.error("Error publishing workout to feed.", error);
       Alert.alert("Share failed", "We couldn't publish this workout. Please try again.");
@@ -310,7 +312,9 @@ const workoutComplete = () => {
                 }}
               >
                 <ThemedText style={styles.progressText}>
-                  <ThemedText style={[styles.progressText, isTrainingTargetMet ? { color: Colors.accent.primary } : null]}>
+                  <ThemedText
+                    style={[styles.progressText, isTrainingTargetMet ? { color: Colors.accent.primary } : null]}
+                  >
                     {completeWorkoutResponse?.activeDaysThisWeek}
                   </ThemedText>
                   /{completeWorkoutResponse?.weeklyTargetDays}
@@ -319,7 +323,9 @@ const workoutComplete = () => {
               </View>
 
               {isTrainingTargetMet && (
-                <ThemedText style={{ fontSize: 12, color: Colors.gray }}>You met your standard for the week.</ThemedText>
+                <ThemedText style={{ fontSize: 12, color: Colors.gray }}>
+                  You met your standard for the week.
+                </ThemedText>
               )}
               <View style={{ backgroundColor: Colors.background.primary, height: 6, borderRadius: 3 }}>
                 <View
@@ -365,10 +371,18 @@ const workoutComplete = () => {
               <>
                 <Image source={{ uri: workoutPhotoUri }} style={styles.workoutPhotoPreview} />
                 <View style={styles.photoActions}>
-                  <Pressable accessibilityRole="button" onPress={handleTakeWorkoutPhoto} style={styles.secondaryPhotoButton}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={handleTakeWorkoutPhoto}
+                    style={styles.secondaryPhotoButton}
+                  >
                     <ThemedText style={styles.secondaryPhotoButtonText}>RETAKE</ThemedText>
                   </Pressable>
-                  <Pressable accessibilityRole="button" onPress={handleRemoveWorkoutPhoto} style={styles.secondaryPhotoButton}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={handleRemoveWorkoutPhoto}
+                    style={styles.secondaryPhotoButton}
+                  >
                     <ThemedText style={styles.secondaryPhotoButtonText}>REMOVE</ThemedText>
                   </Pressable>
                 </View>
@@ -381,7 +395,10 @@ const workoutComplete = () => {
                     Add an optional photo to appear with this completed workout in the feed.
                   </ThemedText>
                 </View>
-                <ThemedButton title={isOpeningCamera ? "OPENING CAMERA..." : "TAKE PHOTO"} onPress={handleTakeWorkoutPhoto} />
+                <ThemedButton
+                  title={isOpeningCamera ? "OPENING CAMERA..." : "TAKE PHOTO"}
+                  onPress={handleTakeWorkoutPhoto}
+                />
               </>
             )}
           </View>
