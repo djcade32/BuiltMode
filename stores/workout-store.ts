@@ -15,6 +15,19 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
 
+export type PersistedDurationSetTimerStatus = "running" | "paused" | "expired";
+
+export type PersistedDurationSetTimer = {
+  exerciseId: string;
+  setId: string;
+  status: PersistedDurationSetTimerStatus;
+  startedAtMs: number | null;
+  expiresAtMs: number | null;
+  durationSeconds: number;
+  pausedRemainingSeconds: number | null;
+  notificationId?: string | null;
+};
+
 export interface WorkoutState {
   duration?: number;
   isLoggingWorkout: boolean;
@@ -28,7 +41,7 @@ export interface WorkoutState {
   workoutProgress: Record<string, { sets: ExerciseSet[]; completed: boolean }> | null;
   isWorkoutComplete: boolean;
   currentExerciseIndex: number;
-  durationSetTimer: { expiresAtMs: number; notificationId: string } | null;
+  durationSetTimer: PersistedDurationSetTimer | null;
   completeWorkoutResponse?: CompleteWorkoutResponse;
   startWorkout: (payload: {
     name: string;
@@ -54,7 +67,7 @@ export interface WorkoutState {
   clearWorkout: () => void;
   saveWorkoutAsTemplate: (template: any) => Promise<SaveAsTemplateResponse | undefined>;
   setIsWorkoutComplete: (value: boolean) => void;
-  setDurationSetTimer: (timer: { expiresAtMs: number; notificationId: string } | null) => void;
+  setDurationSetTimer: (timer: PersistedDurationSetTimer | null) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -234,6 +247,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           currentExerciseIndex: 0,
           duration: undefined,
           completeWorkoutResponse: undefined,
+          durationSetTimer: null,
         }),
       setIsWorkoutComplete: (value) =>
         set({
@@ -244,8 +258,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         if (!value) return;
         set({
           durationSetTimer: {
-            expiresAtMs: value?.expiresAtMs,
-            notificationId: value?.notificationId,
+            ...value,
           },
         });
       },

@@ -231,8 +231,8 @@ export function subscribeToForegroundNotifications(): () => void {
 export async function scheduleDurationTimerExpiredNotification(input: { secondsUntilExpiration: number }) {
   const notificationId = await Notifications.scheduleNotificationAsync({
     content: {
-      title: "Duration timer complete",
-      // body: "Time to get back to work.",
+      title: "Round complete",
+      body: "Great work!",
       sound: Platform.OS === "ios" ? "double_bell.mp3" : "double_bell.mp3",
     },
     trigger: {

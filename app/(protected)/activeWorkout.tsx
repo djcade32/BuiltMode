@@ -134,7 +134,9 @@ const ActiveWorkout = () => {
     hydratedStopwatchStartedAtRef.current = activeWorkoutDraft.startedAtMs;
   }, [activeWorkoutDraft?.startedAtMs, reset]);
 
-  useEffect(() => {}, [activeWorkoutDraft?.exercises]);
+  useEffect(() => {
+    if (isWorkoutComplete) scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [isWorkoutComplete]);
 
   const completedExercises = useMemo(() => {
     let completedExercises = 0;
@@ -181,6 +183,7 @@ const ActiveWorkout = () => {
   if (!activeWorkoutDraft) return null;
 
   const handleExerciseCompleted = () => {
+    //TODO: Some of these conditions are not relevant. May need to be refactored
     const exerciseLeftToComplete = activeWorkoutDraft.exercises.find((e) => {
       if (workoutProgress && workoutProgress[e.id]) {
         return workoutProgress[e.id].completed === false;
@@ -190,7 +193,6 @@ const ActiveWorkout = () => {
     });
 
     const nextExerciseIndex = currentExerciseIndex + 1;
-
     if (nextExerciseIndex >= activeWorkoutDraft.exercises.length && !exerciseLeftToComplete) {
       return;
     }
@@ -200,7 +202,6 @@ const ActiveWorkout = () => {
         ? activeWorkoutDraft.exercises.findIndex((e) => e.id === exerciseLeftToComplete?.id)
         : nextExerciseIndex,
     );
-    scrollViewRef.current?.scrollToEnd({ animated: true });
   };
 
   const handleCompleteWorkout = async () => {
