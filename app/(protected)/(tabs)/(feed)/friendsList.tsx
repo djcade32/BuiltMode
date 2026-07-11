@@ -295,7 +295,7 @@ const friendsList = () => {
                     displayName={item.displayName}
                     username={item.usernameLower}
                     removeFriend={() => removeFriendFunc(item.uid)}
-                    isPending={isPendingRemoveFriend}
+                    isPending={isPendingRemoveFriend && removeFriendUid === item.uid}
                   />
                 )}
                 ListHeaderComponent={listHeaderComponent}

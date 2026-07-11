@@ -174,7 +174,7 @@ type FriendRequestRowProps = {
 };
 
 const FriendRequestRow = ({ request, type, isPending, onAccept, onDecline, onCancel }: FriendRequestRowProps) => {
-  const [actionPressed, setActionPressed] = useState<"accept" | "decline" | null>(null);
+  const [actionPressed, setActionPressed] = useState<"accept" | "decline" | "cancel" | null>(null);
   const isIncoming = type === "incoming";
 
   const displayName = isIncoming ? request.fromDisplayName : request.toDisplayName;
@@ -234,11 +234,14 @@ const FriendRequestRow = ({ request, type, isPending, onAccept, onDecline, onCan
       ) : (
         <TouchableOpacity
           style={styles.cancelButton}
-          onPress={() => onCancel(request.requestId)}
+          onPress={() => {
+            setActionPressed("cancel");
+            onCancel(request.requestId);
+          }}
           activeOpacity={0.85}
           disabled={isPending}
         >
-          {isPending ? (
+          {isPending && actionPressed === "cancel" ? (
             <ActivityIndicator color={Colors.icon} />
           ) : (
             <ThemedText style={styles.cancelButtonText}>CANCEL</ThemedText>
