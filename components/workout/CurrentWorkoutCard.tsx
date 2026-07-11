@@ -3,15 +3,14 @@ import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { v4 as uuidv4 } from "uuid";
 import { ThemedText } from "../themed-text";
 import DropdownMenu, { DropdownMenuOption } from "../ui/DropdownMenu";
 import ThemedButton from "../ui/ThemedButton";
 import ChangeMetricTypeSheet from "./ChangeMetricTypeSheet";
-import ExerciseNoteSheet from "./ExerciseNoteSheet";
 import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
 import DurationSetItem from "./exerciseSetItems/DurationSetItem";
 import RepsOnlySetItem from "./exerciseSetItems/RepsOnlySetItem";
@@ -159,19 +158,27 @@ const ExerciseSetItem = ({
 type Props = {
   exercise: Exercise;
   index: number;
-  onChangeExerciseNote: (note: string, exerciseId: string) => void;
   onDeleteExercise: (exerciseId: string) => void;
-  onExerciseComplete: (exercise: Exercise) => void;
+  onExerciseComplete: (
+    workoutProgress: Record<
+      string,
+      {
+        sets: ExerciseSet[];
+        completed: boolean;
+      }
+    > | null,
+  ) => void;
   onChangeMetricType: (exerciseId: string, metricType: ExerciseMetricType) => void;
+  setIsNotesSheetVisible: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const CurrentWorkoutCard = ({
   exercise,
   index,
   onExerciseComplete,
-  onChangeExerciseNote,
   onDeleteExercise,
   onChangeMetricType,
+  setIsNotesSheetVisible,
 }: Props) => {
   const { updateWorkout, activeWorkoutDraft, updateWorkoutProgress, workoutProgress } = useWorkoutStore();
   const { user } = useUserStore();
@@ -180,11 +187,7 @@ const CurrentWorkoutCard = ({
 
   const [completedSets, setCompletedSets] = useState<ExerciseSet[]>([]);
   const [activeSetIndex, setActiveSetIndex] = useState(0);
-  const [isNotesSheetVisible, setIsNotesSheetVisible] = useState(false);
-  const [exerciseNotes, setExerciseNotes] = useState<string>(notes ?? "");
   const [isMetricSheetVisible, setIsMetricSheetVisible] = useState(false);
-
-  const listRef = useRef<FlatList<ExerciseSet>>(null);
 
   const currentSet = useMemo(() => sets[activeSetIndex], [sets, activeSetIndex]);
   const hasNotes = Boolean(notes?.trim());
@@ -194,10 +197,6 @@ const CurrentWorkoutCard = ({
     setCompletedSets(sets ?? []);
     setActiveSetIndex(sets.length);
   }, [index, exercise.id, workoutProgress]);
-
-  useEffect(() => {
-    setExerciseNotes(notes ?? "");
-  }, [exercise]);
 
   const handleChangeMetricType = useCallback(
     (exerciseId: string, metricType: ExerciseMetricType) => {
@@ -225,9 +224,13 @@ const CurrentWorkoutCard = ({
       workoutProgress && workoutProgress[exercise.id]
         ? [...workoutProgress[exercise.id].sets, currentSet]
         : [currentSet];
+
+    const isCompleted = updatedSets.length === exercise.sets.length;
+
     updateWorkoutProgress({
       exerciseId: exercise.id,
       sets: updatedSets,
+      completed: isCompleted,
     });
 
     const nextIndex = activeSetIndex + 1;
@@ -235,30 +238,10 @@ const CurrentWorkoutCard = ({
     if (nextIndex < sets.length) {
       setActiveSetIndex(nextIndex);
     }
-  };
 
-  const handleFinishExercise = () => {
-    if (!currentSet) {
-      // All sets already completed, just mark exercise as finished
-      updateWorkoutProgress({
-        exerciseId: exercise.id,
-        sets: workoutProgress?.[exercise.id]?.sets ?? [],
-        completed: true,
-      });
-      onExerciseComplete(exercise);
-      return;
+    if (isCompleted) {
+      onExerciseComplete(workoutProgress);
     }
-
-    const updatedSets =
-      workoutProgress && workoutProgress[exercise.id]
-        ? [...workoutProgress[exercise.id].sets, currentSet]
-        : [currentSet];
-    updateWorkoutProgress({
-      exerciseId: exercise.id,
-      sets: updatedSets,
-      completed: true,
-    });
-    onExerciseComplete(exercise);
   };
 
   const getSetCallToActionText = useCallback(() => {
@@ -479,23 +462,10 @@ const CurrentWorkoutCard = ({
                 ? "FINISH EXERCISE"
                 : `COMPLETE ${getExerciseMetricText()?.toLocaleUpperCase()}`
             }
-            onPress={activeSetIndex >= sets.length - 1 ? handleFinishExercise : handleCompleteSet}
+            onPress={handleCompleteSet}
           />
         )}
       </View>
-
-      <ExerciseNoteSheet
-        visible={isNotesSheetVisible}
-        name={name}
-        initialValue={exerciseNotes}
-        onClose={() => {
-          setIsNotesSheetVisible(false);
-        }}
-        onSave={(note) => {
-          setExerciseNotes(note);
-          onChangeExerciseNote(note, exercise.id);
-        }}
-      />
 
       <ChangeMetricTypeSheet
         visible={isMetricSheetVisible}

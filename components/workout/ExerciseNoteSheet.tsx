@@ -50,7 +50,13 @@ const ExerciseNoteSheet = ({ visible, name, initialValue = "", onClose, onSave }
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" presentationStyle="overFullScreen" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      presentationStyle="overFullScreen"
+      onRequestClose={handleClose}
+    >
       <View style={styles.modalRoot}>
         <Pressable style={styles.backdrop} onPress={handleClose} />
 

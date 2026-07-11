@@ -5,6 +5,7 @@ import Progressbar from "@/components/ui/Progressbar";
 import ThemedButton from "@/components/ui/ThemedButton";
 import AddExerciseSheet from "@/components/workout/AddExerciseSheet";
 import CurrentWorkoutCard from "@/components/workout/CurrentWorkoutCard";
+import ExerciseNoteSheet from "@/components/workout/ExerciseNoteSheet";
 import NextExerciseItem from "@/components/workout/NextExerciseItem";
 import { StopwatchDisplay } from "@/components/workout/StopwatchDisplay";
 import WorkoutNoteSheet from "@/components/workout/WorkoutNoteSheet";
@@ -71,6 +72,7 @@ const ActiveWorkout = () => {
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
   const [workoutNotes, setWorkoutNotes] = useState<string>(activeWorkoutDraft?.notes ?? "");
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
+  const [isNotesSheetVisible, setIsNotesSheetVisible] = useState(false);
 
   const displayWorkoutName =
     activeWorkoutDraft?.name ?? `${firstLetterToUpperCase(activeWorkoutDraft?.workoutType ?? "")} Workout`;
@@ -134,7 +136,9 @@ const ActiveWorkout = () => {
     hydratedStopwatchStartedAtRef.current = activeWorkoutDraft.startedAtMs;
   }, [activeWorkoutDraft?.startedAtMs, reset]);
 
-  useEffect(() => {}, [activeWorkoutDraft?.exercises]);
+  useEffect(() => {
+    if (isWorkoutComplete) scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [isWorkoutComplete]);
 
   const completedExercises = useMemo(() => {
     let completedExercises = 0;
@@ -181,6 +185,7 @@ const ActiveWorkout = () => {
   if (!activeWorkoutDraft) return null;
 
   const handleExerciseCompleted = () => {
+    //TODO: Some of these conditions are not relevant. May need to be refactored
     const exerciseLeftToComplete = activeWorkoutDraft.exercises.find((e) => {
       if (workoutProgress && workoutProgress[e.id]) {
         return workoutProgress[e.id].completed === false;
@@ -190,7 +195,6 @@ const ActiveWorkout = () => {
     });
 
     const nextExerciseIndex = currentExerciseIndex + 1;
-
     if (nextExerciseIndex >= activeWorkoutDraft.exercises.length && !exerciseLeftToComplete) {
       return;
     }
@@ -200,7 +204,6 @@ const ActiveWorkout = () => {
         ? activeWorkoutDraft.exercises.findIndex((e) => e.id === exerciseLeftToComplete?.id)
         : nextExerciseIndex,
     );
-    scrollViewRef.current?.scrollToEnd({ animated: true });
   };
 
   const handleCompleteWorkout = async () => {
@@ -436,7 +439,7 @@ const ActiveWorkout = () => {
                 exercise={activeWorkoutDraft.exercises[currentExerciseIndex]}
                 index={currentExerciseIndex + 1}
                 onExerciseComplete={handleExerciseCompleted}
-                onChangeExerciseNote={handleChangeExerciseNotes}
+                setIsNotesSheetVisible={setIsNotesSheetVisible}
                 onDeleteExercise={handleDeleteExercise}
                 onChangeMetricType={handleChangeMetricType}
               />
@@ -590,6 +593,18 @@ const ActiveWorkout = () => {
         </ScrollView>
       </ThemedView>
 
+      <ExerciseNoteSheet
+        visible={isNotesSheetVisible}
+        name={activeWorkoutDraft.exercises[currentExerciseIndex].name}
+        initialValue={activeWorkoutDraft.exercises[currentExerciseIndex].notes}
+        onClose={() => {
+          setIsNotesSheetVisible(false);
+        }}
+        onSave={(note) => {
+          handleChangeExerciseNotes(note, activeWorkoutDraft.exercises[currentExerciseIndex].id);
+        }}
+      />
+
       <AddExerciseSheet
         visible={isAddExerciseSheetOpen}
         onClose={() => {
@@ -601,9 +616,7 @@ const ActiveWorkout = () => {
         visible={isWorkoutNoteSheetVisible}
         workoutName={displayWorkoutName}
         initialValue={workoutNotes}
-        onClose={() => {
-          setIsWorkoutNoteSheetVisible(false);
-        }}
+        onClose={() => setIsWorkoutNoteSheetVisible(false)}
         onSave={handleChangeWorkoutNotes}
       />
     </KeyboardAvoidingView>

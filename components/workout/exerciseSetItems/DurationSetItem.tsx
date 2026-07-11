@@ -4,6 +4,11 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { timeStringToSeconds } from "@/lib/utils/conversions";
 import { durationTimeString, formatTimeInput } from "@/lib/utils/time";
 import { Exercise, ExerciseSet } from "@/packages/shared/src";
+import {
+  cancelDurationTimerNotification,
+  scheduleDurationTimerExpiredNotification,
+} from "@/services/notification-service";
+import { PersistedDurationSetTimer, useWorkoutStore } from "@/stores/workout-store";
 import { Feather, FontAwesome6 } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
 import * as Haptics from "expo-haptics";
@@ -34,8 +39,28 @@ type Props = {
 
 const getExpiryTimestamp = (durationSec: number) => {
   const time = new Date();
-  time.setSeconds(time.getSeconds() + durationSec);
+  time.setSeconds(time.getSeconds() + Math.max(0, durationSec));
   return time;
+};
+
+const getRemainingSecondsFromExpiresAt = (expiresAtMs?: number | null) => {
+  if (!expiresAtMs) return 0;
+
+  return Math.max(0, Math.ceil((expiresAtMs - Date.now()) / 1000));
+};
+
+const getInitialTimerSeconds = (timerState: PersistedDurationSetTimer | null, fallbackDurationSeconds: number) => {
+  if (!timerState) return fallbackDurationSeconds;
+
+  if (timerState.status === "paused") {
+    return Math.max(0, timerState.pausedRemainingSeconds ?? timerState.durationSeconds ?? 0);
+  }
+
+  if (timerState.status === "running") {
+    return getRemainingSecondsFromExpiresAt(timerState.expiresAtMs);
+  }
+
+  return fallbackDurationSeconds;
 };
 
 const getNearestTouchedDurationAbove = (
@@ -81,12 +106,34 @@ const DurationSetItem = ({
   onFocus,
 }: Props) => {
   const hasMountedRef = useRef(false);
+  const { setDurationSetTimer, durationSetTimer } = useWorkoutStore();
+
+  const persistedDurationSetTimer = durationSetTimer;
+
+  const currentDurationSetTimer = useMemo(() => {
+    if (!persistedDurationSetTimer) return null;
+
+    const isCurrentSetTimer =
+      persistedDurationSetTimer.exerciseId === exerciseId && persistedDurationSetTimer.setId === set.id;
+
+    return isCurrentSetTimer ? persistedDurationSetTimer : null;
+  }, [persistedDurationSetTimer, exerciseId, set.id]);
+
+  const initialTimerSeconds = getInitialTimerSeconds(currentDurationSetTimer, set.durationSec ?? 0);
+  const shouldAutoStartTimer = currentDurationSetTimer?.status === "running" && initialTimerSeconds > 0;
 
   const [isDurationTouched, setIsDurationTouched] = useState(false);
-  const [isTimerStarted, setIsTimerStarted] = useState(false);
-  const [isTimerExpired, setIsTimerExpired] = useState(false);
+  const [isTimerStarted, setIsTimerStarted] = useState(() => Boolean(currentDurationSetTimer));
+  const [isTimerExpired, setIsTimerExpired] = useState(
+    currentDurationSetTimer?.status === "expired" ||
+      (currentDurationSetTimer?.status === "running" && initialTimerSeconds <= 0),
+  );
 
   const timerCompletePlayer = useAudioPlayer(timer_sound);
+
+  const persistDurationSetTimer = (nextTimer: PersistedDurationSetTimer | null) => {
+    setDurationSetTimer(nextTimer);
+  };
 
   const hasDurationBeenTouched = () => {
     return (
@@ -109,14 +156,55 @@ const DurationSetItem = ({
   const handleTimerExpire = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     playTimerCompleteSound();
+    cancelDurationTimerNotification(currentDurationSetTimer?.notificationId);
+    persistDurationSetTimer(null);
+    setIsTimerStarted(false);
     setIsTimerExpired(true);
   };
 
-  const { seconds, minutes, hours, isRunning, start, pause, restart } = useTimer({
-    expiryTimestamp: getExpiryTimestamp(set.durationSec ?? 0),
+  const timer = useTimer({
+    autoStart: shouldAutoStartTimer,
     onExpire: handleTimerExpire,
-    autoStart: false,
+    expiryTimestamp: getExpiryTimestamp(initialTimerSeconds),
   });
+
+  const { seconds, minutes, hours, isRunning, totalSeconds, pause, restart } = timer;
+
+  useEffect(() => {
+    if (!currentDurationSetTimer) return;
+
+    setIsTimerStarted(true);
+
+    if (currentDurationSetTimer.status === "paused") {
+      const remainingSeconds = Math.max(
+        0,
+        currentDurationSetTimer.pausedRemainingSeconds ?? currentDurationSetTimer.durationSeconds ?? 0,
+      );
+
+      restart(getExpiryTimestamp(remainingSeconds), false);
+      setIsTimerExpired(false);
+      return;
+    }
+
+    if (currentDurationSetTimer.status === "running") {
+      const remainingSeconds = getRemainingSecondsFromExpiresAt(currentDurationSetTimer.expiresAtMs);
+
+      if (remainingSeconds <= 0) {
+        persistDurationSetTimer(null);
+        setIsTimerStarted(false);
+        setIsTimerExpired(true);
+        restart(getExpiryTimestamp(0), false);
+        return;
+      }
+
+      restart(getExpiryTimestamp(remainingSeconds), true);
+      setIsTimerExpired(false);
+    }
+  }, [
+    currentDurationSetTimer?.status,
+    currentDurationSetTimer?.expiresAtMs,
+    currentDurationSetTimer?.pausedRemainingSeconds,
+  ]);
 
   useEffect(() => {
     if (setIndex <= 1) return;
@@ -166,13 +254,6 @@ const DurationSetItem = ({
       durationSec: nextDurationSec,
     });
   }, [setUpdateTransactions]);
-
-  useEffect(() => {
-    if (isTimerStarted) return;
-
-    restart(getExpiryTimestamp(set.durationSec ?? 0), false);
-    setIsTimerExpired(false);
-  }, [set.durationSec, restart, isTimerStarted]);
 
   const getDurationString = useMemo(() => {
     const value = set.durationSec ?? 0;
@@ -235,12 +316,68 @@ const DurationSetItem = ({
       });
   };
 
-  const handleStartTimer = () => {
-    if (!isTimerStarted) {
-      setIsTimerStarted(true);
+  const handleStartTimer = async () => {
+    const initialDurationSeconds = set.durationSec ?? 0;
+
+    if (!initialDurationSeconds) return;
+
+    if (!isTimerStarted) setIsTimerStarted(true);
+
+    setIsTimerExpired(false);
+
+    const secondsUntilExpiration =
+      currentDurationSetTimer?.status === "paused"
+        ? Math.max(
+            0,
+            currentDurationSetTimer.pausedRemainingSeconds ?? currentDurationSetTimer.durationSeconds ?? 0,
+          )
+        : initialDurationSeconds;
+
+    if (secondsUntilExpiration <= 0) {
+      setIsTimerExpired(true);
+      persistDurationSetTimer(null);
+      return;
     }
 
-    isRunning ? pause() : start();
+    const notificationId = await scheduleDurationTimerExpiredNotification({
+      secondsUntilExpiration,
+    });
+
+    persistDurationSetTimer({
+      exerciseId,
+      setId: set.id,
+      status: "running",
+      startedAtMs: Date.now(),
+      expiresAtMs: Date.now() + secondsUntilExpiration * 1000,
+      notificationId,
+      durationSeconds: currentDurationSetTimer?.durationSeconds ?? initialDurationSeconds,
+      pausedRemainingSeconds: null,
+    });
+
+    restart(getExpiryTimestamp(secondsUntilExpiration), true);
+  };
+
+  const handlePauseTimer = async () => {
+    if (!isTimerStarted) return;
+
+    const remainingSeconds = Math.max(0, totalSeconds);
+
+    if (currentDurationSetTimer?.notificationId) {
+      await cancelDurationTimerNotification(currentDurationSetTimer.notificationId);
+    }
+
+    persistDurationSetTimer({
+      exerciseId,
+      setId: set.id,
+      status: "paused",
+      startedAtMs: currentDurationSetTimer?.startedAtMs ?? null,
+      expiresAtMs: null,
+      notificationId: null,
+      durationSeconds: currentDurationSetTimer?.durationSeconds ?? set.durationSec ?? remainingSeconds,
+      pausedRemainingSeconds: remainingSeconds,
+    });
+
+    pause();
   };
 
   return (
@@ -290,7 +427,7 @@ const DurationSetItem = ({
         )}
 
         {!usedForBuilding && !isTimerExpired && isActive && (
-          <TouchableOpacity style={styles.timerButton} onPress={handleStartTimer}>
+          <TouchableOpacity style={styles.timerButton} onPress={isRunning ? handlePauseTimer : handleStartTimer}>
             <FontAwesome6 name={isRunning ? "pause" : "play"} size={16} color={Colors.accent.primary} />
           </TouchableOpacity>
         )}
