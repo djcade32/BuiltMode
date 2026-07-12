@@ -89,7 +89,7 @@
               "displayName": "BuiltMode Active Workout",
               "description": "Track your active workout from the Lock Screen and Dynamic Island.",
               "contentMarginsDisabled": true,
-              "supportedFamilies": []
+              "supportedFamilies": ["systemSmall"]
             }
           ]
         }
@@ -98,7 +98,9 @@
       "expo-audio",
       "@react-native-firebase/app",
       "@react-native-firebase/messaging",
-      "expo-widgets"
+      "expo-widgets",
+      "expo-image",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
