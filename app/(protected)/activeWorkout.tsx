@@ -18,7 +18,7 @@ import WorkoutLiveActivity from "@/widgets/WorkoutLiveActivity";
 import { Entypo, FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -69,7 +69,6 @@ const ActiveWorkout = () => {
     removeExerciseFromWorkoutProgress,
     setIsWorkoutComplete,
     updateWorkoutProgress,
-    liveActivityId,
   } = useWorkoutStore();
   const [isWorkoutNoteSheetVisible, setIsWorkoutNoteSheetVisible] = useState(false);
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
@@ -82,6 +81,9 @@ const ActiveWorkout = () => {
 
   const hydratedStopwatchStartedAtRef = useRef<number | null>(null);
   const scrollViewRef = useRef<ScrollView | null>(null);
+  const liveActivityRef = useRef<ReturnType<typeof WorkoutLiveActivity.start> | null>(null);
+
+  const liveActivitySessionIdRef = useRef<string | null>(null);
 
   const opacity = useSharedValue(0.4);
   const scale = useSharedValue(1);
@@ -113,31 +115,70 @@ const ActiveWorkout = () => {
     }
   }, [activeWorkoutDraft, router]);
 
+  // useEffect(() => {
+  //   const existingActivities = WorkoutLiveActivity.getInstances();
+  //   console.log("existingActivities: ", existingActivities);
+  //   existingActivities.forEach((acivity) => acivity.end());
+  // }, []);
+
   useEffect(() => {
-    if (!liveActivityId || !activeWorkoutDraft) return;
+    const draft = activeWorkoutDraft;
 
-    const currentExercise = activeWorkoutDraft.exercises[0];
-    const currentSet = currentExercise.sets[0];
-    console.log("starting live widget in useEffect");
-    WorkoutLiveActivity.start(
-      {
-        workoutId: activeWorkoutDraft.sessionId,
-        workoutName: activeWorkoutDraft.name ?? "",
-        startedAtMs: activeWorkoutDraft.startedAtMs,
+    if (!draft?.startedAtMs) {
+      return;
+    }
 
-        exerciseName: currentExercise?.name ?? null,
-        setNumber: 1,
-        totalSets: currentExercise.sets.length,
+    // Prevent restarting the activity whenever the draft updates.
+    if (liveActivitySessionIdRef.current === draft.sessionId) {
+      return;
+    }
 
-        weight: currentSet?.weight,
-        reps: currentSet?.reps,
+    try {
+      /*
+       * Recover an activity after the app returns from the background
+       * or the screen remounts.
+       */
+      const existingActivities = WorkoutLiveActivity.getInstances();
 
-        isResting: false,
-        isPaused: false,
-      },
-      // `builtmode://active-workout/${activeWorkoutDraft.sessionId}`
-    );
-  }, [liveActivityId]);
+      if (existingActivities.length > 0) {
+        liveActivityRef.current = existingActivities[0];
+        liveActivitySessionIdRef.current = draft.sessionId;
+
+        console.log("Reusing existing workout Live Activity:", existingActivities.length);
+
+        return;
+      }
+
+      const currentExercise = draft.exercises[0];
+      const currentSet = currentExercise?.sets?.[0];
+
+      const instance = WorkoutLiveActivity.start(
+        {
+          workoutId: draft.sessionId,
+          workoutName: draft.name ?? `${firstLetterToUpperCase(draft.workoutType ?? "")} Workout`,
+          startedAtMs: draft.startedAtMs,
+
+          exerciseName: currentExercise?.name ?? null,
+          setNumber: currentExercise ? 1 : 0,
+          totalSets: currentExercise?.sets?.length ?? 0,
+
+          weight: currentSet?.weight,
+          reps: currentSet?.reps,
+
+          isResting: false,
+          isPaused: false,
+        },
+        `builtmode://active-workout/${draft.sessionId}`,
+      );
+      console.log("instance: ", instance);
+      liveActivityRef.current = instance;
+      liveActivitySessionIdRef.current = draft.sessionId;
+
+      console.log("Workout Live Activity started. Active instances:", WorkoutLiveActivity.getInstances().length);
+    } catch (error) {
+      console.error("Failed to start workout Live Activity:", error);
+    }
+  }, [activeWorkoutDraft]);
 
   const initialStopwatchOffset = useMemo(
     () => getStopwatchOffsetFromStartedAtMs(activeWorkoutDraft?.startedAtMs),
@@ -178,16 +219,33 @@ const ActiveWorkout = () => {
     return completedExercises;
   }, [workoutProgress]);
 
+  const endWorkoutLiveActivity = useCallback(async () => {
+    try {
+      const instances = liveActivityRef.current ? [liveActivityRef.current] : WorkoutLiveActivity.getInstances();
+      console.log("Ending instances: ", instances);
+
+      await Promise.all(instances.map((instance) => instance.end("immediate")));
+
+      liveActivityRef.current = null;
+      liveActivitySessionIdRef.current = null;
+    } catch (error) {
+      console.error("Failed to end workout Live Activity:", error);
+    }
+  }, []);
+
   const handleExit = useCallback(() => {
     return Alert.alert("Are You Sure?", "All workout progress will be lost.", [
       {
         text: "Continue",
-        onPress: () => clearWorkout(),
+        onPress: async () => {
+          await endWorkoutLiveActivity();
+          clearWorkout();
+        },
         style: "destructive",
       },
       { text: "Cancel" },
     ]);
-  }, [clearWorkout]);
+  }, [clearWorkout, endWorkoutLiveActivity, liveActivityRef]);
 
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
@@ -242,6 +300,7 @@ const ActiveWorkout = () => {
       const response = await logWorkout(totalSeconds);
 
       if (response) {
+        await endWorkoutLiveActivity();
         console.log("Workout logged: ", response);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 

@@ -1,15 +1,10 @@
 import { ThemedView } from "@/components/themed-view";
 import { Colors, Typography } from "@/constants/theme";
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from "@expo-google-fonts/inter";
-import { DarkTheme, ThemeProvider } from "@react-navigation/native";
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import { DarkTheme, ThemeProvider } from "expo-router/react-navigation";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import Toast, { BaseToastProps } from "react-native-toast-message";
@@ -73,9 +68,7 @@ const toastConfig = {
       </View>
       {props.props?.actionText && (
         <TouchableOpacity style={{ marginRight: 10 }} onPress={props.props?.action}>
-          <ThemedText
-            style={{ color: Colors.accent.primary, fontFamily: Typography.family.primary.medium }}
-          >
+          <ThemedText style={{ color: Colors.accent.primary, fontFamily: Typography.family.primary.medium }}>
             {props.props.actionText}
           </ThemedText>
         </TouchableOpacity>
@@ -126,9 +119,7 @@ const toastConfig = {
       </View>
       {props.props?.actionText && (
         <TouchableOpacity style={{ marginRight: 10 }} onPress={props.props?.action}>
-          <ThemedText
-            style={{ color: Colors.accent.primary, fontFamily: Typography.family.primary.medium }}
-          >
+          <ThemedText style={{ color: Colors.accent.primary, fontFamily: Typography.family.primary.medium }}>
             {props.props.actionText}
           </ThemedText>
         </TouchableOpacity>

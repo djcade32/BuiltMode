@@ -1,3 +1,90 @@
+// import { Text, VStack } from "@expo/ui/swift-ui";
+// import { padding } from "@expo/ui/swift-ui/modifiers";
+// import { createLiveActivity } from "expo-widgets";
+
+// export type WorkoutLiveActivityProps = {
+//   /**
+//    * Identifies the active workout.
+//    */
+//   workoutId: string;
+
+//   /**
+//    * Display name of the workout.
+//    */
+//   workoutName: string;
+
+//   /**
+//    * Unix timestamp representing when the workout started.
+//    */
+//   startedAtMs: number;
+
+//   /**
+//    * Current exercise being performed.
+//    */
+//   exerciseName: string | null;
+
+//   /**
+//    * Current set position within the active exercise.
+//    *
+//    * This should be one-based for display purposes.
+//    */
+//   setNumber: number;
+
+//   /**
+//    * Total number of sets in the active exercise.
+//    */
+//   totalSets: number;
+
+//   /**
+//    * Optional metrics for the current set.
+//    */
+//   weight?: number;
+//   reps?: number;
+//   durationSeconds?: number;
+
+//   /**
+//    * Unix timestamp representing when the rest timer ends.
+//    */
+//   restEndsAtMs?: number;
+
+//   /**
+//    * Current workout state.
+//    */
+//   isResting: boolean;
+//   isPaused: boolean;
+// };
+
+// /**
+//  * SDK 55 widget view.
+//  *
+//  * This function must remain a pure display component. Do not use Zustand,
+//  * React hooks, Firestore, Expo Router, or other application services here.
+//  */
+// function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
+//   "widget";
+
+//   return {
+//     banner: (
+//       <VStack modifiers={[padding({ all: 16 })]}>
+//         <Text>BUILTMODE</Text>
+//         <Text>{props.workoutName || "Active Workout"}</Text>
+//       </VStack>
+//     ),
+
+//     compactLeading: <Text>BM</Text>,
+//     compactTrailing: <Text>GO</Text>,
+//     minimal: <Text>BM</Text>,
+//   };
+// }
+
+// /**
+//  * The name passed here must match the Live Activity name configured
+//  * for expo-widgets in app.json or app.config.ts.
+//  */
+// export const WorkoutLiveActivity = createLiveActivity("WorkoutLiveActivity", WorkoutLiveActivityView);
+
+// export default WorkoutLiveActivity;
+
 import { HStack, Image, Spacer, Text, VStack } from "@expo/ui/swift-ui";
 import { background, font, foregroundStyle, padding } from "@expo/ui/swift-ui/modifiers";
 import { createLiveActivity } from "expo-widgets";
@@ -54,54 +141,6 @@ export type WorkoutLiveActivityProps = {
   isPaused: boolean;
 };
 
-const COLORS = {
-  background: "#121212",
-  gold: "#D5A63A",
-  white: "#FFFFFF",
-  muted: "#A3A3A3",
-} as const;
-
-/**
- * Returns the primary metric shown for the current set.
- */
-function getMetricLabel(props: WorkoutLiveActivityProps): string {
-  if (props.weight != null && props.reps != null) {
-    return `${formatNumber(props.weight)} LB × ${formatNumber(props.reps)}`;
-  }
-
-  if (props.reps != null) {
-    return `${formatNumber(props.reps)} REPS`;
-  }
-
-  if (props.durationSeconds != null) {
-    return formatDuration(props.durationSeconds);
-  }
-
-  return "READY";
-}
-
-/**
- * Avoids displaying unnecessary trailing decimals.
- *
- * Examples:
- * 225    -> "225"
- * 22.5   -> "22.5"
- */
-function formatNumber(value: number): string {
-  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
-}
-
-/**
- * Formats a duration as MM:SS.
- */
-function formatDuration(totalSeconds: number): string {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const minutes = Math.floor(safeSeconds / 60);
-  const seconds = safeSeconds % 60;
-
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
 /**
  * SDK 55 widget view.
  *
@@ -111,21 +150,51 @@ function formatDuration(totalSeconds: number): string {
 function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
   "widget";
 
-  const exerciseLabel = props.exerciseName?.trim() || props.workoutName || "Active Workout";
+  /*
+   * Keep values used by the widget inside this function.
+   * The widget executes in a separate extension runtime.
+   */
+  const backgroundColor = "#121212";
+  const goldColor = "#D5A63A";
+  const whiteColor = "#FFFFFF";
+  const mutedColor = "#A3A3A3";
 
-  const setLabel =
-    props.totalSets > 0 ? `SET ${Math.max(props.setNumber, 1)} OF ${props.totalSets}` : "NO ACTIVE SET";
+  const formatNumber = (value: number): string => {
+    const roundedValue = Math.round(value);
 
-  const metricLabel = getMetricLabel(props);
+    return value === roundedValue ? `${roundedValue}` : value.toFixed(1);
+  };
+
+  const formatDuration = (totalSeconds: number): string => {
+    const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+    const minutes = Math.floor(safeSeconds / 60);
+    const seconds = safeSeconds % 60;
+    const formattedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
+
+    return `${minutes}:${formattedSeconds}`;
+  };
+
+  let metricLabel = "READY";
+
+  if (props.weight != null && props.reps != null) {
+    metricLabel = `${formatNumber(props.weight)} LB × ${formatNumber(props.reps)}`;
+  } else if (props.reps != null) {
+    metricLabel = `${formatNumber(props.reps)} REPS`;
+  } else if (props.durationSeconds != null) {
+    metricLabel = formatDuration(props.durationSeconds);
+  }
+
+  const exerciseLabel = props.exerciseName?.trim() || props.workoutName?.trim() || "Active Workout";
+
+  const displayedSetNumber = props.setNumber > 0 ? props.setNumber : 1;
+
+  const setLabel = props.totalSets > 0 ? `SET ${displayedSetNumber} OF ${props.totalSets}` : "NO ACTIVE SET";
 
   const activityStatus = props.isPaused ? "PAUSED" : props.isResting ? "REST" : "ACTIVE";
 
   return {
-    /**
-     * Lock Screen and notification banner presentation.
-     */
     banner: (
-      <VStack alignment="leading" spacing={12} modifiers={[padding({ all: 16 }), background(COLORS.background)]}>
+      <VStack alignment="leading" spacing={12} modifiers={[padding({ all: 16 }), background(backgroundColor)]}>
         <HStack alignment="center">
           <Text
             modifiers={[
@@ -133,7 +202,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                 size: 12,
                 weight: "bold",
               }),
-              foregroundStyle(COLORS.gold),
+              foregroundStyle(goldColor),
             ]}
           >
             BUILTMODE
@@ -147,7 +216,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                 size: 12,
                 weight: "semibold",
               }),
-              foregroundStyle(props.isPaused ? COLORS.muted : COLORS.white),
+              foregroundStyle(props.isPaused ? mutedColor : whiteColor),
             ]}
           >
             {activityStatus}
@@ -161,7 +230,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                 size: 18,
                 weight: "bold",
               }),
-              foregroundStyle(COLORS.white),
+              foregroundStyle(whiteColor),
             ]}
           >
             {exerciseLabel}
@@ -173,7 +242,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                 size: 12,
                 weight: "medium",
               }),
-              foregroundStyle(COLORS.muted),
+              foregroundStyle(mutedColor),
             ]}
           >
             {setLabel}
@@ -188,7 +257,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                   size: 10,
                   weight: "medium",
                 }),
-                foregroundStyle(COLORS.muted),
+                foregroundStyle(mutedColor),
               ]}
             >
               CURRENT SET
@@ -200,7 +269,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                   size: 22,
                   weight: "bold",
                 }),
-                foregroundStyle(COLORS.white),
+                foregroundStyle(whiteColor),
               ]}
             >
               {metricLabel}
@@ -216,7 +285,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                   size: 10,
                   weight: "medium",
                 }),
-                foregroundStyle(COLORS.muted),
+                foregroundStyle(mutedColor),
               ]}
             >
               STATUS
@@ -228,7 +297,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                   size: 16,
                   weight: "bold",
                 }),
-                foregroundStyle(props.isResting ? COLORS.gold : COLORS.white),
+                foregroundStyle(props.isResting ? goldColor : whiteColor),
               ]}
             >
               {activityStatus}
@@ -238,10 +307,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
       </VStack>
     ),
 
-    /**
-     * Dynamic Island compact presentation.
-     */
-    compactLeading: <Image systemName="figure.strengthtraining.traditional" color={COLORS.gold} />,
+    compactLeading: <Image systemName="figure.strengthtraining.traditional" color={goldColor} />,
 
     compactTrailing: (
       <Text
@@ -250,25 +316,15 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
             size: 13,
             weight: "bold",
           }),
-          foregroundStyle(props.isResting ? COLORS.gold : COLORS.white),
+          foregroundStyle(props.isResting ? goldColor : whiteColor),
         ]}
       >
-        {props.isResting
-          ? "REST"
-          : props.totalSets > 0
-            ? `${Math.max(props.setNumber, 1)}/${props.totalSets}`
-            : "GO"}
+        {props.isResting ? "REST" : props.totalSets > 0 ? `${displayedSetNumber}/${props.totalSets}` : "GO"}
       </Text>
     ),
 
-    /**
-     * Dynamic Island minimal presentation.
-     */
-    minimal: <Image systemName="figure.strengthtraining.traditional" color={COLORS.gold} />,
+    minimal: <Image systemName="figure.strengthtraining.traditional" color={goldColor} />,
 
-    /**
-     * Dynamic Island expanded leading region.
-     */
     expandedLeading: (
       <VStack alignment="leading" spacing={2} modifiers={[padding({ all: 8 })]}>
         <Text
@@ -277,7 +333,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
               size: 11,
               weight: "bold",
             }),
-            foregroundStyle(COLORS.gold),
+            foregroundStyle(goldColor),
           ]}
         >
           BUILTMODE
@@ -289,7 +345,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
               size: 11,
               weight: "medium",
             }),
-            foregroundStyle(COLORS.muted),
+            foregroundStyle(mutedColor),
           ]}
         >
           {setLabel}
@@ -297,9 +353,6 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
       </VStack>
     ),
 
-    /**
-     * Dynamic Island expanded trailing region.
-     */
     expandedTrailing: (
       <VStack alignment="trailing" spacing={2} modifiers={[padding({ all: 8 })]}>
         <Text
@@ -308,7 +361,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
               size: 10,
               weight: "medium",
             }),
-            foregroundStyle(COLORS.muted),
+            foregroundStyle(mutedColor),
           ]}
         >
           {props.isResting ? "REST" : "CURRENT SET"}
@@ -320,7 +373,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
               size: 15,
               weight: "bold",
             }),
-            foregroundStyle(props.isResting ? COLORS.gold : COLORS.white),
+            foregroundStyle(props.isResting ? goldColor : whiteColor),
           ]}
         >
           {props.isResting ? "RESTING" : metricLabel}
@@ -328,9 +381,6 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
       </VStack>
     ),
 
-    /**
-     * Dynamic Island expanded bottom region.
-     */
     expandedBottom: (
       <VStack alignment="leading" spacing={4} modifiers={[padding({ all: 8 })]}>
         <Text
@@ -339,7 +389,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
               size: 15,
               weight: "bold",
             }),
-            foregroundStyle(COLORS.white),
+            foregroundStyle(whiteColor),
           ]}
         >
           {exerciseLabel}
@@ -351,7 +401,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
               size: 11,
               weight: "medium",
             }),
-            foregroundStyle(COLORS.muted),
+            foregroundStyle(mutedColor),
           ]}
         >
           Tap to return to your active workout
