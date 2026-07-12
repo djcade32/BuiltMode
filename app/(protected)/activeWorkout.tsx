@@ -14,6 +14,7 @@ import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
+import WorkoutLiveActivity from "@/widgets/WorkoutLiveActivity";
 import { Entypo, FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -68,6 +69,7 @@ const ActiveWorkout = () => {
     removeExerciseFromWorkoutProgress,
     setIsWorkoutComplete,
     updateWorkoutProgress,
+    liveActivityId,
   } = useWorkoutStore();
   const [isWorkoutNoteSheetVisible, setIsWorkoutNoteSheetVisible] = useState(false);
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
@@ -110,6 +112,32 @@ const ActiveWorkout = () => {
       router.replace("/(protected)/(tabs)/(workout)/log");
     }
   }, [activeWorkoutDraft, router]);
+
+  useEffect(() => {
+    if (!liveActivityId || !activeWorkoutDraft) return;
+
+    const currentExercise = activeWorkoutDraft.exercises[0];
+    const currentSet = currentExercise.sets[0];
+    console.log("starting live widget in useEffect");
+    WorkoutLiveActivity.start(
+      {
+        workoutId: activeWorkoutDraft.sessionId,
+        workoutName: activeWorkoutDraft.name ?? "",
+        startedAtMs: activeWorkoutDraft.startedAtMs,
+
+        exerciseName: currentExercise?.name ?? null,
+        setNumber: 1,
+        totalSets: currentExercise.sets.length,
+
+        weight: currentSet?.weight,
+        reps: currentSet?.reps,
+
+        isResting: false,
+        isPaused: false,
+      },
+      // `builtmode://active-workout/${activeWorkoutDraft.sessionId}`
+    );
+  }, [liveActivityId]);
 
   const initialStopwatchOffset = useMemo(
     () => getStopwatchOffsetFromStartedAtMs(activeWorkoutDraft?.startedAtMs),

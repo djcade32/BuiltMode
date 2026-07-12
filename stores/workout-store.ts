@@ -8,6 +8,7 @@ import {
   WorkoutType,
 } from "@/packages/shared/src";
 import { saveAsTemplate } from "@/services/template-service";
+import { workoutLiveActivityService } from "@/services/workout-live-activity-service";
 import { createCompleteWorkout } from "@/services/workout-service";
 import type { ActiveWorkoutDraft } from "@builtmode/shared/types/workout";
 import { v4 as uuidv4 } from "uuid";
@@ -43,6 +44,7 @@ export interface WorkoutState {
   currentExerciseIndex: number;
   durationSetTimer: PersistedDurationSetTimer | null;
   completeWorkoutResponse?: CompleteWorkoutResponse;
+  liveActivityId?: string | null;
   startWorkout: (payload: {
     name: string;
     sessionId: string;
@@ -68,6 +70,7 @@ export interface WorkoutState {
   saveWorkoutAsTemplate: (template: any) => Promise<SaveAsTemplateResponse | undefined>;
   setIsWorkoutComplete: (value: boolean) => void;
   setDurationSetTimer: (timer: PersistedDurationSetTimer | null) => void;
+  startLiveWorkoutWidget: () => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -80,21 +83,27 @@ export const useWorkoutStore = create<WorkoutState>()(
       isWorkoutComplete: false,
       currentExerciseIndex: 0,
       durationSetTimer: null,
+      liveActivityId: null,
 
-      startWorkout: ({ name, sessionId, uid, exercises, workoutType, notes }) =>
+      startWorkout: ({ name, sessionId, uid, exercises, workoutType, notes }) => {
+        const activeWorkout: ActiveWorkoutDraft = {
+          name,
+          sessionId,
+          uid,
+          exercises,
+          startedAtMs: Date.now(),
+          status: "active",
+          lastEditedAtMs: Date.now(),
+          workoutType,
+          notes,
+        };
+
         set({
-          activeWorkoutDraft: {
-            name,
-            sessionId,
-            uid,
-            exercises,
-            startedAtMs: Date.now(),
-            status: "active",
-            lastEditedAtMs: Date.now(),
-            workoutType,
-            notes,
-          },
-        }),
+          activeWorkoutDraft: activeWorkout,
+        });
+
+        get().startLiveWorkoutWidget();
+      },
 
       updateWorkout: ({ sessionId, uid, exercises, notes }) => {
         set({
@@ -248,6 +257,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           duration: undefined,
           completeWorkoutResponse: undefined,
           durationSetTimer: null,
+          liveActivityId: null,
         }),
       setIsWorkoutComplete: (value) =>
         set({
@@ -256,6 +266,14 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       setDurationSetTimer: (value) => {
         set({ durationSetTimer: value });
+      },
+
+      startLiveWorkoutWidget: () => {
+        const activeWorkout = get().activeWorkoutDraft;
+        if (!activeWorkout) return;
+
+        const liveActivityId = workoutLiveActivityService.startWorkout(activeWorkout);
+        set({ liveActivityId });
       },
     }),
     {

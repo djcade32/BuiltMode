@@ -143,3 +143,24 @@ export type PublishCompletedWorkoutToFeedRequest = {
   photoUrl?: string | null;
   caption?: string | null;
 };
+
+export type WorkoutLiveActivityState = {
+  workoutId: string;
+  workoutName: string;
+  startedAtMs: number;
+
+  exerciseId: string | null;
+  exerciseName: string | null;
+
+  setId: string | null;
+  setNumber: number;
+  totalSets: number;
+
+  weight?: number;
+  reps?: number;
+  durationSeconds?: number;
+
+  restEndsAtMs?: number;
+  isPaused: boolean;
+  isComplete: boolean;
+};

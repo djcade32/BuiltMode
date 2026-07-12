@@ -33,7 +33,6 @@
       "predictiveBackGestureEnabled": false,
       "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
       "googleServicesFile": "./google-services.json",
-
       "package": "com.djcade32.BuiltMode"
     },
     "notification": {
@@ -78,10 +77,28 @@
           "photosPermission": "BuiltMode accesses your photos to let you share them with your friends."
         }
       ],
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "com.djcade32.BuiltMode.widget",
+          "groupIdentifier": "group.com.djcade32.BuiltMode",
+          "enablePushNotifications": false,
+          "widgets": [
+            {
+              "name": "WorkoutLiveActivity",
+              "displayName": "BuiltMode Active Workout",
+              "description": "Track your active workout from the Lock Screen and Dynamic Island.",
+              "contentMarginsDisabled": true,
+              "supportedFamilies": []
+            }
+          ]
+        }
+      ],
       "expo-localization",
       "expo-audio",
       "@react-native-firebase/app",
-      "@react-native-firebase/messaging"
+      "@react-native-firebase/messaging",
+      "expo-widgets"
     ],
     "experiments": {
       "typedRoutes": true,
