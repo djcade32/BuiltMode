@@ -56,7 +56,14 @@
           }
         }
       ],
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "ios": {
+            "fonts": ["node_modules/@expo-google-fonts/jetbrains-mono/500Medium/JetBrainsMono_500Medium.ttf"]
+          }
+        }
+      ],
       [
         "expo-camera",
         {

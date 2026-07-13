@@ -53,10 +53,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={isPending}
+            refreshing={!isLoading && isPending}
             onRefresh={onRefresh}
-            colors={["#6B7280"]}
-            tintColor="#6B7280"
+            colors={[Colors.accent.primary]}
+            tintColor={Colors.accent.primary}
           />
         }
       >
@@ -122,9 +122,7 @@ export default function HomeScreen() {
             </>
           ) : (
             <>
-              <ThemedText style={styles.weekStreakNumber}>
-                {data ? data.currentWeekStreak : 0}
-              </ThemedText>
+              <ThemedText style={styles.weekStreakNumber}>{data ? data.currentWeekStreak : 0}</ThemedText>
               <View style={{ marginTop: 24, alignItems: "center", gap: 8 }}>
                 <ThemedText style={styles.weekStreakText}>WEEK STREAK</ThemedText>
                 <ThemedText style={styles.subtext}>Consecutive Weeks Meeting Target</ThemedText>
@@ -142,10 +140,7 @@ export default function HomeScreen() {
               >
                 Build Daily.
                 <ThemedText
-                  style={[
-                    styles.subtext,
-                    { letterSpacing: 0, fontFamily: Typography.family.primary.medium },
-                  ]}
+                  style={[styles.subtext, { letterSpacing: 0, fontFamily: Typography.family.primary.medium }]}
                 >
                   Become Relentless.
                 </ThemedText>
@@ -185,8 +180,8 @@ export default function HomeScreen() {
                   Why doesn&apos;t my score start yet?
                 </ThemedText>
                 <ThemedText style={{ fontSize: 12, lineHeight: 19.5, color: Colors.icon }}>
-                  To keep weekly tracking fair, all users begin on a full training week. Use this
-                  time to explore and set up your routines.
+                  To keep weekly tracking fair, all users begin on a full training week. Use this time to explore
+                  and set up your routines.
                 </ThemedText>
               </View>
             </View>

@@ -1,92 +1,16 @@
-// import { Text, VStack } from "@expo/ui/swift-ui";
-// import { padding } from "@expo/ui/swift-ui/modifiers";
-// import { createLiveActivity } from "expo-widgets";
-
-// export type WorkoutLiveActivityProps = {
-//   /**
-//    * Identifies the active workout.
-//    */
-//   workoutId: string;
-
-//   /**
-//    * Display name of the workout.
-//    */
-//   workoutName: string;
-
-//   /**
-//    * Unix timestamp representing when the workout started.
-//    */
-//   startedAtMs: number;
-
-//   /**
-//    * Current exercise being performed.
-//    */
-//   exerciseName: string | null;
-
-//   /**
-//    * Current set position within the active exercise.
-//    *
-//    * This should be one-based for display purposes.
-//    */
-//   setNumber: number;
-
-//   /**
-//    * Total number of sets in the active exercise.
-//    */
-//   totalSets: number;
-
-//   /**
-//    * Optional metrics for the current set.
-//    */
-//   weight?: number;
-//   reps?: number;
-//   durationSeconds?: number;
-
-//   /**
-//    * Unix timestamp representing when the rest timer ends.
-//    */
-//   restEndsAtMs?: number;
-
-//   /**
-//    * Current workout state.
-//    */
-//   isResting: boolean;
-//   isPaused: boolean;
-// };
-
-// /**
-//  * SDK 55 widget view.
-//  *
-//  * This function must remain a pure display component. Do not use Zustand,
-//  * React hooks, Firestore, Expo Router, or other application services here.
-//  */
-// function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
-//   "widget";
-
-//   return {
-//     banner: (
-//       <VStack modifiers={[padding({ all: 16 })]}>
-//         <Text>BUILTMODE</Text>
-//         <Text>{props.workoutName || "Active Workout"}</Text>
-//       </VStack>
-//     ),
-
-//     compactLeading: <Text>BM</Text>,
-//     compactTrailing: <Text>GO</Text>,
-//     minimal: <Text>BM</Text>,
-//   };
-// }
-
-// /**
-//  * The name passed here must match the Live Activity name configured
-//  * for expo-widgets in app.json or app.config.ts.
-//  */
-// export const WorkoutLiveActivity = createLiveActivity("WorkoutLiveActivity", WorkoutLiveActivityView);
-
-// export default WorkoutLiveActivity;
-
 import { HStack, Image, Spacer, Text, VStack } from "@expo/ui/swift-ui";
-import { background, font, foregroundStyle, padding } from "@expo/ui/swift-ui/modifiers";
+import {
+  background,
+  border,
+  cornerRadius,
+  font,
+  foregroundStyle,
+  frame,
+  multilineTextAlignment,
+  padding,
+  resizable,
+  widgetAccentedRenderingMode,
+} from "@expo/ui/swift-ui/modifiers";
 import { createLiveActivity } from "expo-widgets";
 
 export type WorkoutLiveActivityProps = {
@@ -101,9 +25,23 @@ export type WorkoutLiveActivityProps = {
   workoutName: string;
 
   /**
-   * Unix timestamp representing when the workout started.
+   * Original Unix timestamp representing when the workout began.
    */
   startedAtMs: number;
+
+  /**
+   * Effective start point for the running timer.
+   *
+   * This may differ from startedAtMs after pausing and resuming.
+   */
+  timerStartedAtMs: number;
+
+  /**
+   * Elapsed workout time at the moment this state was created.
+   *
+   * Used to freeze the timer while the workout is paused.
+   */
+  elapsedSeconds: number;
 
   /**
    * Current exercise being performed.
@@ -139,10 +77,15 @@ export type WorkoutLiveActivityProps = {
    */
   isResting: boolean;
   isPaused: boolean;
+
+  /**
+   * Shared App Group URI for the BuiltMode logo.
+   */
+  logoUri: string;
 };
 
 /**
- * SDK 55 widget view.
+ * SDK 56 widget view.
  *
  * This function must remain a pure display component. Do not use Zustand,
  * React hooks, Firestore, Expo Router, or other application services here.
@@ -154,10 +97,11 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
    * Keep values used by the widget inside this function.
    * The widget executes in a separate extension runtime.
    */
-  const backgroundColor = "#121212";
-  const goldColor = "#D5A63A";
+  const backgroundColor = "#0F1113";
+  const goldColor = "#C6A34A";
   const whiteColor = "#FFFFFF";
-  const mutedColor = "#A3A3A3";
+  const mutedColor = "#6B7280";
+  const borderColor = "#1F2228";
 
   const formatNumber = (value: number): string => {
     const roundedValue = Math.round(value);
@@ -169,6 +113,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
     const safeSeconds = Math.max(0, Math.floor(totalSeconds));
     const minutes = Math.floor(safeSeconds / 60);
     const seconds = safeSeconds % 60;
+
     const formattedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
 
     return `${minutes}:${formattedSeconds}`;
@@ -192,35 +137,104 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
 
   const activityStatus = props.isPaused ? "PAUSED" : props.isResting ? "REST" : "ACTIVE";
 
+  /*
+   * SwiftUI requires a closed date range for the native timer.
+   * Seven days is safely beyond a normal workout duration.
+   */
+  const timerLowerDate = new Date(props.timerStartedAtMs);
+
+  const timerUpperDate = new Date(props.timerStartedAtMs + 7 * 24 * 60 * 60 * 1000);
+
+  /*
+   * Freeze the displayed timer at the current elapsed duration
+   * whenever the workout is paused.
+   */
+  const timerPauseDate = props.isPaused
+    ? new Date(props.timerStartedAtMs + Math.max(0, props.elapsedSeconds) * 1000)
+    : undefined;
+
   return {
+    /**
+     * Lock Screen Live Activity.
+     */
     banner: (
-      <VStack alignment="leading" spacing={12} modifiers={[padding({ all: 16 }), background(backgroundColor)]}>
+      <VStack
+        alignment="leading"
+        spacing={12}
+        modifiers={[
+          padding({ all: 16 }),
+          background(backgroundColor),
+          border({
+            color: borderColor,
+            width: 1,
+          }),
+          cornerRadius(18),
+        ]}
+      >
         <HStack alignment="center">
-          <Text
+          <Image
+            uiImage={props.logoUri}
             modifiers={[
-              font({
-                size: 12,
-                weight: "bold",
+              resizable(),
+              widgetAccentedRenderingMode("fullColor"),
+              frame({
+                width: 105,
+                height: 18,
               }),
-              foregroundStyle(goldColor),
             ]}
-          >
-            BUILTMODE
-          </Text>
+          />
 
           <Spacer />
 
-          <Text
+          <VStack
+            alignment="trailing"
+            spacing={2}
             modifiers={[
-              font({
-                size: 12,
-                weight: "semibold",
+              frame({
+                width: 92,
+                alignment: "trailing",
               }),
-              foregroundStyle(props.isPaused ? mutedColor : whiteColor),
             ]}
           >
-            {activityStatus}
-          </Text>
+            <Text
+              modifiers={[
+                font({
+                  size: 9,
+                  family: "JetBrainsMono-Medium",
+                }),
+                foregroundStyle(mutedColor),
+                multilineTextAlignment("trailing"),
+                frame({
+                  width: 92,
+                  alignment: "trailing",
+                }),
+              ]}
+            >
+              DURATION
+            </Text>
+
+            <Text
+              timerInterval={{
+                lower: timerLowerDate,
+                upper: timerUpperDate,
+              }}
+              countsDown={false}
+              pauseTime={timerPauseDate}
+              modifiers={[
+                font({
+                  design: "monospaced",
+                  size: 16,
+                  weight: "bold",
+                }),
+                foregroundStyle(props.isPaused ? mutedColor : goldColor),
+                multilineTextAlignment("trailing"),
+                frame({
+                  width: 92,
+                  alignment: "trailing",
+                }),
+              ]}
+            />
+          </VStack>
         </HStack>
 
         <VStack alignment="leading" spacing={4}>
@@ -240,7 +254,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
             modifiers={[
               font({
                 size: 12,
-                weight: "medium",
+                family: "JetBrainsMono-Medium",
               }),
               foregroundStyle(mutedColor),
             ]}
@@ -255,7 +269,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
               modifiers={[
                 font({
                   size: 10,
-                  weight: "medium",
+                  family: "JetBrainsMono-Medium",
                 }),
                 foregroundStyle(mutedColor),
               ]}
@@ -283,7 +297,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
               modifiers={[
                 font({
                   size: 10,
-                  weight: "medium",
+                  family: "JetBrainsMono-Medium",
                 }),
                 foregroundStyle(mutedColor),
               ]}
@@ -307,43 +321,60 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
       </VStack>
     ),
 
+    /**
+     * Dynamic Island compact leading region.
+     */
     compactLeading: <Image systemName="figure.strengthtraining.traditional" color={goldColor} />,
 
+    /**
+     * Dynamic Island compact trailing region.
+     */
     compactTrailing: (
       <Text
+        timerInterval={{
+          lower: timerLowerDate,
+          upper: timerUpperDate,
+        }}
+        countsDown={false}
+        pauseTime={timerPauseDate}
         modifiers={[
           font({
-            size: 13,
+            design: "monospaced",
+            size: 12,
             weight: "bold",
           }),
-          foregroundStyle(props.isResting ? goldColor : whiteColor),
+          foregroundStyle(props.isPaused ? mutedColor : goldColor),
         ]}
-      >
-        {props.isResting ? "REST" : props.totalSets > 0 ? `${displayedSetNumber}/${props.totalSets}` : "GO"}
-      </Text>
+      />
     ),
 
+    /**
+     * Dynamic Island minimal region.
+     */
     minimal: <Image systemName="figure.strengthtraining.traditional" color={goldColor} />,
 
+    /**
+     * Dynamic Island expanded leading region.
+     */
     expandedLeading: (
       <VStack alignment="leading" spacing={2} modifiers={[padding({ all: 8 })]}>
-        <Text
+        <Image
+          uiImage={props.logoUri}
           modifiers={[
-            font({
-              size: 11,
-              weight: "bold",
+            resizable(),
+            widgetAccentedRenderingMode("fullColor"),
+            frame({
+              width: 105,
+              height: 18,
             }),
-            foregroundStyle(goldColor),
           ]}
-        >
-          BUILTMODE
-        </Text>
+        />
 
         <Text
           modifiers={[
             font({
               size: 11,
-              weight: "medium",
+              family: "JetBrainsMono-Medium",
             }),
             foregroundStyle(mutedColor),
           ]}
@@ -353,36 +384,57 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
       </VStack>
     ),
 
+    /**
+     * Dynamic Island expanded trailing region.
+     */
     expandedTrailing: (
       <VStack alignment="trailing" spacing={2} modifiers={[padding({ all: 8 })]}>
         <Text
           modifiers={[
             font({
-              size: 10,
-              weight: "medium",
+              size: 9,
+              family: "JetBrainsMono-Medium",
             }),
             foregroundStyle(mutedColor),
           ]}
         >
-          {props.isResting ? "REST" : "CURRENT SET"}
+          DURATION
         </Text>
 
         <Text
+          timerInterval={{
+            lower: timerLowerDate,
+            upper: timerUpperDate,
+          }}
+          countsDown={false}
+          pauseTime={timerPauseDate}
           modifiers={[
             font({
+              design: "monospaced",
               size: 15,
               weight: "bold",
             }),
-            foregroundStyle(props.isResting ? goldColor : whiteColor),
+            foregroundStyle(props.isPaused ? mutedColor : goldColor),
           ]}
-        >
-          {props.isResting ? "RESTING" : metricLabel}
-        </Text>
+        />
       </VStack>
     ),
 
+    /**
+     * Dynamic Island expanded bottom region.
+     */
     expandedBottom: (
-      <VStack alignment="leading" spacing={4} modifiers={[padding({ all: 8 })]}>
+      <VStack
+        alignment="leading"
+        spacing={6}
+        modifiers={[
+          padding({ all: 8 }),
+          border({
+            color: borderColor,
+            width: 1,
+          }),
+        ]}
+      >
         <Text
           modifiers={[
             font({
@@ -395,17 +447,61 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
           {exerciseLabel}
         </Text>
 
-        <Text
-          modifiers={[
-            font({
-              size: 11,
-              weight: "medium",
-            }),
-            foregroundStyle(mutedColor),
-          ]}
-        >
-          Tap to return to your active workout
-        </Text>
+        <HStack alignment="center">
+          <VStack alignment="leading" spacing={2}>
+            <Text
+              modifiers={[
+                font({
+                  size: 9,
+                  family: "JetBrainsMono-Medium",
+                }),
+                foregroundStyle(mutedColor),
+              ]}
+            >
+              CURRENT SET
+            </Text>
+
+            <Text
+              modifiers={[
+                font({
+                  size: 13,
+                  weight: "bold",
+                }),
+                foregroundStyle(whiteColor),
+              ]}
+            >
+              {metricLabel}
+            </Text>
+          </VStack>
+
+          <Spacer />
+
+          <VStack alignment="trailing" spacing={2}>
+            <Text
+              modifiers={[
+                font({
+                  size: 9,
+                  family: "JetBrainsMono-Medium",
+                }),
+                foregroundStyle(mutedColor),
+              ]}
+            >
+              STATUS
+            </Text>
+
+            <Text
+              modifiers={[
+                font({
+                  size: 12,
+                  weight: "bold",
+                }),
+                foregroundStyle(props.isResting ? goldColor : whiteColor),
+              ]}
+            >
+              {activityStatus}
+            </Text>
+          </VStack>
+        </HStack>
       </VStack>
     ),
   };

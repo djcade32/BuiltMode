@@ -28,7 +28,6 @@ prepare_react_native_project!
 
 pod 'GoogleUtilities', :modular_headers => true
 
-
 target 'BuiltMode' do
   use_expo_modules!
 

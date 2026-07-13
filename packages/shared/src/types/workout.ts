@@ -149,10 +149,20 @@ export type WorkoutLiveActivityState = {
   workoutName: string;
   startedAtMs: number;
 
-  exerciseId: string | null;
-  exerciseName: string | null;
+  /**
+   * Effective start point for the displayed timer.
+   *
+   * This may differ from startedAtMs after pausing and resuming.
+   */
+  timerStartedAtMs: number;
 
-  setId: string | null;
+  /**
+   * Current elapsed workout time when this state was created.
+   * Used to freeze the native timer while paused.
+   */
+  elapsedSeconds: number;
+
+  exerciseName: string | null;
   setNumber: number;
   totalSets: number;
 
@@ -161,6 +171,7 @@ export type WorkoutLiveActivityState = {
   durationSeconds?: number;
 
   restEndsAtMs?: number;
+
+  isResting: boolean;
   isPaused: boolean;
-  isComplete: boolean;
 };
