@@ -5,8 +5,8 @@
     "moduleResolution": "nodenext",
     "baseUrl": ".",
     "paths": {
-      "@builtmode/shared/types/*": ["../packages/shared/dist/types/*"],
-      "@builtmode/shared/schemas/*": ["../packages/shared/dist/schemas/*"]
+      "@builtmode/shared/types/*": ["../packages/shared/src/types/*"],
+      "@builtmode/shared/schemas/*": ["../packages/shared/src/schemas/*"]
     },
     "noImplicitReturns": true,
     "noUnusedLocals": true,
