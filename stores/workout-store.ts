@@ -240,7 +240,9 @@ export const useWorkoutStore = create<WorkoutState>()(
           durationSetTimer?.exerciseId === exerciseId && durationSetTimer.setId === setId;
 
         if (shouldClearDurationSetTimer && durationSetTimer?.notificationId) {
-          void cancelDurationTimerNotification(durationSetTimer.notificationId);
+          void cancelDurationTimerNotification(durationSetTimer.notificationId).catch((error) => {
+            console.error("Failed to cancel duration timer notification:", error);
+          });
         }
 
         set({

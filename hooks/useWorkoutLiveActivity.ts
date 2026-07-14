@@ -43,7 +43,9 @@ export const useWorkoutLiveActivity = ({
    */
   const elapsedSecondsRef = useRef(elapsedSeconds);
 
-  elapsedSecondsRef.current = elapsedSeconds;
+  useEffect(() => {
+    elapsedSecondsRef.current = elapsedSeconds;
+  });
 
   useEffect(() => {
     if (!workout?.startedAtMs) {

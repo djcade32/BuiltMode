@@ -13,7 +13,7 @@ import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
@@ -25,7 +25,7 @@ export default function HomeScreen() {
 
   const uid = user?.uid;
 
-  const { data, isLoading, error, refetch, isPending } = useQuery({
+  const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["user-stats", uid],
     queryFn: fetchUserStats,
     params: { uid: uid ?? "" },
@@ -34,12 +34,12 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    refetch();
+    refetch().finally(() => setRefreshing(false));
   }, [data]);
 
-  useEffect(() => {
-    if (!isPending && refreshing) setRefreshing(false);
-  }, [isPending]);
+  // useEffect(() => {
+  //   if (!isRefetching && refreshing) setRefreshing(false);
+  // }, [isRefetching]);
 
   if (!user) return null;
   return (
@@ -53,7 +53,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={!isLoading && isPending}
+            refreshing={refreshing}
             onRefresh={onRefresh}
             colors={[Colors.accent.primary]}
             tintColor={Colors.accent.primary}

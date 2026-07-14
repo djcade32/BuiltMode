@@ -11,7 +11,7 @@ import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -76,7 +76,7 @@ const profile = () => {
       targetDays: userWeekAggregate?.weeklyTargetDays || userStats?.weeklyTargetDays || 5,
       currentStreakWeek: userWeekAggregate?.streakWeeks || userStats?.currentWeekStreak || 0,
       isPracticeWeek: user?.isPracticeWeek || !userWeekAggregate?.isOfficialWeek || false,
-      isStreakActive: userWeekAggregate?.streakStatus === "active",
+      isStreakActive: userStats?.currentWeekStreak && userStats?.currentWeekStreak > 0 ? true : false,
     };
   }, [userWeekAggregate, userStats, user]);
 

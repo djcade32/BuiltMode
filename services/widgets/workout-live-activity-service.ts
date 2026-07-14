@@ -43,7 +43,10 @@ const enqueueOperation = <T>(operation: () => Promise<T>): Promise<T> => {
 
 const getLogoUri = (): Promise<string> => {
   if (!logoUriPromise) {
-    logoUriPromise = getWorkoutWidgetLogoUri();
+    logoUriPromise = getWorkoutWidgetLogoUri().catch((error) => {
+      logoUriPromise = null;
+      throw error;
+    });
   }
 
   return logoUriPromise;

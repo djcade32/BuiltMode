@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   },
 
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.45)",
   },
 
