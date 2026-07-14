@@ -3,6 +3,11 @@
     "module": "NodeNext",
     "esModuleInterop": true,
     "moduleResolution": "nodenext",
+    "baseUrl": ".",
+    "paths": {
+      "@builtmode/shared/types/*": ["../packages/shared/dist/types/*"],
+      "@builtmode/shared/schemas/*": ["../packages/shared/dist/schemas/*"]
+    },
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "rootDir": "src",
