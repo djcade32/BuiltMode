@@ -4,7 +4,7 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { Exercise, ExerciseMetricType, ExerciseType } from "@builtmode/shared";
 import { Entypo, MaterialIcons } from "@expo/vector-icons";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -101,18 +101,6 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
       name,
       metricType,
       sets: [{ id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }],
-    };
-    return exercise;
-  };
-
-  const buildNewExerciseObject = (item: { name: string; type: ExerciseType; metricType: ExerciseMetricType }) => {
-    const { name, metricType } = item;
-    const id = `${uuidv4()}-exercise`;
-    const exercise: Exercise = {
-      id,
-      name,
-      metricType,
-      sets: [],
     };
     return exercise;
   };
@@ -251,7 +239,7 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
                             type: newExerciseWorkoutType.toLocaleLowerCase() as ExerciseType,
                             metricType: getExerciseMetric(newExerciseMetric),
                           },
-                          buildNewExerciseObject,
+                          buildExerciseObject,
                         );
                         setNewExerciseInput("");
                         setNewExerciseMetric(METRICS[0]);

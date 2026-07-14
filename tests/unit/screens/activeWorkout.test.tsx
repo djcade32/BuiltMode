@@ -30,26 +30,11 @@ jest.mock("react-timer-hook", () => ({
   }),
 }));
 
-jest.mock("react-native-reanimated", () => {
-  const React = require("react");
-  const { View } = require("react-native");
-  const Reanimated = require("react-native-reanimated/mock");
-  Reanimated.default.call = () => {};
-
-  return {
-    __esModule: true,
-    default: {
-      ...Reanimated.default,
-      View: View,
-    },
-    useSharedValue: (value: any) => ({ value }),
-    useAnimatedStyle: () => ({}),
-    withRepeat: (value: any) => value,
-    withSequence: (...args: any[]) => args[0],
-    withTiming: (value: any) => value,
-    View: React.forwardRef((props: any, ref: any) => <div ref={ref} {...props} />),
-  };
-});
+jest.mock("@/hooks/useWorkoutLiveActivity", () => ({
+  useWorkoutLiveActivity: () => ({
+    endWorkoutLiveActivity: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
 
 describe("activeWorkout", () => {
   beforeEach(() => {
@@ -133,6 +118,8 @@ describe("activeWorkout", () => {
     const { getByText } = render(<ActiveWorkout />);
     fireEvent.press(getByText("Exit"));
 
-    expect(clearWorkoutSpy).toHaveBeenCalled();
+    return waitFor(() => {
+      expect(clearWorkoutSpy).toHaveBeenCalled();
+    });
   });
 });

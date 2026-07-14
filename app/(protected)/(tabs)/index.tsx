@@ -13,7 +13,7 @@ import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
@@ -25,7 +25,7 @@ export default function HomeScreen() {
 
   const uid = user?.uid;
 
-  const { data, isLoading, error, refetch, isPending } = useQuery({
+  const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["user-stats", uid],
     queryFn: fetchUserStats,
     params: { uid: uid ?? "" },
@@ -34,12 +34,12 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    refetch();
+    refetch().finally(() => setRefreshing(false));
   }, [data]);
 
-  useEffect(() => {
-    if (!isPending && refreshing) setRefreshing(false);
-  }, [isPending]);
+  // useEffect(() => {
+  //   if (!isRefetching && refreshing) setRefreshing(false);
+  // }, [isRefetching]);
 
   if (!user) return null;
   return (
@@ -53,10 +53,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={isPending}
+            refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={["#6B7280"]}
-            tintColor="#6B7280"
+            colors={[Colors.accent.primary]}
+            tintColor={Colors.accent.primary}
           />
         }
       >
@@ -122,9 +122,7 @@ export default function HomeScreen() {
             </>
           ) : (
             <>
-              <ThemedText style={styles.weekStreakNumber}>
-                {data ? data.currentWeekStreak : 0}
-              </ThemedText>
+              <ThemedText style={styles.weekStreakNumber}>{data ? data.currentWeekStreak : 0}</ThemedText>
               <View style={{ marginTop: 24, alignItems: "center", gap: 8 }}>
                 <ThemedText style={styles.weekStreakText}>WEEK STREAK</ThemedText>
                 <ThemedText style={styles.subtext}>Consecutive Weeks Meeting Target</ThemedText>
@@ -142,10 +140,7 @@ export default function HomeScreen() {
               >
                 Build Daily.
                 <ThemedText
-                  style={[
-                    styles.subtext,
-                    { letterSpacing: 0, fontFamily: Typography.family.primary.medium },
-                  ]}
+                  style={[styles.subtext, { letterSpacing: 0, fontFamily: Typography.family.primary.medium }]}
                 >
                   Become Relentless.
                 </ThemedText>
@@ -185,8 +180,8 @@ export default function HomeScreen() {
                   Why doesn&apos;t my score start yet?
                 </ThemedText>
                 <ThemedText style={{ fontSize: 12, lineHeight: 19.5, color: Colors.icon }}>
-                  To keep weekly tracking fair, all users begin on a full training week. Use this
-                  time to explore and set up your routines.
+                  To keep weekly tracking fair, all users begin on a full training week. Use this time to explore
+                  and set up your routines.
                 </ThemedText>
               </View>
             </View>

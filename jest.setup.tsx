@@ -50,6 +50,20 @@ jest.mock("@expo/vector-icons", () => ({
   Ionicons: "Ionicons",
 }));
 
+jest.mock("expo-router", () => ({
+  router: {
+    back: jest.fn(),
+    push: jest.fn(),
+    replace: jest.fn(),
+  },
+  useLocalSearchParams: jest.fn(() => ({})),
+  useRouter: () => ({
+    back: jest.fn(),
+    push: jest.fn(),
+    replace: jest.fn(),
+  }),
+}));
+
 jest.mock("uuid", () => ({
   v4: jest.fn(() => "mock-uuid"),
 }));
@@ -297,7 +311,22 @@ jest.mock("@/components/workout/StopwatchDisplay", () => {
 // ======================
 
 jest.mock("react-native-reanimated", () => {
-  const Reanimated = require("react-native-reanimated/mock");
-  Reanimated.default.call = () => {};
-  return Reanimated;
+  const React = require("react");
+  const { View } = require("react-native");
+  const AnimatedView = React.forwardRef((props: any, ref: any) => <View ref={ref} {...props} />);
+
+  return {
+    __esModule: true,
+    createAnimatedComponent: (Component: any) => Component,
+    default: {
+      createAnimatedComponent: (Component: any) => Component,
+      View: AnimatedView,
+    },
+    View: AnimatedView,
+    useAnimatedStyle: (updater?: () => object) => (typeof updater === "function" ? updater() : {}),
+    useSharedValue: (value: any) => ({ value }),
+    withRepeat: (value: any) => value,
+    withSequence: (...args: any[]) => args[0],
+    withTiming: (value: any) => value,
+  };
 });
