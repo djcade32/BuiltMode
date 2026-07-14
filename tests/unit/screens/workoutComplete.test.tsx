@@ -122,7 +122,7 @@ describe("workoutComplete", () => {
     await waitFor(() => {
       expect(publishCompletedWorkoutToFeed).toHaveBeenCalledWith("session-1", null, null);
       expect(clearWorkoutSpy).toHaveBeenCalled();
-      expect(mockReplace).toHaveBeenCalledWith("/(protected)/(tabs)/(workout)/log");
+      expect(mockReplace).toHaveBeenCalledWith("/(protected)/(tabs)/(feed)/feed");
     });
   });
 });
