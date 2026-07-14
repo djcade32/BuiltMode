@@ -1,7 +1,9 @@
-import { HStack, Image, Spacer, Text, VStack } from "@expo/ui/swift-ui";
+import { Button, HStack, Image, Spacer, Text, VStack } from "@expo/ui/swift-ui";
 import {
   background,
   border,
+  buttonStyle,
+  controlSize,
   cornerRadius,
   font,
   foregroundStyle,
@@ -9,6 +11,7 @@ import {
   multilineTextAlignment,
   padding,
   resizable,
+  tint,
   widgetAccentedRenderingMode,
 } from "@expo/ui/swift-ui/modifiers";
 import { createLiveActivity } from "expo-widgets";
@@ -49,6 +52,28 @@ export type WorkoutLiveActivityProps = {
   exerciseName: string | null;
 
   /**
+   * Position of the active exercise within the workout.
+   */
+  exerciseNumber: number;
+  totalExercises: number;
+
+  /**
+   * True after every exercise in the workout has been completed.
+   */
+  isWorkoutComplete: boolean;
+
+  /**
+   * Identifies the active exercise and set used by the interaction target.
+   */
+  currentExerciseId: string | null;
+  currentSetId: string | null;
+
+  /**
+   * Whether the current set may be completed from the Live Activity.
+   */
+  canCompleteCurrentSet: boolean;
+
+  /**
    * Current set position within the active exercise.
    *
    * This should be one-based for display purposes.
@@ -66,6 +91,8 @@ export type WorkoutLiveActivityProps = {
   weight?: number;
   reps?: number;
   durationSeconds?: number;
+  distance?: number;
+  distanceUnit?: "mi" | "km" | "m";
 
   /**
    * Unix timestamp representing when the rest timer ends.
@@ -121,28 +148,61 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
 
   let metricLabel = "READY";
 
-  if (props.weight != null && props.reps != null) {
+  if (props.isWorkoutComplete) {
+    metricLabel = "WORKOUT COMPLETE";
+  } else if (props.weight != null && props.reps != null) {
     metricLabel = `${formatNumber(props.weight)} LB × ${formatNumber(props.reps)}`;
   } else if (props.reps != null) {
     metricLabel = `${formatNumber(props.reps)} REPS`;
   } else if (props.durationSeconds != null) {
     metricLabel = formatDuration(props.durationSeconds);
+  } else if (props.distance != null) {
+    const unit = props.distanceUnit ? props.distanceUnit.toLocaleUpperCase() : "MI";
+    metricLabel = `${formatNumber(props.distance)} ${unit}`;
   }
 
-  const exerciseLabel = props.exerciseName?.trim() || props.workoutName?.trim() || "Active Workout";
+  const exerciseLabel = props.isWorkoutComplete
+    ? props.workoutName?.trim() || "Workout"
+    : props.exerciseName?.trim() || props.workoutName?.trim() || "Active Workout";
+
+  const displayedExerciseNumber =
+    props.totalExercises > 0 ? Math.min(Math.max(props.exerciseNumber, 1), props.totalExercises) : 0;
 
   const displayedSetNumber = props.setNumber > 0 ? props.setNumber : 1;
 
-  const setLabel = props.totalSets > 0 ? `SET ${displayedSetNumber} OF ${props.totalSets}` : "NO ACTIVE SET";
+  const exerciseTrackerLabel = props.isWorkoutComplete
+    ? `${props.totalExercises} OF ${props.totalExercises} EXERCISES`
+    : props.totalExercises > 0
+      ? `EXERCISE ${displayedExerciseNumber} OF ${props.totalExercises}`
+      : "NO EXERCISES";
 
-  const activityStatus = props.isPaused ? "PAUSED" : props.isResting ? "REST" : "ACTIVE";
+  const setTrackerLabel = props.isWorkoutComplete
+    ? "ALL SETS COMPLETE"
+    : props.totalSets > 0
+      ? `SET ${displayedSetNumber} OF ${props.totalSets}`
+      : "NO ACTIVE SET";
+
+  const metricHeaderLabel = props.isWorkoutComplete ? "STATUS" : "CURRENT SET";
+
+  const completesExercise = props.totalSets > 0 && displayedSetNumber >= props.totalSets;
+
+  const completionButtonLabel = completesExercise ? "FINISH EXERCISE" : "COMPLETE SET";
+
+  const completionTarget =
+    !props.isWorkoutComplete && props.canCompleteCurrentSet && props.currentExerciseId && props.currentSetId
+      ? [
+          "builtmode.complete-current-set",
+          encodeURIComponent(props.workoutId),
+          encodeURIComponent(props.currentExerciseId),
+          encodeURIComponent(props.currentSetId),
+        ].join("|")
+      : null;
 
   /*
    * SwiftUI requires a closed date range for the native timer.
    * Seven days is safely beyond a normal workout duration.
    */
   const timerLowerDate = new Date(props.timerStartedAtMs);
-
   const timerUpperDate = new Date(props.timerStartedAtMs + 7 * 24 * 60 * 60 * 1000);
 
   /*
@@ -160,9 +220,12 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
     banner: (
       <VStack
         alignment="leading"
-        spacing={12}
+        spacing={8}
         modifiers={[
-          padding({ all: 16 }),
+          padding({
+            horizontal: 16,
+            vertical: 12,
+          }),
           background(backgroundColor),
           border({
             color: borderColor,
@@ -237,7 +300,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
           </VStack>
         </HStack>
 
-        <VStack alignment="leading" spacing={4}>
+        <VStack alignment="leading" spacing={3}>
           <Text
             modifiers={[
               font({
@@ -250,17 +313,33 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
             {exerciseLabel}
           </Text>
 
-          <Text
-            modifiers={[
-              font({
-                size: 12,
-                family: "JetBrainsMono-Medium",
-              }),
-              foregroundStyle(mutedColor),
-            ]}
-          >
-            {setLabel}
-          </Text>
+          <HStack alignment="center">
+            <Text
+              modifiers={[
+                font({
+                  size: 11,
+                  family: "JetBrainsMono-Medium",
+                }),
+                foregroundStyle(mutedColor),
+              ]}
+            >
+              {exerciseTrackerLabel}
+            </Text>
+
+            <Spacer />
+
+            <Text
+              modifiers={[
+                font({
+                  size: 11,
+                  family: "JetBrainsMono-Medium",
+                }),
+                foregroundStyle(props.isWorkoutComplete ? goldColor : whiteColor),
+              ]}
+            >
+              {setTrackerLabel}
+            </Text>
+          </HStack>
         </VStack>
 
         <HStack alignment="center">
@@ -268,22 +347,22 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
             <Text
               modifiers={[
                 font({
-                  size: 10,
+                  size: 9,
                   family: "JetBrainsMono-Medium",
                 }),
                 foregroundStyle(mutedColor),
               ]}
             >
-              CURRENT SET
+              {metricHeaderLabel}
             </Text>
 
             <Text
               modifiers={[
                 font({
-                  size: 22,
+                  size: props.isWorkoutComplete ? 18 : 20,
                   weight: "bold",
                 }),
-                foregroundStyle(whiteColor),
+                foregroundStyle(props.isWorkoutComplete ? goldColor : whiteColor),
               ]}
             >
               {metricLabel}
@@ -292,31 +371,14 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
 
           <Spacer />
 
-          <VStack alignment="trailing" spacing={2}>
-            <Text
-              modifiers={[
-                font({
-                  size: 10,
-                  family: "JetBrainsMono-Medium",
-                }),
-                foregroundStyle(mutedColor),
-              ]}
-            >
-              STATUS
-            </Text>
-
-            <Text
-              modifiers={[
-                font({
-                  size: 16,
-                  weight: "bold",
-                }),
-                foregroundStyle(props.isResting ? goldColor : whiteColor),
-              ]}
-            >
-              {activityStatus}
-            </Text>
-          </VStack>
+          {completionTarget ? (
+            <Button
+              target={completionTarget}
+              label={completionButtonLabel}
+              systemImage="checkmark"
+              modifiers={[buttonStyle("borderedProminent"), controlSize("mini"), tint(goldColor)]}
+            />
+          ) : null}
         </HStack>
       </VStack>
     ),
@@ -373,13 +435,13 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
         <Text
           modifiers={[
             font({
-              size: 11,
+              size: 10,
               family: "JetBrainsMono-Medium",
             }),
             foregroundStyle(mutedColor),
           ]}
         >
-          {setLabel}
+          {exerciseTrackerLabel}
         </Text>
       </VStack>
     ),
@@ -458,7 +520,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                 foregroundStyle(mutedColor),
               ]}
             >
-              CURRENT SET
+              {metricHeaderLabel}
             </Text>
 
             <Text
@@ -467,7 +529,7 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
                   size: 13,
                   weight: "bold",
                 }),
-                foregroundStyle(whiteColor),
+                foregroundStyle(props.isWorkoutComplete ? goldColor : whiteColor),
               ]}
             >
               {metricLabel}
@@ -476,30 +538,27 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
 
           <Spacer />
 
-          <VStack alignment="trailing" spacing={2}>
+          <VStack alignment="trailing" spacing={4}>
             <Text
               modifiers={[
                 font({
                   size: 9,
                   family: "JetBrainsMono-Medium",
                 }),
-                foregroundStyle(mutedColor),
+                foregroundStyle(props.isWorkoutComplete ? goldColor : mutedColor),
               ]}
             >
-              STATUS
+              {setTrackerLabel}
             </Text>
 
-            <Text
-              modifiers={[
-                font({
-                  size: 12,
-                  weight: "bold",
-                }),
-                foregroundStyle(props.isResting ? goldColor : whiteColor),
-              ]}
-            >
-              {activityStatus}
-            </Text>
+            {completionTarget ? (
+              <Button
+                target={completionTarget}
+                label={completionButtonLabel}
+                systemImage="checkmark"
+                modifiers={[buttonStyle("borderedProminent"), controlSize("mini"), tint(goldColor)]}
+              />
+            ) : null}
           </VStack>
         </HStack>
       </VStack>

@@ -169,6 +169,8 @@ export type WorkoutLiveActivityState = {
   weight?: number;
   reps?: number;
   durationSeconds?: number;
+  distance?: number;
+  distanceUnit?: "mi" | "km" | "m";
 
   restEndsAtMs?: number;
 

@@ -1,7 +1,7 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
 import { Entypo, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   },
 
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
   },
 

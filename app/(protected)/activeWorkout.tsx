@@ -36,6 +36,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useStopwatch } from "react-timer-hook";
+import { v4 as uuidv4 } from "uuid";
 
 const getStopwatchOffsetFromStartedAtMs = (startedAtMs?: number | null) => {
   const elapsedMs = startedAtMs ? Math.max(0, Date.now() - startedAtMs) : 0;
@@ -281,7 +282,7 @@ const ActiveWorkout = () => {
         return {
           ...exercise,
           metricType,
-          sets: [],
+          sets: [{ id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }],
         };
       }
       return exercise;
