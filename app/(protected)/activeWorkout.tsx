@@ -462,6 +462,7 @@ const ActiveWorkout = () => {
                 setIsNotesSheetVisible={setIsNotesSheetVisible}
                 onDeleteExercise={handleDeleteExercise}
                 onChangeMetricType={handleChangeMetricType}
+                scrollToTop={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
               />
             )}
 

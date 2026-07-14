@@ -174,6 +174,7 @@ type Props = {
   ) => void;
   onChangeMetricType: (exerciseId: string, metricType: ExerciseMetricType) => void;
   setIsNotesSheetVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  scrollToTop: () => void;
 };
 
 const CurrentWorkoutCard = ({
@@ -182,6 +183,7 @@ const CurrentWorkoutCard = ({
   onDeleteExercise,
   onChangeMetricType,
   setIsNotesSheetVisible,
+  scrollToTop,
 }: Props) => {
   const { updateWorkout, activeWorkoutDraft, updateWorkoutProgress, completeCurrentSet, workoutProgress } =
     useWorkoutStore();
@@ -238,6 +240,8 @@ const CurrentWorkoutCard = ({
         setId: currentSet.id,
       });
     }
+
+    result.completedExercise && scrollToTop();
   };
 
   const getSetCallToActionText = useCallback(() => {
