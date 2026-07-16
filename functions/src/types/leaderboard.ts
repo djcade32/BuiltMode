@@ -6,8 +6,5 @@ export type LeaderboardEntry = {
   isRanked: boolean;
   modeScore: number;
   streakWeeks: number;
-  usernameLower: string;
-  displayName: string;
-  avatarUrl?: string;
   updatedAt: Timestamp;
 };

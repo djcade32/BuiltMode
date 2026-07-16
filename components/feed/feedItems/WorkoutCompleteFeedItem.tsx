@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
+import { usePublicProfile } from "@/hooks/user/usePublicProfile";
 import dayjs from "@/lib/dayjs";
 import { formatFirestoreDateTimeISO, formatFirestoreTimestamp } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
@@ -8,7 +9,7 @@ import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import { useMemo } from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import WeeklyProgressBar from "./WeeklyProgressBar";
@@ -34,6 +35,25 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     isPracticeWeek: isPractice,
     photoUrl,
   } = feedItem;
+
+  const actorProfileFallback = useMemo(
+    () => ({
+      uid: actorUid,
+      avatarUrl: actorAvatarUrl ?? null,
+      displayName: actorDisplayName,
+      username: actorUsername,
+      avatarVersion: 0,
+    }),
+    [actorUid, actorAvatarUrl, actorDisplayName, actorUsername],
+  );
+
+  const { profile: actorProfile } = usePublicProfile(actorUid, actorProfileFallback);
+
+  const resolvedActorAvatarUrl = actorProfile?.avatarUrl ?? actorAvatarUrl ?? null;
+
+  const resolvedActorDisplayName = actorProfile?.displayName || actorDisplayName;
+
+  const resolvedActorUsername = actorProfile?.username || actorUsername;
 
   const hasWorkoutId = Boolean(workoutId);
 
@@ -131,8 +151,8 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
       <View style={styles.cardBody}>
         <View style={styles.headerRow}>
           <Avatar
-            avatarUrl={actorAvatarUrl}
-            displayName={actorDisplayName}
+            avatarUrl={resolvedActorAvatarUrl}
+            displayName={resolvedActorDisplayName}
             onPress={() => navigateToFriendProfile(actorUid)}
           />
 
@@ -140,7 +160,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
             <View style={styles.nameRow}>
               <TouchableOpacity onPress={() => navigateToFriendProfile(actorUid)} style={styles.nameButton}>
                 <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
-                  {actorDisplayName}
+                  {resolvedActorDisplayName}
                 </ThemedText>
               </TouchableOpacity>
 
@@ -171,7 +191,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
             <View style={styles.metaRow}>
               <TouchableOpacity onPress={() => navigateToFriendProfile(actorUid)}>
                 <ThemedText style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
-                  @{actorUsername.toLocaleLowerCase()}
+                  @{resolvedActorUsername.toLocaleLowerCase()}
                 </ThemedText>
               </TouchableOpacity>
 
@@ -350,7 +370,7 @@ const styles = StyleSheet.create({
   },
 
   imageGradient: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
 
   workoutContent: {

@@ -15,7 +15,8 @@
     "test:unit": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest src/tests/unit",
     "test:integration": "GCLOUD_PROJECT=demo-builtmode FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand src/tests/integration",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "backfill:public-profiles": "tsx src/scripts/backfill-public-profiles.ts"
   },
   "engines": {
     "node": "22"
@@ -42,6 +43,7 @@
     "ts-jest": "^29.4.6",
     "ts-node": "10.9.2",
     "tsup": "^8.5.1",
+    "tsx": "^4.23.1",
     "typescript": "^5.9.3"
   },
   "private": true,

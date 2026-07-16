@@ -1,4 +1,4 @@
-import { UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
+import { PublicProfile, UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
 import { Timestamp, Transaction } from "firebase-admin/firestore";
 import { db } from "../lib/firebaseAdmin.js";
 import { UserDoc, UsernameIndexDoc } from "../types/user.js";
@@ -17,12 +17,7 @@ export const createUser = (tx: Transaction, user: UserDoc) => {
   tx.set(ref, user);
 };
 
-export const createUsernameIndex = (
-  tx: Transaction,
-  usernameLower: string,
-  uid: string,
-  createdAt: Timestamp,
-) => {
+export const createUsernameIndex = (tx: Transaction, usernameLower: string, uid: string, createdAt: Timestamp) => {
   const ref = db.collection("usernames").doc(usernameLower);
 
   const doc: UsernameIndexDoc = {
@@ -37,6 +32,12 @@ export const createUserStats = (tx: Transaction, uid: string, userStatsDoc: User
   const ref = db.collection("userStats").doc(uid);
 
   tx.set(ref, userStatsDoc);
+};
+
+export const createPublicProfile = (tx: Transaction, uid: string, publicProfileDoc: PublicProfile) => {
+  const ref = db.collection("publicProfiles").doc(uid);
+
+  tx.set(ref, publicProfileDoc);
 };
 
 export const getUserStats = (tx: Transaction, uid: string) => {

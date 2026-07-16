@@ -18,7 +18,7 @@ import { useUserStore } from "@/stores/user-store";
 import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -291,7 +291,6 @@ const friendsList = () => {
                 renderItem={({ item }) => (
                   <FriendsListCard
                     uid={item.uid}
-                    avatarUrl={item.avatarUrl}
                     displayName={item.displayName}
                     username={item.usernameLower}
                     removeFriend={() => removeFriendFunc(item.uid)}
