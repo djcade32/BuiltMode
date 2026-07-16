@@ -105,6 +105,8 @@ export async function handleCreateUserProfile(
       isRanked: false,
       modeScore: 0,
       streakWeeks: 0,
+      displayName: displayName.trim(),
+      usernameLower,
       updatedAt: now,
     };
 
