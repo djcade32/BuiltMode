@@ -1,5 +1,5 @@
 import { PublicProfile, UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
-import { Timestamp, Transaction } from "firebase-admin/firestore";
+import { FieldValue, Timestamp, Transaction } from "firebase-admin/firestore";
 import { db } from "../lib/firebaseAdmin.js";
 import { UserDoc, UsernameIndexDoc } from "../types/user.js";
 import { UserWeekAggregate } from "../types/workout.js";
@@ -71,4 +71,18 @@ export const createUserMonthAggregates = (
 
 export const getUserMonthAggregate = (tx: Transaction, uid: string, monthId: string) => {
   return tx.get(db.collection("userMonthAggregates").doc(`${uid}_${monthId}`));
+};
+
+export const changeUserAvatarUrl = (tx: Transaction, uid: string, profile: PublicProfile) => {
+  const publicProfilesRef = db.collection("publicProfiles").doc(uid);
+  const userRef = db.collection("users").doc(uid);
+  const leaderboardRef = db.collection("leaderboardEntries").doc(uid);
+
+  tx.update(userRef, { avatarUrl: profile.avatarUrl, updatedAt: FieldValue.serverTimestamp() });
+  tx.update(leaderboardRef, { avatarUrl: profile.avatarUrl, updatedAt: FieldValue.serverTimestamp() });
+  tx.set(publicProfilesRef, { ...profile, avatarUpdatedAt: FieldValue.serverTimestamp() });
+};
+
+export const getPublicProfile = (tx: Transaction, uid: string) => {
+  return tx.get(db.collection("publicProfiles").doc(uid));
 };

@@ -151,6 +151,7 @@ export const fetchUserMonthAggregate = async ({
 
 export const fetchUserStats = async ({ params }: { params: { uid: string } }): Promise<UserStats | null> => {
   const { uid } = params;
+
   try {
     const userStatsDoc = doc(db, `userStats/${uid}`);
     const snapshot = await getDoc(userStatsDoc);
@@ -161,6 +162,24 @@ export const fetchUserStats = async ({ params }: { params: { uid: string } }): P
     return snapshot.data() as UserStats;
   } catch (error: any) {
     console.error("error: ", error);
+    throw error;
+  }
+};
+
+export const changeUserAvatarUrl = async (params: { avatarUrl: string | null }): Promise<PublicProfile> => {
+  changeUserAvatarUrl;
+  const { avatarUrl } = params;
+  try {
+    const changeUserAvatarUrlFunction = httpsCallable<{ avatarUrl: string | null }, PublicProfile>(
+      functions,
+      "changeUserAvatarUrl",
+    );
+
+    const response = await changeUserAvatarUrlFunction({ avatarUrl });
+    if (!response.data || response.data === undefined) throw Error("Failed to update user avatar url");
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to update user avatar url");
     throw error;
   }
 };

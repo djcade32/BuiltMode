@@ -1,15 +1,17 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
+import { useUpdateProfileAvatar } from "@/hooks/user/useUpdateProfileAvatar";
 import { useAuthStore } from "@/stores/auth-store";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const settings = () => {
   const router = useRouter();
   const { signout } = useAuthStore();
+
+  const { mutate: changeUserAvatarUrl } = useUpdateProfileAvatar();
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
@@ -26,6 +28,18 @@ const settings = () => {
       <View style={{ paddingTop: 16 }}>
         <TouchableOpacity style={styles.signOutButtonContainer} onPress={signout}>
           <ThemedText style={styles.signOutButton}>SIGN OUT</ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.signOutButtonContainer}
+          onPress={() =>
+            changeUserAvatarUrl({
+              avatarUrl:
+                "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            })
+          }
+        >
+          <ThemedText style={styles.signOutButton}>Change User Avatar</ThemedText>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

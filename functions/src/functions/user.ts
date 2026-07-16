@@ -8,10 +8,12 @@ import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
 import { createInitialEntry } from "../firestore/leaderboard.js";
 import {
+  changeUserAvatarUrl,
   createPublicProfile,
   createUser,
   createUsernameIndex,
   createUserStats,
+  getPublicProfile,
   getUserByUid,
   getUsernameIndex,
 } from "../firestore/user.js";
@@ -158,6 +160,29 @@ export async function handleFetchingUserHomeTimezone(userId: string): Promise<st
     const homeTimezone = user.data()?.homeTimezone;
     return typeof homeTimezone === "string" ? homeTimezone : null;
   });
+}
+
+export async function handleChangingUserAvatarUrl(
+  uid: string,
+  avatarUrl: string | null,
+): Promise<PublicProfile | undefined> {
+  const result = await db.runTransaction(async (tx) => {
+    const fetchedProfile = (await getPublicProfile(tx, uid)).data();
+    if (!fetchedProfile || fetchedProfile === undefined) return;
+    const avatarVersion = fetchedProfile.avatarVersion + 1;
+
+    const updatedProfile: PublicProfile = {
+      uid,
+      avatarUrl,
+      avatarVersion,
+      username: fetchedProfile.username,
+      displayName: fetchedProfile.displayName,
+    };
+
+    changeUserAvatarUrl(tx, uid, updatedProfile);
+    return updatedProfile;
+  });
+  return result;
 }
 
 export function handleGetOfficialStartAt(
