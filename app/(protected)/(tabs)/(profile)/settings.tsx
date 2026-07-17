@@ -1,17 +1,36 @@
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useUpdateProfileAvatar } from "@/hooks/user/useUpdateProfileAvatar";
+import { changeWeeklyTarget } from "@/services/user-service";
 import { useAuthStore } from "@/stores/auth-store";
+import { useUserStore } from "@/stores/user-store";
+import { getWeekId } from "@builtmode/shared";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const settings = () => {
   const router = useRouter();
+  const { user } = useUserStore();
   const { signout } = useAuthStore();
+  const uid = user?.uid ?? "";
+  const usersHomeTimezone = user?.homeTimezone;
+
+  const queryClient = useQueryClient();
 
   const { mutate: changeUserAvatarUrl } = useUpdateProfileAvatar();
+  const { mutate: handleChangingWeeklyTarget } = useMutation({
+    mutationFn: changeWeeklyTarget,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-stats", uid] });
+      queryClient.invalidateQueries({
+        queryKey: ["user-week-aggregate", usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "", uid],
+      });
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
@@ -40,6 +59,16 @@ const settings = () => {
           }
         >
           <ThemedText style={styles.signOutButton}>Change User Avatar</ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.signOutButtonContainer}
+          onPress={() =>
+            handleChangingWeeklyTarget({
+              weeklyTarget: 5,
+            })
+          }
+        >
+          <ThemedText style={styles.signOutButton}>Change Weekly Target</ThemedText>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -76,13 +76,15 @@ export const createUserProfileResponseSchema = z.object({
   avatarUrl: avatarUrlSchema,
   homeTimezone: homeTimezoneSchema,
   officialStartWeekId: z.string().min(1),
-  officialStartAt: z.union([
-    firestoreTimestampSchema,
-    firestoreTimestampV2Schema,
-  ]),
+  officialStartAt: z.union([firestoreTimestampSchema, firestoreTimestampV2Schema]),
   officialWeekStatus: officialWeekSchema,
   currentWeekId: z.string().min(1),
   weeklyTargetDays: weeklyTargetDaysSchema,
+  pendingWeeklyTargetDays: weeklyTargetDaysSchema.nullable().optional(),
+  pendingWeeklyTargetStartsAt: z
+    .union([firestoreTimestampSchema, firestoreTimestampV2Schema])
+    .nullable()
+    .optional(),
   isPracticeWeek: z.boolean(),
 });
 

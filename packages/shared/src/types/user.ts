@@ -1,4 +1,4 @@
-import { firestoreTimestamp } from "./firestore.js";
+import { firestoreTimestamp, firestoreTimestampV2 } from "./firestore.js";
 
 export type Goal =
   | "BUILD MUSCLE"
@@ -38,6 +38,8 @@ export type User = {
   officialWeekStatus: OfficialWeekStatus;
   officialStartAt: firestoreTimestamp;
   weeklyTargetDays: WeeklyTargetDays;
+  pendingWeeklyTargetDays?: WeeklyTargetDays | null;
+  pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
 
   // Meta
   createdAt: firestoreTimestamp;
@@ -106,6 +108,8 @@ export type CreateUserProfileResponse = {
   officialWeekStatus: OfficialWeekStatus;
   currentWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
+  pendingWeeklyTargetDays?: WeeklyTargetDays | null;
+  pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
   isPracticeWeek: boolean;
 };
 

@@ -8,7 +8,7 @@
  */
 
 import { saveAsTemplateRequestSchema } from "@builtmode/shared/schemas/template";
-import { createUserProfileRequestSchema } from "@builtmode/shared/schemas/user";
+import { createUserProfileRequestSchema, weeklyTargetDaysSchema } from "@builtmode/shared/schemas/user";
 import { completeWorkoutRequestSchema } from "@builtmode/shared/schemas/workout";
 import { SaveAsTemplateRequest } from "@builtmode/shared/types/template";
 import { CreateUserProfileRequest } from "@builtmode/shared/types/user";
@@ -25,10 +25,12 @@ import {
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
 import {
   handleChangingUserAvatarUrl,
+  handleChangingWeeklyTarget,
   handleCreateUserProfile,
   handleFetchingUserHomeTimezone,
 } from "./functions/user.js";
 import { handleCompleteWorkout, handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
+import { WeeklyTargetDays } from "./types/user.js";
 import { assertValidTimezone } from "./utils/time.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekId.js";
 
@@ -246,6 +248,22 @@ export const changeUserAvatarUrl = onCall(async (request: CallableRequest<{ avat
   return await handleChangingUserAvatarUrl(request.auth.uid, data.avatarUrl);
 });
 
+export const changeWeeklyTarget = onCall(async (request: CallableRequest<{ weeklyTarget: WeeklyTargetDays }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+  const data = request.data;
+
+  const parsed = weeklyTargetDaysSchema.safeParse(request.data?.weeklyTarget);
+
+  if (!parsed.success) {
+    throw new HttpsError("invalid-argument", "Invalid changeWeeklyTarget payload.");
+  }
+
+  return await handleChangingWeeklyTarget(request.auth.uid, parsed.data);
+});
+
 export { activateOfficialWeeks } from "./scheduled/activateOfficialWeek.js";
+export { changeUsersWeeklyTargetDays } from "./scheduled/changeUsersWeeklyTargetDays.js";
 export { ensureCurrentWeekAggregates } from "./scheduled/ensureCurrentWeekAggregates.js";
 export { finalizeExpiredWeeks } from "./scheduled/finalizeExpiredWeeks.js";

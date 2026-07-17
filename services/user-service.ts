@@ -14,6 +14,7 @@ import {
 
 import { httpsCallable } from "firebase/functions";
 
+import { firestoreTimestamp, firestoreTimestampV2 } from "@/packages/shared/src/types/firestore";
 import { doc, getDoc } from "firebase/firestore";
 
 export const checkForUserProfile = async (uid: string): Promise<User | undefined> => {
@@ -167,7 +168,6 @@ export const fetchUserStats = async ({ params }: { params: { uid: string } }): P
 };
 
 export const changeUserAvatarUrl = async (params: { avatarUrl: string | null }): Promise<PublicProfile> => {
-  changeUserAvatarUrl;
   const { avatarUrl } = params;
   try {
     const changeUserAvatarUrlFunction = httpsCallable<{ avatarUrl: string | null }, PublicProfile>(
@@ -179,7 +179,26 @@ export const changeUserAvatarUrl = async (params: { avatarUrl: string | null }):
     if (!response.data || response.data === undefined) throw Error("Failed to update user avatar url");
     return response.data;
   } catch (error: any) {
-    console.error("Failed to update user avatar url");
+    console.error("Failed to update user avatar url: ", error);
+    throw error;
+  }
+};
+
+export const changeWeeklyTarget = async (params: {
+  weeklyTarget: WeeklyTargetDays;
+}): Promise<firestoreTimestamp | firestoreTimestampV2> => {
+  const { weeklyTarget } = params;
+  try {
+    const changeWeeklyTargetFunction = httpsCallable<
+      { weeklyTarget: WeeklyTargetDays },
+      firestoreTimestamp | firestoreTimestampV2
+    >(functions, "changeWeeklyTarget");
+
+    const response = await changeWeeklyTargetFunction({ weeklyTarget });
+    if (!response.data || response.data === undefined) throw Error("Failed to update weekly target");
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to update weekly target");
     throw error;
   }
 };
@@ -227,7 +246,7 @@ export const getPublicProfile = async (uid: string): Promise<PublicProfile | nul
     return null;
   }
 
-  const data = snapshot.data();
+  const data = snapshot.data() || {};
 
   return {
     uid: snapshot.id,
