@@ -2,25 +2,23 @@ import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
 import { useRouter } from "expo-router";
-import React from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 
 type Props = {
   uid: string;
-  avatarUrl: string;
   displayName: string;
   username: string;
   removeFriend: () => void;
   isPending: boolean;
 };
 
-const FriendsListCard = ({ uid, avatarUrl, displayName, username, removeFriend, isPending }: Props) => {
+const FriendsListCard = ({ uid, displayName, username, removeFriend, isPending }: Props) => {
   const router = useRouter();
   const navigateToFriendProfile = (uid: string) => router.push(`/(friendProfile)/${uid}`);
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-        <Avatar avatarUrl={avatarUrl} displayName={displayName} onPress={() => navigateToFriendProfile(uid)} />
+        <Avatar uid={uid} displayName={displayName} onPress={() => navigateToFriendProfile(uid)} />
         <TouchableOpacity onPress={() => navigateToFriendProfile(uid)}>
           <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
             {displayName}

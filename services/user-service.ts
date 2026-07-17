@@ -4,6 +4,7 @@ import {
   CreateUserProfileResponse,
   Goal,
   LeaderboardEntry,
+  PublicProfile,
   User,
   UserMonthAggregate,
   UserStats,
@@ -94,14 +95,12 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
  * @returns The function `createUserProfile` is returning a Promise that resolves with a
  * `CreateUserProfileResponse` object.
  */
-export const createUserProfile = async (
-  user: CreateUserProfileRequest,
-): Promise<CreateUserProfileResponse> => {
+export const createUserProfile = async (user: CreateUserProfileRequest): Promise<CreateUserProfileResponse> => {
   try {
-    const createUserProfileFunction = httpsCallable<
-      CreateUserProfileRequest,
-      CreateUserProfileResponse
-    >(functions, "createUserProfile");
+    const createUserProfileFunction = httpsCallable<CreateUserProfileRequest, CreateUserProfileResponse>(
+      functions,
+      "createUserProfile",
+    );
 
     const userResponse = await createUserProfileFunction(user);
     return userResponse.data;
@@ -150,12 +149,9 @@ export const fetchUserMonthAggregate = async ({
   }
 };
 
-export const fetchUserStats = async ({
-  params,
-}: {
-  params: { uid: string };
-}): Promise<UserStats | null> => {
+export const fetchUserStats = async ({ params }: { params: { uid: string } }): Promise<UserStats | null> => {
   const { uid } = params;
+
   try {
     const userStatsDoc = doc(db, `userStats/${uid}`);
     const snapshot = await getDoc(userStatsDoc);
@@ -170,11 +166,25 @@ export const fetchUserStats = async ({
   }
 };
 
-export const fetchUsersHomeTimezone = async ({
-  params,
-}: {
-  params: { uid: string };
-}): Promise<string | null> => {
+export const changeUserAvatarUrl = async (params: { avatarUrl: string | null }): Promise<PublicProfile> => {
+  changeUserAvatarUrl;
+  const { avatarUrl } = params;
+  try {
+    const changeUserAvatarUrlFunction = httpsCallable<{ avatarUrl: string | null }, PublicProfile>(
+      functions,
+      "changeUserAvatarUrl",
+    );
+
+    const response = await changeUserAvatarUrlFunction({ avatarUrl });
+    if (!response.data || response.data === undefined) throw Error("Failed to update user avatar url");
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to update user avatar url");
+    throw error;
+  }
+};
+
+export const fetchUsersHomeTimezone = async ({ params }: { params: { uid: string } }): Promise<string | null> => {
   try {
     const fetchUsersHomeTimezoneFunction = httpsCallable<{ uid: string }, string>(
       functions,
@@ -204,4 +214,27 @@ export const fetchUserLeaderboardEntry = async ({
   } catch (error: any) {
     throw error;
   }
+};
+
+export const getPublicProfile = async (uid: string): Promise<PublicProfile | null> => {
+  if (!uid) {
+    return null;
+  }
+
+  const snapshot = await getDoc(doc(db, "publicProfiles", uid));
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  const data = snapshot.data();
+
+  return {
+    uid: snapshot.id,
+    displayName: typeof data.displayName === "string" ? data.displayName : "",
+    username: typeof data.username === "string" ? data.username : "",
+    avatarUrl: typeof data.avatarUrl === "string" ? data.avatarUrl : null,
+    avatarVersion: typeof data.avatarVersion === "number" ? data.avatarVersion : 0,
+    avatarUpdatedAt: data.avatarUpdatedAt,
+  };
 };

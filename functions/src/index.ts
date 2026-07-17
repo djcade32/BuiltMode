@@ -23,7 +23,11 @@ import {
   handleSendFriendRequest,
 } from "./functions/social.js";
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
-import { handleCreateUserProfile, handleFetchingUserHomeTimezone } from "./functions/user.js";
+import {
+  handleChangingUserAvatarUrl,
+  handleCreateUserProfile,
+  handleFetchingUserHomeTimezone,
+} from "./functions/user.js";
 import { handleCompleteWorkout, handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
 import { assertValidTimezone } from "./utils/time.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekId.js";
@@ -228,6 +232,19 @@ export const publishCompletedWorkoutToFeed = onCall(
     });
   },
 );
+
+export const changeUserAvatarUrl = onCall(async (request: CallableRequest<{ avatarUrl: string | null }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+  const data = request.data;
+
+  if (!data || (data.avatarUrl !== null && typeof data.avatarUrl !== "string")) {
+    throw new HttpsError("invalid-argument", "Invalid changeUserAvatarUrl payload.");
+  }
+
+  return await handleChangingUserAvatarUrl(request.auth.uid, data.avatarUrl);
+});
 
 export { activateOfficialWeeks } from "./scheduled/activateOfficialWeek.js";
 export { ensureCurrentWeekAggregates } from "./scheduled/ensureCurrentWeekAggregates.js";

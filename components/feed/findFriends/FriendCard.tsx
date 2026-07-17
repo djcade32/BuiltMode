@@ -4,7 +4,7 @@ import { Colors, Typography } from "@/constants/theme";
 import { useUserStore } from "@/stores/user-store";
 import { SearchUserResult } from "@builtmode/shared";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { ActivityIndicator, Alert, StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
 
 type FriendCardProps = {
@@ -119,7 +119,7 @@ const FriendCard = ({ data, isPending, onAccept, onCancel, onDecline, onRemove, 
   return (
     <View style={[styles.cardContainer, styles.container]}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-        <Avatar avatarUrl={avatarUrl} displayName={displayName ?? "?"} />
+        <Avatar uid={uid} displayName={displayName ?? "?"} />
         <View>
           <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
             {displayName}

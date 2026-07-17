@@ -83,13 +83,6 @@ export type UserMonthAggregate = {
   updatedAt: firestoreTimestamp;
 };
 
-export type PublicUserProfile = {
-  uid: string;
-  username: string;
-  displayName: string;
-  avatarUrl?: string;
-};
-
 export type CreateUserProfileRequest = {
   username: string;
   goal: Goal;
@@ -143,4 +136,13 @@ export type UpdateHomeTimezoneRequest = {
 export type UpdateHomeTimezoneResponse = {
   homeTimezone: HomeTimezone;
   effectiveWeekId: string;
+};
+
+export type PublicProfile = {
+  uid: string;
+  username: string;
+  displayName?: string;
+  avatarUrl: string | null;
+  avatarVersion: number;
+  avatarUpdatedAt?: firestoreTimestamp;
 };

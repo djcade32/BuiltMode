@@ -2,6 +2,7 @@ import WorkoutCompleteFeedItem from "@/components/feed/feedItems/WorkoutComplete
 import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useUserFeedInfinite } from "@/hooks/social/useUserFeedInfinite";
+import { usePublicProfiles } from "@/hooks/user/usePublicProfile";
 import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -110,6 +111,12 @@ export default function feed() {
   const feedItems = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
   }, [data]);
+
+  const feedActorUids = useMemo(() => {
+    return Array.from(new Set(feedItems.map((item) => item.actorUid).filter(Boolean)));
+  }, [feedItems]);
+
+  usePublicProfiles(feedActorUids);
 
   const renderFeedItem = (item: FeedItem) => {
     switch (item.type) {

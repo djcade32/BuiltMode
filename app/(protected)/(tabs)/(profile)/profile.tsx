@@ -119,8 +119,8 @@ const profile = () => {
             {/* USER INFO */}
             <View style={styles.userInfoContainer}>
               <Avatar
-                avatarUrl={user?.avatarUrl ?? ""}
-                displayName={user?.displayName ?? "?"}
+                uid={user?.uid ?? ""}
+                displayName={user?.displayName}
                 size={65}
                 containerStyle={styles.avatar}
               />

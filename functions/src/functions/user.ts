@@ -1,9 +1,6 @@
-import {
-  CreateUserProfileRequest,
-  CreateUserProfileResponse,
-} from "@builtmode/shared/schemas/user";
+import { CreateUserProfileRequest, CreateUserProfileResponse } from "@builtmode/shared/schemas/user";
 import { firestoreTimestampV2 } from "@builtmode/shared/types/firestore";
-import { UserStats } from "@builtmode/shared/types/user";
+import { PublicProfile, UserStats } from "@builtmode/shared/types/user";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
@@ -11,9 +8,12 @@ import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
 import { createInitialEntry } from "../firestore/leaderboard.js";
 import {
+  changeUserAvatarUrl,
+  createPublicProfile,
   createUser,
   createUsernameIndex,
   createUserStats,
+  getPublicProfile,
   getUserByUid,
   getUsernameIndex,
 } from "../firestore/user.js";
@@ -53,9 +53,7 @@ export async function handleCreateUserProfile(
    */
   const officialStartAt = handleGetOfficialStartAt(officialStartWeekId, homeTimezone);
 
-  const officialWeekStatus: UserDoc["officialWeekStatus"] = isPracticeWeek
-    ? "practice"
-    : "official";
+  const officialWeekStatus: UserDoc["officialWeekStatus"] = isPracticeWeek ? "practice" : "official";
 
   const officialStartedAt = isPracticeWeek ? null : now;
 
@@ -107,9 +105,8 @@ export async function handleCreateUserProfile(
       isRanked: false,
       modeScore: 0,
       streakWeeks: 0,
+      displayName: displayName.trim(),
       usernameLower,
-      displayName: userDoc.displayName,
-      avatarUrl: userDoc.avatarUrl,
       updatedAt: now,
     };
 
@@ -125,10 +122,20 @@ export async function handleCreateUserProfile(
       updatedAt: now,
     };
 
+    const publicProfileDoc: PublicProfile = {
+      uid,
+      username,
+      displayName,
+      avatarUrl: avatarUrl ?? "",
+      avatarVersion: 0,
+      avatarUpdatedAt: now,
+    };
+
     createUser(tx, userDoc);
     createUsernameIndex(tx, usernameLower, uid, now);
     createInitialEntry(tx, leaderboardEntry);
     createUserStats(tx, uid, userStatsDoc);
+    createPublicProfile(tx, uid, publicProfileDoc);
   });
 
   return {
@@ -155,6 +162,29 @@ export async function handleFetchingUserHomeTimezone(userId: string): Promise<st
     const homeTimezone = user.data()?.homeTimezone;
     return typeof homeTimezone === "string" ? homeTimezone : null;
   });
+}
+
+export async function handleChangingUserAvatarUrl(
+  uid: string,
+  avatarUrl: string | null,
+): Promise<PublicProfile | undefined> {
+  const result = await db.runTransaction(async (tx) => {
+    const fetchedProfile = (await getPublicProfile(tx, uid)).data();
+    if (!fetchedProfile || fetchedProfile === undefined) return;
+    const avatarVersion = fetchedProfile.avatarVersion + 1;
+
+    const updatedProfile: PublicProfile = {
+      uid,
+      avatarUrl,
+      avatarVersion,
+      username: fetchedProfile.username,
+      displayName: fetchedProfile.displayName,
+    };
+
+    changeUserAvatarUrl(tx, uid, updatedProfile);
+    return updatedProfile;
+  });
+  return result;
 }
 
 export function handleGetOfficialStartAt(
@@ -190,16 +220,10 @@ export function handleGetOfficialStartAt(
    * Stored:
    * Firestore Timestamp in UTC
    */
-  const officialStartLocal = dayjs.tz(
-    `${officialStartWeekId} 04:00:00`,
-    "YYYY-MM-DD HH:mm:ss",
-    homeTimezone,
-  );
+  const officialStartLocal = dayjs.tz(`${officialStartWeekId} 04:00:00`, "YYYY-MM-DD HH:mm:ss", homeTimezone);
 
   if (!officialStartLocal.isValid()) {
-    throw new Error(
-      `Unable to calculate officialStartAt for ${officialStartWeekId} in ${homeTimezone}.`,
-    );
+    throw new Error(`Unable to calculate officialStartAt for ${officialStartWeekId} in ${homeTimezone}.`);
   }
 
   return Timestamp.fromDate(officialStartLocal.toDate());

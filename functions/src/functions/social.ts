@@ -119,10 +119,7 @@ export async function handleRespondToFriendRequest(
       return false;
     }
     if (friendRequest.status !== "pending") {
-      console.error(
-        "Failed to respond to friend request. Can only respond to pending requests: ",
-        requestId,
-      );
+      console.error("Failed to respond to friend request. Can only respond to pending requests: ", requestId);
       return false;
     }
     recipientUid = friendRequest.fromUid;
@@ -186,10 +183,7 @@ export async function handleCancelFriendRequest(uid: string, requestId: string):
       return false;
     }
     if (friendRequest.status !== "pending") {
-      console.error(
-        "Failed to cancel friend request. Can only cancel pending requests: ",
-        requestId,
-      );
+      console.error("Failed to cancel friend request. Can only cancel pending requests: ", requestId);
       return false;
     }
 
