@@ -39,7 +39,7 @@ export type User = {
   officialStartAt: firestoreTimestamp;
   weeklyTargetDays: WeeklyTargetDays;
   pendingWeeklyTargetDays?: WeeklyTargetDays | null;
-  pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2;
+  pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
 
   // Meta
   createdAt: firestoreTimestamp;
@@ -109,7 +109,7 @@ export type CreateUserProfileResponse = {
   currentWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
   pendingWeeklyTargetDays?: WeeklyTargetDays | null;
-  pendingWeeklyTargetStartsAt?: firestoreTimestamp | null;
+  pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
   isPracticeWeek: boolean;
 };
 

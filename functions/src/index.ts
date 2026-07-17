@@ -254,13 +254,13 @@ export const changeWeeklyTarget = onCall(async (request: CallableRequest<{ weekl
   }
   const data = request.data;
 
-  const parsed = weeklyTargetDaysSchema.safeParse(request.data);
+  const parsed = weeklyTargetDaysSchema.safeParse(request.data?.weeklyTarget);
 
-  if (!parsed) {
+  if (!parsed.success) {
     throw new HttpsError("invalid-argument", "Invalid changeWeeklyTarget payload.");
   }
 
-  return await handleChangingWeeklyTarget(request.auth.uid, data.weeklyTarget);
+  return await handleChangingWeeklyTarget(request.auth.uid, parsed.data);
 });
 
 export { activateOfficialWeeks } from "./scheduled/activateOfficialWeek.js";

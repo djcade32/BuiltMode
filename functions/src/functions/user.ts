@@ -191,7 +191,7 @@ export async function handleChangingUserAvatarUrl(
 export async function handleChangingWeeklyTarget(
   uid: string,
   weeklyTarget: WeeklyTargetDays,
-): Promise<firestoreTimestampV2 | firestoreTimestamp | undefined> {
+): Promise<firestoreTimestampV2 | firestoreTimestamp | undefined | null> {
   const result = await db.runTransaction(async (tx) => {
     const fetchedUser = (await getUserByUid(tx, uid)).data();
     if (!fetchedUser || fetchedUser === undefined) return undefined;

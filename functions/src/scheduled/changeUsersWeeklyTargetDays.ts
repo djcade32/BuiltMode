@@ -48,7 +48,7 @@ export const changeUsersWeeklyTargetDays = onSchedule(
       let query = db
         .collection("users")
         .where("pendingWeeklyTargetDays", "!=", null)
-        .where("pendingWeeklyTargetStartsAt", "<=", Timestamp.now())
+        .where("pendingWeeklyTargetStartsAt", "<=", now)
         .orderBy("pendingWeeklyTargetStartsAt", "asc")
         .limit(PAGE_SIZE);
 
