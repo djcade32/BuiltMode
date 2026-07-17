@@ -1,4 +1,4 @@
-import { PublicProfile, UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
+import { PublicProfile, User, UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
 import { FieldValue, Timestamp, Transaction } from "firebase-admin/firestore";
 import { db } from "../lib/firebaseAdmin.js";
 import { UserDoc, UsernameIndexDoc } from "../types/user.js";
@@ -78,9 +78,14 @@ export const changeUserAvatarUrl = (tx: Transaction, uid: string, profile: Publi
   const userRef = db.collection("users").doc(uid);
   const leaderboardRef = db.collection("leaderboardEntries").doc(uid);
 
-  tx.update(userRef, { avatarUrl: profile.avatarUrl, updatedAt: FieldValue.serverTimestamp() });
-  tx.update(leaderboardRef, { avatarUrl: profile.avatarUrl, updatedAt: FieldValue.serverTimestamp() });
+  tx.update(userRef, { avatarUrl: profile.avatarUrl ?? "", updatedAt: FieldValue.serverTimestamp() });
+  tx.update(leaderboardRef, { avatarUrl: profile.avatarUrl ?? "", updatedAt: FieldValue.serverTimestamp() });
   tx.set(publicProfilesRef, { ...profile, avatarUpdatedAt: FieldValue.serverTimestamp() });
+};
+
+export const changeWeeklyTarget = async (tx: Transaction, uid: string, updatedUserDoc: User) => {
+  const userRef = db.collection("users").doc(uid);
+  tx.set(userRef, { ...updatedUserDoc, updatedAt: FieldValue.serverTimestamp() });
 };
 
 export const getPublicProfile = (tx: Transaction, uid: string) => {

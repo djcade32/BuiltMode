@@ -1,6 +1,6 @@
 import { CreateUserProfileRequest, CreateUserProfileResponse } from "@builtmode/shared/schemas/user";
-import { firestoreTimestampV2 } from "@builtmode/shared/types/firestore";
-import { PublicProfile, UserStats } from "@builtmode/shared/types/user";
+import { firestoreTimestamp, firestoreTimestampV2 } from "@builtmode/shared/types/firestore";
+import { PublicProfile, User, UserStats } from "@builtmode/shared/types/user";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
@@ -9,6 +9,7 @@ import { HttpsError } from "firebase-functions/https";
 import { createInitialEntry } from "../firestore/leaderboard.js";
 import {
   changeUserAvatarUrl,
+  changeWeeklyTarget,
   createPublicProfile,
   createUser,
   createUsernameIndex,
@@ -19,7 +20,7 @@ import {
 } from "../firestore/user.js";
 import { db } from "../lib/firebaseAdmin.js";
 import { LeaderboardEntry } from "../types/leaderboard.js";
-import { UserDoc } from "../types/user.js";
+import { UserDoc, WeeklyTargetDays } from "../types/user.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "../utils/weekId.js";
 
 dayjs.extend(utc);
@@ -168,8 +169,10 @@ export async function handleChangingUserAvatarUrl(
 ): Promise<PublicProfile | undefined> {
   const result = await db.runTransaction(async (tx) => {
     const fetchedProfile = (await getPublicProfile(tx, uid)).data();
-    if (!fetchedProfile || fetchedProfile === undefined) return;
-    const avatarVersion = fetchedProfile.avatarVersion + 1;
+    if (!fetchedProfile) {
+      throw new HttpsError("not-found", "Public profile not found.");
+    }
+    const avatarVersion = (fetchedProfile.avatarVersion ?? 0) + 1;
 
     const updatedProfile: PublicProfile = {
       uid,
@@ -181,6 +184,28 @@ export async function handleChangingUserAvatarUrl(
 
     changeUserAvatarUrl(tx, uid, updatedProfile);
     return updatedProfile;
+  });
+  return result;
+}
+
+export async function handleChangingWeeklyTarget(
+  uid: string,
+  weeklyTarget: WeeklyTargetDays,
+): Promise<firestoreTimestampV2 | firestoreTimestamp | undefined> {
+  const result = await db.runTransaction(async (tx) => {
+    const fetchedUser = (await getUserByUid(tx, uid)).data();
+    if (!fetchedUser || fetchedUser === undefined) return undefined;
+    const { homeTimezone } = fetchedUser;
+    const nextWeekId = handleGetNextOfficialStartWeekId(Timestamp.now().toDate(), homeTimezone);
+
+    const updatedUserDoc: User = {
+      ...(fetchedUser as User),
+      pendingWeeklyTargetDays: weeklyTarget,
+      pendingWeeklyTargetStartsAt: handleGetOfficialStartAt(nextWeekId, homeTimezone),
+    };
+
+    await changeWeeklyTarget(tx, uid, updatedUserDoc);
+    return updatedUserDoc.pendingWeeklyTargetStartsAt;
   });
   return result;
 }

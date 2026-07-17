@@ -119,7 +119,7 @@ const FriendCard = ({ data, isPending, onAccept, onCancel, onDecline, onRemove, 
   return (
     <View style={[styles.cardContainer, styles.container]}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-        <Avatar uid={uid} displayName={displayName ?? "?"} />
+        <Avatar avatarUrl={avatarUrl} uid={uid} displayName={displayName ?? "?"} />
         <View>
           <ThemedText style={styles.displayName} ellipsizeMode="tail" numberOfLines={1}>
             {displayName}
