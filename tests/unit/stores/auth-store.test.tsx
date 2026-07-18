@@ -84,7 +84,7 @@ describe("auth store", () => {
 
     expect(useAuthStore.getState().user).toEqual({
       uid: "user-123",
-      displayName: "norman cade",
+      name: "norman cade",
       email: "norman@example.com",
     });
 
@@ -132,7 +132,7 @@ describe("auth store", () => {
 
     expect(useAuthStore.getState().user).toEqual({
       uid: "new-user-123",
-      displayName: "norman cade",
+      name: "norman cade",
       email: "norman@example.com",
     });
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
