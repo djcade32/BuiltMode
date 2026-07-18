@@ -363,9 +363,9 @@ const settings = () => {
               }}
             />
 
-            <View style={styles.separator} />
+            {/* <View style={styles.separator} />
 
-            {/* <SettingsRow
+            <SettingsRow
               title="Delete Account"
               onPress={showDeleteAccountWarning}
               titleStyle={{ color: Colors.error }}
