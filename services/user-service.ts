@@ -14,6 +14,7 @@ import {
 
 import { httpsCallable } from "firebase/functions";
 
+import { uploadImageAsync } from "@/lib/firestorage";
 import { firestoreTimestamp, firestoreTimestampV2 } from "@/packages/shared/src/types/firestore";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -70,6 +71,8 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       usernameLower: data.usernameLower,
       weeklyTargetDays: data.weeklyTargetDays as WeeklyTargetDays,
       avatarUrl: typeof data.avatarUrl === "string" ? data.avatarUrl : "",
+      pendingWeeklyTargetDays: data.pendingWeeklyTargetDays as WeeklyTargetDays,
+      pendingWeeklyTargetStartsAt: data.pendingWeeklyTargetDays,
     };
 
     return builtUser;
@@ -167,15 +170,18 @@ export const fetchUserStats = async ({ params }: { params: { uid: string } }): P
   }
 };
 
-export const changeUserAvatarUrl = async (params: { avatarUrl: string | null }): Promise<PublicProfile> => {
-  const { avatarUrl } = params;
+export const changeUserAvatarUrl = async (params: {
+  uid: string;
+  avatarUrl: string | null;
+}): Promise<PublicProfile> => {
+  const { avatarUrl, uid } = params;
   try {
     const changeUserAvatarUrlFunction = httpsCallable<{ avatarUrl: string | null }, PublicProfile>(
       functions,
       "changeUserAvatarUrl",
     );
-
-    const response = await changeUserAvatarUrlFunction({ avatarUrl });
+    const convertedUrl = avatarUrl ? ((await uploadImageAsync(avatarUrl, `user-avatars/${uid}`)) ?? null) : null;
+    const response = await changeUserAvatarUrlFunction({ avatarUrl: convertedUrl });
     if (!response.data || response.data === undefined) throw Error("Failed to update user avatar url");
     return response.data;
   } catch (error: any) {

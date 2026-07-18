@@ -1,20 +1,15 @@
 import { handleGetWeekId } from "@/lib/utils/weekId";
-import { CreateUserProfileResponse } from "@/packages/shared/src";
-import {
-  resetPassword,
-  signInWithEmail,
-  signOutUser,
-  signUpWithEmail,
-} from "@/services/auth-service";
+import { resetPassword, signInWithEmail, signOutUser, signUpWithEmail } from "@/services/auth-service";
 import { unregisterPushToken } from "@/services/notification-service";
 import { checkForUserProfile } from "@/services/user-service";
+import { User } from "firebase/auth";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
 import { useUserStore } from "./user-store";
 
 type AuthStore = {
-  user: { uid: string; name: string | null; email: string | null } | null;
+  user: User | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
   isSigningIn: boolean;
@@ -52,43 +47,15 @@ export const useAuthStore = create<AuthStore>()(
 
           const userFromDb = await checkForUserProfile(result.user.uid);
           if (userFromDb) {
-            const {
-              uid,
-              username,
-              goal,
-              metrics,
-              displayName,
-              avatarUrl,
-              homeTimezone,
-              officialStartWeekId,
-              officialStartAt,
-              officialWeekStatus,
-              currentWeekId,
-              weeklyTargetDays,
-            } = userFromDb;
-            const user: CreateUserProfileResponse = {
-              uid,
-              username,
-              goal,
-              metrics,
-              displayName,
-              avatarUrl,
-              homeTimezone,
-              officialStartWeekId,
-              officialStartAt,
-              officialWeekStatus,
-              currentWeekId,
-              weeklyTargetDays,
-              isPracticeWeek: handleGetWeekId(new Date(), homeTimezone) < officialStartWeekId,
+            const user = {
+              ...userFromDb,
+              isPracticeWeek:
+                handleGetWeekId(new Date(), userFromDb.homeTimezone) < userFromDb.officialStartWeekId,
             };
             useUserStore.getState().setUser(user);
           }
           set({
-            user: {
-              uid: result.user.uid,
-              name: result.user.displayName,
-              email: result.user.email,
-            },
+            user: result.user,
             isSigningIn: false,
             isAuthenticated: true,
           });
@@ -109,11 +76,7 @@ export const useAuthStore = create<AuthStore>()(
           const result = await signUpWithEmail({ name, email, password });
 
           set({
-            user: {
-              uid: result.user.uid,
-              name: result.user.displayName,
-              email: result.user.email,
-            },
+            user: result.user,
             isSigningIn: false,
             isAuthenticated: true,
           });
@@ -127,7 +90,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       signout: async () => {
-        await unregisterPushToken()
+        await unregisterPushToken();
         await signOutUser();
         set({ ...initialState, isHydrated: true });
         useUserStore.getState().setUser(null);
