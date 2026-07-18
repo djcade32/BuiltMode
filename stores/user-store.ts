@@ -1,11 +1,11 @@
-import { CreateUserProfileResponse } from "@/packages/shared/src";
+import { User } from "@/packages/shared/src";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
 
 type UserStore = {
-  user: CreateUserProfileResponse | null;
-  setUser: (user: CreateUserProfileResponse | null) => void;
+  user: (User & { isPracticeWeek: boolean }) | null;
+  setUser: (user: (User & { isPracticeWeek: boolean }) | null) => void;
   setIsUserHydrated: (value: boolean) => void;
   isUserHydrated: boolean;
 };

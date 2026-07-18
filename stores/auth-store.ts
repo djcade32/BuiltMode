@@ -1,11 +1,5 @@
 import { handleGetWeekId } from "@/lib/utils/weekId";
-import { CreateUserProfileResponse } from "@/packages/shared/src";
-import {
-  resetPassword,
-  signInWithEmail,
-  signOutUser,
-  signUpWithEmail,
-} from "@/services/auth-service";
+import { resetPassword, signInWithEmail, signOutUser, signUpWithEmail } from "@/services/auth-service";
 import { unregisterPushToken } from "@/services/notification-service";
 import { checkForUserProfile } from "@/services/user-service";
 import { create } from "zustand";
@@ -52,34 +46,10 @@ export const useAuthStore = create<AuthStore>()(
 
           const userFromDb = await checkForUserProfile(result.user.uid);
           if (userFromDb) {
-            const {
-              uid,
-              username,
-              goal,
-              metrics,
-              displayName,
-              avatarUrl,
-              homeTimezone,
-              officialStartWeekId,
-              officialStartAt,
-              officialWeekStatus,
-              currentWeekId,
-              weeklyTargetDays,
-            } = userFromDb;
-            const user: CreateUserProfileResponse = {
-              uid,
-              username,
-              goal,
-              metrics,
-              displayName,
-              avatarUrl,
-              homeTimezone,
-              officialStartWeekId,
-              officialStartAt,
-              officialWeekStatus,
-              currentWeekId,
-              weeklyTargetDays,
-              isPracticeWeek: handleGetWeekId(new Date(), homeTimezone) < officialStartWeekId,
+            const user = {
+              ...userFromDb,
+              isPracticeWeek:
+                handleGetWeekId(new Date(), userFromDb.homeTimezone) < userFromDb.officialStartWeekId,
             };
             useUserStore.getState().setUser(user);
           }
@@ -127,7 +97,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       signout: async () => {
-        await unregisterPushToken()
+        await unregisterPushToken();
         await signOutUser();
         set({ ...initialState, isHydrated: true });
         useUserStore.getState().setUser(null);

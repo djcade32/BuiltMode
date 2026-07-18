@@ -159,23 +159,25 @@ const profile = () => {
               <View style={styles.recentWorkoutsHeader}>
                 <ThemedText style={styles.recentWorkoutsTitle}>RECENT WORKOUTS</ThemedText>
 
-                <TouchableOpacity
-                  style={styles.viewAllRecentButton}
-                  hitSlop={15}
-                  activeOpacity={0.8}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(protected)/(tabs)/(workout)/(viewHistory)/[id]",
-                      params: {
-                        id: uid,
-                        returnTo: "/(protected)/(tabs)/profile",
-                      },
-                    })
-                  }
-                >
-                  <ThemedText style={styles.recentWorkoutsTitle}>VIEW ALL</ThemedText>
-                  <FontAwesome6 name="arrow-right" size={9} color={Colors.icon} />
-                </TouchableOpacity>
+                {recentWorkoutsData.length ? (
+                  <TouchableOpacity
+                    style={styles.viewAllRecentButton}
+                    hitSlop={15}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(protected)/(tabs)/(workout)/(viewHistory)/[id]",
+                        params: {
+                          id: uid,
+                          returnTo: "/(protected)/(tabs)/profile",
+                        },
+                      })
+                    }
+                  >
+                    <ThemedText style={styles.recentWorkoutsTitle}>VIEW ALL</ThemedText>
+                    <FontAwesome6 name="arrow-right" size={9} color={Colors.icon} />
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               <View style={styles.recentWorkoutsList}>
