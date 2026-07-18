@@ -72,7 +72,7 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       weeklyTargetDays: data.weeklyTargetDays as WeeklyTargetDays,
       avatarUrl: typeof data.avatarUrl === "string" ? data.avatarUrl : "",
       pendingWeeklyTargetDays: data.pendingWeeklyTargetDays as WeeklyTargetDays,
-      pendingWeeklyTargetStartsAt: data.pendingWeeklyTargetDays,
+      pendingWeeklyTargetStartsAt: data.pendingWeeklyTargetStartsAt,
     };
 
     return builtUser;

@@ -18,7 +18,7 @@ import { getWeekId } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -142,10 +142,6 @@ const FriendProfile = () => {
 
     router.back();
   };
-
-  // const isLoadingData =
-  //   isLoadingUserInfo || isLoadingUserStats || isLoadingUserWeekAggregate || isLoadingRecentWorkouts;
-  // const isLoadingData = false;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>

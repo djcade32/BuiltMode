@@ -101,7 +101,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
           });
           const { avatarUrl, username, goal, metrics, weeklyStandard, homeTimezone, resetState } = get();
           if (!username || !goal || !weeklyStandard || !homeTimezone) return;
-          const displayName = useAuthStore.getState().user?.displayName;
+          const displayName = useAuthStore.getState().user?.name;
           if (!displayName) {
             console.warn("No display name available for user profile");
             return;

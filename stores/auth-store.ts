@@ -2,14 +2,13 @@ import { handleGetWeekId } from "@/lib/utils/weekId";
 import { resetPassword, signInWithEmail, signOutUser, signUpWithEmail } from "@/services/auth-service";
 import { unregisterPushToken } from "@/services/notification-service";
 import { checkForUserProfile } from "@/services/user-service";
-import { User } from "firebase/auth";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { mmkvStorage } from "./mmkv-storage-wrapper";
 import { useUserStore } from "./user-store";
 
 type AuthStore = {
-  user: User | null;
+  user: { uid: string; name: string | null; email: string | null } | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
   isSigningIn: boolean;
@@ -55,7 +54,11 @@ export const useAuthStore = create<AuthStore>()(
             useUserStore.getState().setUser(user);
           }
           set({
-            user: result.user,
+            user: {
+              uid: result.user.uid,
+              name: result.user.displayName,
+              email: result.user.email,
+            },
             isSigningIn: false,
             isAuthenticated: true,
           });
@@ -76,7 +79,11 @@ export const useAuthStore = create<AuthStore>()(
           const result = await signUpWithEmail({ name, email, password });
 
           set({
-            user: result.user,
+            user: {
+              uid: result.user.uid,
+              name: result.user.displayName,
+              email: result.user.email,
+            },
             isSigningIn: false,
             isAuthenticated: true,
           });
