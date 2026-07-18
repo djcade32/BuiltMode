@@ -35,7 +35,7 @@ describe("onboarding store", () => {
     useAuthStore.setState({
       user: {
         uid: "user-123",
-        name: "Norman Cade",
+        displayName: "Norman Cade",
         email: "norman@example.com",
       },
       isAuthenticated: true,
@@ -197,7 +197,7 @@ describe("onboarding store", () => {
     useAuthStore.setState({
       user: {
         uid: "",
-        name: "Norman Cade",
+        displayName: "Norman Cade",
         email: "norman@example.com",
       },
       isAuthenticated: true,
