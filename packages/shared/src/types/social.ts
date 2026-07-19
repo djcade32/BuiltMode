@@ -58,6 +58,7 @@ export type FeedItem = {
 
   caption: string | null;
   photoUrl: string | null;
+  respectCount?: number;
 
   createdAt: firestoreTimestamp;
   updatedAt: firestoreTimestamp;

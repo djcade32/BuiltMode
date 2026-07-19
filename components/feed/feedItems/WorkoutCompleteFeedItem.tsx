@@ -1,23 +1,30 @@
 import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
+import { useQuery } from "@/hooks/useQuery";
 import { usePublicProfile } from "@/hooks/user/usePublicProfile";
 import dayjs from "@/lib/dayjs";
 import { formatFirestoreDateTimeISO, formatFirestoreTimestamp } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
+import { getFeedItemRespectCount, respectFeedPost, userHasRespectedFeedItem } from "@/services/social-service";
 import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import WeeklyProgressBar from "./WeeklyProgressBar";
 
 const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
   const { user } = useUserStore();
+
   const currentUserUid = user?.uid ?? "";
   const router = useRouter();
+
+  const [isRespected, setIsRespected] = useState<boolean>(false);
+  const [respectCount, setRespectCount] = useState<number>(0);
 
   const {
     actorUid,
@@ -34,7 +41,36 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     workoutId,
     isPracticeWeek: isPractice,
     photoUrl,
+    feedItemId,
   } = feedItem;
+
+  const { mutateAsync: respectFeedItemAction, isPending: isPendingRespectFeedItemAction } = useMutation({
+    mutationFn: respectFeedPost,
+    onError: (error) => {
+      console.error(error.message);
+    },
+  });
+  useQuery({
+    queryKey: ["feed-item", feedItemId],
+    queryFn: async ({ params: { feedItemId } }) => {
+      const result = await getFeedItemRespectCount({ params: { feedItemId } });
+      setRespectCount(result);
+      return result;
+    },
+    params: { feedItemId },
+    enabled: !!feedItemId,
+  });
+
+  useQuery({
+    queryKey: ["respected-feed-items", feedItemId],
+    queryFn: async ({ params: { uid, feedItemId } }) => {
+      const result = await userHasRespectedFeedItem({ params: { uid, feedItemId } });
+      setIsRespected(result);
+      return result;
+    },
+    params: { uid: currentUserUid, feedItemId },
+    enabled: !!feedItemId && !!currentUserUid,
+  });
 
   const actorProfileFallback = useMemo(
     () => ({
@@ -137,6 +173,15 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
       </View>
     </View>
   );
+
+  const handleRespectFeedItem = async () => {
+    const result = await respectFeedItemAction({ feedItemId });
+    if (!result.success) {
+      return Alert.alert("Respect failed", "We couldn't add or remove respect. Please try again.");
+    }
+    setRespectCount((prev) => (isRespected ? prev - 1 : prev + 1));
+    setIsRespected((prev) => !prev);
+  };
 
   return (
     <View
@@ -258,6 +303,16 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
       </View>
 
       <View style={styles.footer}>
+        <TouchableOpacity
+          disabled={!hasWorkoutId || isPendingRespectFeedItemAction}
+          style={styles.respectCounterContainer}
+          hitSlop={15}
+          onPress={handleRespectFeedItem}
+        >
+          <FontAwesome6 name="hand-fist" size={20} color={isRespected ? Colors.accent.primary : Colors.icon} />
+          <ThemedText style={styles.respectCountText}>{respectCount === 0 ? null : respectCount}</ThemedText>
+        </TouchableOpacity>
+
         <TouchableOpacity
           disabled={!hasWorkoutId}
           style={styles.viewDetailsContainer}
@@ -489,8 +544,10 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    alignItems: "flex-end",
+    alignItems: "center",
+    justifyContent: "space-between",
     width: "100%",
+    flexDirection: "row",
   },
 
   viewDetailsContainer: {
@@ -509,5 +566,16 @@ const styles = StyleSheet.create({
 
   durationWorkoutStatContainer: {
     flex: 1.35,
+  },
+
+  respectCounterContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  respectCountText: {
+    color: Colors.icon,
+    fontFamily: Typography.family.secondary.bold,
+    fontSize: 14,
   },
 });

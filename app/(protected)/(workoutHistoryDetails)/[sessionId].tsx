@@ -13,7 +13,7 @@ import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome, FontAwesome6, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
@@ -29,7 +29,6 @@ type WorkoutWithPhoto = Workout & {
 
 const WorkoutHistoryDetails = () => {
   const router = useRouter();
-  const { returnTo } = useLocalSearchParams<{ returnTo?: RelativePathString }>();
 
   const { user } = useUserStore();
   const queryClient = useQueryClient();
@@ -137,11 +136,6 @@ const WorkoutHistoryDetails = () => {
   };
 
   const handleBack = () => {
-    // if (returnTo) {
-    //   router.replace(returnTo);
-    //   return;
-    // }
-
     router.back();
   };
 

@@ -70,6 +70,7 @@ export type CompleteWorkoutResponse = {
   localDate: string;
   photoUrl: string | null;
   sessionId: string;
+  respectCount: number;
 } & WorkoutTimezoneFields;
 
 export type EditWorkoutMetadataRequest = {

@@ -18,6 +18,7 @@ import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https
 import {
   handleCancelFriendRequest,
   handleRemoveFriend,
+  handleRespectFeedPost,
   handleRespondToFriendRequest,
   handleSearchUserByUsername,
   handleSendFriendRequest,
@@ -252,7 +253,6 @@ export const changeWeeklyTarget = onCall(async (request: CallableRequest<{ weekl
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
-  const data = request.data;
 
   const parsed = weeklyTargetDaysSchema.safeParse(request.data?.weeklyTarget);
 
@@ -261,6 +261,19 @@ export const changeWeeklyTarget = onCall(async (request: CallableRequest<{ weekl
   }
 
   return await handleChangingWeeklyTarget(request.auth.uid, parsed.data);
+});
+
+export const respectFeedPost = onCall(async (request: CallableRequest<{ feedItemId: string }>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+  const data = request.data;
+
+  if (!data || typeof data.feedItemId !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid respectFeedPost payload.");
+  }
+  console.log("handle respect feed post called");
+  return await handleRespectFeedPost(request.auth.uid, data.feedItemId);
 });
 
 export { activateOfficialWeeks } from "./scheduled/activateOfficialWeek.js";
