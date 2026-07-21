@@ -25,9 +25,7 @@ export const exerciseMetricTypeSchema = z.enum([
   "time",
 ]);
 
-const workoutLocalDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected date format YYYY-MM-DD");
+const workoutLocalDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected date format YYYY-MM-DD");
 
 const workoutLocalTimeSchema = z.string().regex(/^\d{2}:\d{2}$/, "Expected time format HH:mm");
 
@@ -94,6 +92,7 @@ export const completeWorkoutResponseSchema = z
     lockedAt: z.string().min(1),
     localDate: z.string().min(1),
     photoUrl: z.string().url().max(500).nullable(),
+    respectCount: z.number().int().nonnegative(),
   })
   .merge(workoutTimezoneFieldsSchema);
 
@@ -142,9 +141,5 @@ export type EditWorkoutMetadataResponse = z.infer<typeof editWorkoutMetadataResp
 export type WorkoutFeedStatus = z.infer<typeof WorkoutFeedStatusSchema>;
 export type PublishableWorkoutFields = z.infer<typeof PublishableWorkoutFieldsSchema>;
 
-export type PublishCompletedWorkoutToFeedRequest = z.infer<
-  typeof PublishCompletedWorkoutToFeedRequestSchema
->;
-export type PublishCompletedWorkoutToFeedResponse = z.infer<
-  typeof PublishCompletedWorkoutToFeedResponseSchema
->;
+export type PublishCompletedWorkoutToFeedRequest = z.infer<typeof PublishCompletedWorkoutToFeedRequestSchema>;
+export type PublishCompletedWorkoutToFeedResponse = z.infer<typeof PublishCompletedWorkoutToFeedResponseSchema>;

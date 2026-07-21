@@ -1,23 +1,29 @@
 import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Colors, Typography } from "@/constants/theme";
+import { useQuery } from "@/hooks/useQuery";
 import { usePublicProfile } from "@/hooks/user/usePublicProfile";
 import dayjs from "@/lib/dayjs";
 import { formatFirestoreDateTimeISO, formatFirestoreTimestamp } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
+import { getFeedItemRespectInfo, respectFeedPost } from "@/services/social-service";
 import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
+import FeedItemRespectUsersSheet from "../FeedItemRespectUsersSheet";
 import WeeklyProgressBar from "./WeeklyProgressBar";
 
 const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
   const { user } = useUserStore();
+  const queryClient = useQueryClient();
   const currentUserUid = user?.uid ?? "";
   const router = useRouter();
+  const [isRespectUsersSheetVisible, setIsRespectUsersSheetVisible] = useState(false);
 
   const {
     actorUid,
@@ -34,7 +40,30 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     workoutId,
     isPracticeWeek: isPractice,
     photoUrl,
+    feedItemId,
   } = feedItem;
+
+  const { mutateAsync: respectFeedItemAction, isPending: isPendingRespectFeedItemAction } = useMutation({
+    mutationFn: respectFeedPost,
+    onError: (error) => {
+      console.error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["feed-items-respected-info", feedItemId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["feed-item-respect-users", feedItemId],
+      });
+    },
+  });
+
+  const { data: respectedInfo } = useQuery({
+    queryKey: ["feed-items-respected-info", feedItemId],
+    queryFn: getFeedItemRespectInfo,
+    params: { uid: currentUserUid, feedItemId },
+    enabled: !!feedItemId && !!currentUserUid,
+  });
 
   const actorProfileFallback = useMemo(
     () => ({
@@ -56,6 +85,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
   const resolvedActorUsername = actorProfile?.username || actorUsername;
 
   const hasWorkoutId = Boolean(workoutId);
+  const isPostOwner = currentUserUid === actorUid;
 
   const createdAt =
     Math.abs(dayjs(formatFirestoreDateTimeISO(completedAt)).diff(new Date(), "days")) >= 1
@@ -137,6 +167,22 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
       </View>
     </View>
   );
+
+  const handleRespectPress = async (count: number) => {
+    if (!feedItemId) return;
+
+    if (isPostOwner) {
+      if (!count) return;
+      setIsRespectUsersSheetVisible(true);
+      return;
+    }
+
+    const result = await respectFeedItemAction({ feedItemId });
+
+    if (!result.success) {
+      return Alert.alert("Respect failed", "We couldn't add or remove respect. Please try again.");
+    }
+  };
 
   return (
     <View
@@ -259,6 +305,36 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
 
       <View style={styles.footer}>
         <TouchableOpacity
+          disabled={
+            !feedItemId ||
+            (!isPostOwner && isPendingRespectFeedItemAction) ||
+            (isPostOwner && !respectedInfo?.respectCount)
+          }
+          style={[styles.respectCounterContainer, { opacity: respectedInfo?.isRespected ? 1 : 0.4 }]}
+          hitSlop={15}
+          onPress={() => {
+            void handleRespectPress(respectedInfo?.respectCount ?? 0);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isPostOwner
+              ? `View ${respectedInfo?.respectCount ?? 0} people who respected this post`
+              : respectedInfo?.isRespected
+                ? "Remove respect from this post"
+                : "Respect this post"
+          }
+        >
+          <FontAwesome6
+            name="hand-fist"
+            size={20}
+            color={respectedInfo?.isRespected ? Colors.accent.primary : Colors.icon}
+          />
+          <ThemedText style={styles.respectCountText}>
+            {respectedInfo?.respectCount === 0 ? null : (respectedInfo?.respectCount ?? null)}
+          </ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           disabled={!hasWorkoutId}
           style={styles.viewDetailsContainer}
           onPress={() =>
@@ -277,6 +353,13 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
           <FontAwesome6 name="arrow-right" size={10} color={Colors.accent.primary} />
         </TouchableOpacity>
       </View>
+
+      <FeedItemRespectUsersSheet
+        visible={isRespectUsersSheetVisible}
+        feedItemId={feedItemId}
+        respectTotalCount={respectedInfo?.respectCount ?? 0}
+        onClose={() => setIsRespectUsersSheetVisible(false)}
+      />
     </View>
   );
 };
@@ -489,8 +572,10 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    alignItems: "flex-end",
+    alignItems: "center",
+    justifyContent: "space-between",
     width: "100%",
+    flexDirection: "row",
   },
 
   viewDetailsContainer: {
@@ -509,5 +594,16 @@ const styles = StyleSheet.create({
 
   durationWorkoutStatContainer: {
     flex: 1.35,
+  },
+
+  respectCounterContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  respectCountText: {
+    color: Colors.icon,
+    fontFamily: Typography.family.secondary.bold,
+    fontSize: 14,
   },
 });

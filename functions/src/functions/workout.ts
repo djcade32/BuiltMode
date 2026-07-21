@@ -299,7 +299,7 @@ export async function handleCompleteWorkout(
       currentWeekStreak: streakWeeks,
       bestWeekStreak,
       modeScore: modeScore,
-      last30DayWeeklyAdherenceRate: lastFourWeeksAdherenceRate.adherenceRate,
+      last30DayWeeklyAdherenceRate: lastFourWeeksAdherenceRate,
       activity30DayRate,
       totalTargetsMet,
       totalWorkoutsLogged,
@@ -333,6 +333,7 @@ export async function handleCompleteWorkout(
       sessionId,
       photoUrl: null,
       caption: null,
+      respectCount: 0,
     } as CompleteWorkoutResponse;
   });
 
@@ -441,6 +442,7 @@ export async function handlePublishCompletedWorkoutToFeed(
         isPracticeWeek: !weekAggregate.isOfficialWeek,
         caption,
         photoUrl: nextPhotoUrl,
+        respectCount: 0,
       },
       weekAggregate: {
         activeDaysThisWeek: weekAggregate.activeDaysThisWeek,

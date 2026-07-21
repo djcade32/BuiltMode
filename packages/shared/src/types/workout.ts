@@ -70,6 +70,7 @@ export type CompleteWorkoutResponse = {
   localDate: string;
   photoUrl: string | null;
   sessionId: string;
+  respectCount: number;
 } & WorkoutTimezoneFields;
 
 export type EditWorkoutMetadataRequest = {
@@ -176,4 +177,17 @@ export type WorkoutLiveActivityState = {
 
   isResting: boolean;
   isPaused: boolean;
+};
+
+export type WeeklyAdherenceResult = {
+  adherenceRate: number;
+  completedDays: number;
+  targetDays: number;
+  weeksIncluded: number;
+  weeks: Array<{
+    weekId: string;
+    completedDays: number;
+    targetDays: number;
+    adherenceRate: number;
+  }>;
 };

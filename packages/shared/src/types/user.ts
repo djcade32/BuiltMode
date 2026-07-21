@@ -1,4 +1,5 @@
 import { firestoreTimestamp, firestoreTimestampV2 } from "./firestore.js";
+import { WeeklyAdherenceResult } from "./workout.js";
 
 export type Goal =
   | "BUILD MUSCLE"
@@ -66,7 +67,7 @@ export type UserWeekAggregate = {
 export type UserStats = {
   currentWeekStreak: number;
   bestWeekStreak: number;
-  last30DayWeeklyAdherenceRate: number; // Percentage
+  last30DayWeeklyAdherenceRate: WeeklyAdherenceResult;
   activity30DayRate: number; // Percentage
   totalWorkoutsLogged: number;
   totalTargetsMet: number;

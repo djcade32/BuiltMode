@@ -1,6 +1,7 @@
 import { InfinitePage } from "@/hooks/useInfiniteQuery";
 import { db, functions } from "@/lib/firebase";
 import { chunkArray } from "@/lib/utils/chunk";
+import { firestoreTimestamp } from "@/packages/shared/src/types/firestore";
 import { FeedItem, FriendRequest, SearchUserResult } from "@builtmode/shared";
 import {
   collection,
@@ -25,10 +26,7 @@ type SocialResult = {
 };
 
 export const sendFriendRequest = async (toUid: string): Promise<SocialResult> => {
-  const sendFriendRequestFunction = httpsCallable<{ id: string }, boolean>(
-    functions,
-    "sendFriendRequest",
-  );
+  const sendFriendRequestFunction = httpsCallable<{ id: string }, boolean>(functions, "sendFriendRequest");
 
   if (!toUid.trim()) {
     return { success: false, message: "toUid is required." };
@@ -41,8 +39,7 @@ export const sendFriendRequest = async (toUid: string): Promise<SocialResult> =>
   } catch (err) {
     return {
       success: false,
-      message:
-        err instanceof globalThis.Error ? err.message : `Error sending friend request to ${toUid}.`,
+      message: err instanceof globalThis.Error ? err.message : `Error sending friend request to ${toUid}.`,
     };
   }
 };
@@ -68,10 +65,7 @@ export const respondToFriendRequest = async (
   } catch (err) {
     return {
       success: false,
-      message:
-        err instanceof globalThis.Error
-          ? err.message
-          : `Error responding to friend request: ${requestId}.`,
+      message: err instanceof globalThis.Error ? err.message : `Error responding to friend request: ${requestId}.`,
     };
   }
 };
@@ -94,10 +88,7 @@ export const cancelFriendRequest = async (requestId: string): Promise<SocialResu
   } catch (err) {
     return {
       success: false,
-      message:
-        err instanceof globalThis.Error
-          ? err.message
-          : `Error canceling friend request: ${requestId}.`,
+      message: err instanceof globalThis.Error ? err.message : `Error canceling friend request: ${requestId}.`,
     };
   }
 };
@@ -117,17 +108,12 @@ export const searchUserByUsername = async (username: string): Promise<SearchUser
     const response = await SearchUserByUsernameFunction({ username });
     return response.data;
   } catch (err) {
-    throw err instanceof globalThis.Error
-      ? err
-      : new Error(`Error searching for user by username: ${username}.`);
+    throw err instanceof globalThis.Error ? err : new Error(`Error searching for user by username: ${username}.`);
   }
 };
 
 export const removeFriend = async (friendUid: string): Promise<SocialResult> => {
-  const removeFriendFunction = httpsCallable<{ friendUid: string }, boolean>(
-    functions,
-    "removeFriend",
-  );
+  const removeFriendFunction = httpsCallable<{ friendUid: string }, boolean>(functions, "removeFriend");
 
   if (!friendUid.trim()) {
     return { success: false, message: "friendUid is required." };
@@ -135,14 +121,11 @@ export const removeFriend = async (friendUid: string): Promise<SocialResult> => 
 
   try {
     const response = await removeFriendFunction({ friendUid });
-    return response.data
-      ? { success: true }
-      : { success: false, message: `Error removing friend: ${friendUid}.` };
+    return response.data ? { success: true } : { success: false, message: `Error removing friend: ${friendUid}.` };
   } catch (err) {
     return {
       success: false,
-      message:
-        err instanceof globalThis.Error ? err.message : `Error removing friend: ${friendUid}.`,
+      message: err instanceof globalThis.Error ? err.message : `Error removing friend: ${friendUid}.`,
     };
   }
 };
@@ -175,11 +158,7 @@ export const getIncomingFriendRequests = async ({
   }
 };
 
-export const getSentFriendRequests = async ({
-  params,
-}: {
-  params: { uid: string };
-}): Promise<FriendRequest[]> => {
+export const getSentFriendRequests = async ({ params }: { params: { uid: string } }): Promise<FriendRequest[]> => {
   try {
     const requestsRef = collection(db, "friendRequests");
 
@@ -304,9 +283,7 @@ async function getLeaderboardEntriesForFriendIds(friendIds: string[]) {
   const chunks = chunkArray(friendIds, 10);
 
   const profileSnaps = await Promise.all(
-    chunks.map((ids) =>
-      getDocs(query(collection(db, "leaderboardEntries"), where(documentId(), "in", ids))),
-    ),
+    chunks.map((ids) => getDocs(query(collection(db, "leaderboardEntries"), where(documentId(), "in", ids)))),
   );
 
   const profileItems = profileSnaps.flatMap((snap) =>
@@ -381,3 +358,83 @@ async function getUserFriendsByExactUsername({
     total: 1,
   };
 }
+
+export const respectFeedPost = async (params: {
+  feedItemId: string;
+}): Promise<{ success: boolean; message?: string }> => {
+  const { feedItemId } = params;
+  try {
+    const respectFeedPostFunction = httpsCallable<{ feedItemId: string }, Promise<void> | unknown>(
+      functions,
+      "respectFeedPost",
+    );
+
+    await respectFeedPostFunction({ feedItemId });
+    return {
+      success: true,
+    };
+  } catch (error: any) {
+    console.error("Failed to respect feed item");
+    throw error;
+  }
+};
+
+export const getFeedItemRespectInfo = async ({
+  params,
+}: {
+  params: {
+    uid: string;
+    feedItemId: string;
+  };
+}): Promise<{
+  isRespected: boolean;
+  respectCount: number;
+}> => {
+  const feedItemRef = doc(db, "feedItems", params.feedItemId);
+  const respectRef = doc(db, "feedItems", params.feedItemId, "respects", params.uid);
+
+  try {
+    const [feedItemSnapshot, respectSnapshot] = await Promise.all([getDoc(feedItemRef), getDoc(respectRef)]);
+
+    const respectCount = feedItemSnapshot.data()?.respectCount;
+
+    return {
+      isRespected: respectSnapshot.exists(),
+      respectCount: typeof respectCount === "number" ? respectCount : 0,
+    };
+  } catch (error) {
+    console.error("Error fetching feed item respect information:", error);
+    throw error;
+  }
+};
+
+export const getFeedItemRespectUsers = async ({
+  pageParam,
+  params,
+  limit: pageSize,
+}: {
+  pageParam?: FeedCursor | null;
+  params: { feedItemId: string };
+  limit: number;
+}): Promise<InfinitePage<{ actorUid: string; createdAt: firestoreTimestamp }, FeedCursor>> => {
+  const respectsRef = collection(db, `feedItems/${params.feedItemId}/respects`);
+
+  const respectsQuery = pageParam
+    ? query(respectsRef, orderBy("createdAt", "desc"), startAfter(pageParam), limit(pageSize))
+    : query(respectsRef, orderBy("createdAt", "desc"), limit(pageSize));
+
+  const snapshot = await getDocs(respectsQuery);
+
+  const items: { actorUid: string; createdAt: firestoreTimestamp }[] = snapshot.docs.map((doc) => ({
+    ...(doc.data() as { actorUid: string; createdAt: firestoreTimestamp }),
+  }));
+
+  const hasMore = snapshot.docs.length === pageSize;
+  const nextCursor = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+  return {
+    items,
+    nextCursor,
+    hasMore,
+  };
+};

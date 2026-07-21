@@ -193,9 +193,7 @@ export const getTotalActiveDaysInMonth = async (
     const weekId = dayjs(dateKey).startOf("week").add(1, "day");
     const dayMarkerExists = (await getDayMarker(tx, uid, weekId.format("YYYY-MM-DD"), dateKey)).exists;
     dayMarkerExists && daysWorkedout++;
-    dayMarkerExists && console.log("found workout");
   }
-  console.log("daysWorkedout: ", daysWorkedout);
   return daysWorkedout;
 };
 
