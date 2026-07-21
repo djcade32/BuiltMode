@@ -70,6 +70,7 @@ export type CompleteWorkoutResponse = {
   localDate: string;
   photoUrl: string | null;
   sessionId: string;
+  respectCount: number;
 } & WorkoutTimezoneFields;
 
 export type EditWorkoutMetadataRequest = {
@@ -142,4 +143,51 @@ export type PublishCompletedWorkoutToFeedRequest = {
   sessionId: string;
   photoUrl?: string | null;
   caption?: string | null;
+};
+
+export type WorkoutLiveActivityState = {
+  workoutId: string;
+  workoutName: string;
+  startedAtMs: number;
+
+  /**
+   * Effective start point for the displayed timer.
+   *
+   * This may differ from startedAtMs after pausing and resuming.
+   */
+  timerStartedAtMs: number;
+
+  /**
+   * Current elapsed workout time when this state was created.
+   * Used to freeze the native timer while paused.
+   */
+  elapsedSeconds: number;
+
+  exerciseName: string | null;
+  setNumber: number;
+  totalSets: number;
+
+  weight?: number;
+  reps?: number;
+  durationSeconds?: number;
+  distance?: number;
+  distanceUnit?: "mi" | "km" | "m";
+
+  restEndsAtMs?: number;
+
+  isResting: boolean;
+  isPaused: boolean;
+};
+
+export type WeeklyAdherenceResult = {
+  adherenceRate: number;
+  completedDays: number;
+  targetDays: number;
+  weeksIncluded: number;
+  weeks: Array<{
+    weekId: string;
+    completedDays: number;
+    targetDays: number;
+    adherenceRate: number;
+  }>;
 };

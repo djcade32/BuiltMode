@@ -134,7 +134,7 @@ const ViewTemplates = () => {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.iconContainer}
-            onPress={() => router.back()}
+            onPress={() => router.dismiss()}
             accessibilityRole="button"
             accessibilityLabel="Go back"
             hitSlop={8}

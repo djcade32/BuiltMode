@@ -1,4 +1,5 @@
-import { firestoreTimestamp } from "./firestore.js";
+import { firestoreTimestamp, firestoreTimestampV2 } from "./firestore.js";
+import { WeeklyAdherenceResult } from "./workout.js";
 
 export type Goal =
   | "BUILD MUSCLE"
@@ -38,6 +39,8 @@ export type User = {
   officialWeekStatus: OfficialWeekStatus;
   officialStartAt: firestoreTimestamp;
   weeklyTargetDays: WeeklyTargetDays;
+  pendingWeeklyTargetDays?: WeeklyTargetDays | null;
+  pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
 
   // Meta
   createdAt: firestoreTimestamp;
@@ -64,7 +67,7 @@ export type UserWeekAggregate = {
 export type UserStats = {
   currentWeekStreak: number;
   bestWeekStreak: number;
-  last30DayWeeklyAdherenceRate: number; // Percentage
+  last30DayWeeklyAdherenceRate: WeeklyAdherenceResult;
   activity30DayRate: number; // Percentage
   totalWorkoutsLogged: number;
   totalTargetsMet: number;
@@ -81,13 +84,6 @@ export type UserMonthAggregate = {
   workoutCountByDate: Record<string, number>; // localDateKey -> workout count
   createdAt: firestoreTimestamp;
   updatedAt: firestoreTimestamp;
-};
-
-export type PublicUserProfile = {
-  uid: string;
-  username: string;
-  displayName: string;
-  avatarUrl?: string;
 };
 
 export type CreateUserProfileRequest = {
@@ -113,6 +109,8 @@ export type CreateUserProfileResponse = {
   officialWeekStatus: OfficialWeekStatus;
   currentWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
+  pendingWeeklyTargetDays?: WeeklyTargetDays | null;
+  pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
   isPracticeWeek: boolean;
 };
 
@@ -143,4 +141,13 @@ export type UpdateHomeTimezoneRequest = {
 export type UpdateHomeTimezoneResponse = {
   homeTimezone: HomeTimezone;
   effectiveWeekId: string;
+};
+
+export type PublicProfile = {
+  uid: string;
+  username: string;
+  displayName?: string;
+  avatarUrl: string | null;
+  avatarVersion: number;
+  avatarUpdatedAt?: firestoreTimestamp;
 };

@@ -1,3 +1,4 @@
+import FeedItemRespectUsersSheet from "@/components/feed/FeedItemRespectUsersSheet";
 import { ThemedText } from "@/components/themed-text";
 import DropdownMenu, { DropdownMenuOption } from "@/components/ui/DropdownMenu";
 import WorkoutHistoryExerciseBreakdown from "@/components/workout/workoutHistory/WorkoutHistoryExerciseBreakdown";
@@ -8,13 +9,14 @@ import { useQuery } from "@/hooks/useQuery";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { formatWorkoutLocalDate } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
+import { getFeedItemRespectInfo, respectFeedPost } from "@/services/social-service";
 import { getWorkoutBySessionId } from "@/services/workout-service";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome, FontAwesome6, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import { useQueryClient } from "@tanstack/react-query";
-import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -29,22 +31,48 @@ type WorkoutWithPhoto = Workout & {
 
 const WorkoutHistoryDetails = () => {
   const router = useRouter();
-  const { returnTo } = useLocalSearchParams<{ returnTo?: RelativePathString }>();
 
   const { user } = useUserStore();
   const queryClient = useQueryClient();
 
   const { saveWorkoutAsTemplate, setInitialWorkout } = useWorkoutStore();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
+  const [isRespectUsersSheetVisible, setIsRespectUsersSheetVisible] = useState(false);
 
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
   const [isWorkoutNameSheetVisible, setIsWorkoutNameSheetVisible] = useState<boolean>(false);
-
   const { data, isLoading, error } = useQuery({
     queryKey: ["workout", sessionId],
     queryFn: getWorkoutBySessionId,
     params: { sessionId },
     enabled: !!sessionId,
+  });
+
+  const feedItemId = useMemo(() => {
+    if (!sessionId || !data) return null;
+    return `workout_${data.uid}_${sessionId}`;
+  }, [sessionId, data]);
+
+  const { mutateAsync: respectFeedItemAction, isPending: isPendingRespectFeedItemAction } = useMutation({
+    mutationFn: respectFeedPost,
+    onError: (error) => {
+      console.error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["feed-items-respected-info", feedItemId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["feed-item-respect-users", feedItemId],
+      });
+    },
+  });
+
+  const { data: respectedInfo } = useQuery({
+    queryKey: ["feed-items-respected-info", feedItemId],
+    queryFn: getFeedItemRespectInfo,
+    params: { uid: user?.uid ?? "", feedItemId: feedItemId ?? "" },
+    enabled: !!feedItemId && !!user?.uid,
   });
 
   const workoutPhotoUrl = (data as WorkoutWithPhoto | undefined)?.photoUrl ?? null;
@@ -137,11 +165,6 @@ const WorkoutHistoryDetails = () => {
   };
 
   const handleBack = () => {
-    if (returnTo) {
-      router.replace(returnTo);
-      return;
-    }
-
     router.back();
   };
 
@@ -154,6 +177,67 @@ const WorkoutHistoryDetails = () => {
       },
     ]);
   }
+
+  const handleRespectPress = async (count: number) => {
+    if (!feedItemId) return;
+
+    if (isPostOwner) {
+      if (!count) return;
+      setIsRespectUsersSheetVisible(true);
+      return;
+    }
+
+    const result = await respectFeedItemAction({ feedItemId });
+
+    if (!result.success) {
+      return Alert.alert("Respect failed", "We couldn't add or remove respect. Please try again.");
+    }
+  };
+
+  const renderPostActions = () => {
+    if (!respectedInfo) return null;
+    return (
+      <View style={styles.postActionContainer}>
+        <TouchableOpacity
+          style={{
+            backgroundColor: respectedInfo.isRespected ? "#C6A34A14" : Colors.background.secondary,
+            borderColor: respectedInfo.isRespected ? Colors.accent.primary : Colors.cardBorder,
+            borderWidth: 1,
+            borderRadius: Border.radius.md,
+            paddingVertical: 10,
+            paddingHorizontal: 16,
+            justifyContent: "center",
+            alignItems: "center",
+            alignSelf: "flex-start",
+            flexDirection: "row",
+            gap: 5,
+          }}
+          onPress={() => handleRespectPress(respectedInfo.respectCount)}
+          disabled={
+            !feedItemId ||
+            (!isPostOwner && isPendingRespectFeedItemAction) ||
+            (isPostOwner && !respectedInfo.respectCount)
+          }
+          accessibilityRole="button"
+          accessibilityLabel={
+            isPostOwner
+              ? `View ${respectedInfo.respectCount ?? 0} people who respected this post`
+              : respectedInfo.isRespected
+                ? "Remove respect from this post"
+                : "Respect this post"
+          }
+        >
+          <FontAwesome6 name="hand-fist" size={14} color={Colors.accent.primary} />
+          <ThemedText style={{ fontFamily: Typography.family.primary.semibold, fontSize: 14 }}>Respect</ThemedText>
+          <ThemedText
+            style={{ fontFamily: Typography.family.secondary.semibold, fontSize: 14, color: Colors.icon }}
+          >
+            {respectedInfo.respectCount ? respectedInfo.respectCount : null}
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const renderWorkoutOverview = () => {
     if (!data) return null;
@@ -240,6 +324,8 @@ const WorkoutHistoryDetails = () => {
     );
   };
 
+  const isPostOwner = user?.uid === data?.uid;
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {isDropdownOpened && (
@@ -297,6 +383,7 @@ const WorkoutHistoryDetails = () => {
           keyExtractor={(exercise) => exercise.id}
           ItemSeparatorComponent={() => <View style={styles.exerciseSeparator} />}
           contentContainerStyle={styles.listContentContainer}
+          ListFooterComponent={renderPostActions}
         />
       )}
       <WorkoutNameSheet
@@ -308,6 +395,14 @@ const WorkoutHistoryDetails = () => {
           handleSaveAsTemplate(name);
         }}
       />
+      {feedItemId && (
+        <FeedItemRespectUsersSheet
+          visible={isRespectUsersSheetVisible}
+          feedItemId={feedItemId}
+          respectTotalCount={respectedInfo?.respectCount ?? 0}
+          onClose={() => setIsRespectUsersSheetVisible(false)}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -433,7 +528,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   workoutPhotoGradient: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   workoutPhotoOverlay: {
     position: "absolute",
@@ -544,5 +639,13 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     paddingTop: 24,
+  },
+
+  postActionContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: Colors.cardBorder,
+    marginTop: 24,
   },
 });

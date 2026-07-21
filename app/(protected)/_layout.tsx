@@ -9,7 +9,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Redirect, Stack, usePathname, useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { MenuProvider } from "react-native-popup-menu";
 
 const ProtectedLayout = () => {
@@ -91,6 +91,7 @@ const ProtectedLayout = () => {
             animation: "fade",
           }}
         />
+        <Stack.Screen name="(workoutHistoryDetails)/[sessionId]" options={{ headerShown: false }} />
       </Stack>
     </MenuProvider>
   );

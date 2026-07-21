@@ -1,5 +1,6 @@
 import { FeedItem, Friend, FriendRequest } from "@builtmode/shared/types/social";
-import { Transaction, WriteBatch } from "firebase-admin/firestore";
+import { FieldValue, Transaction, WriteBatch } from "firebase-admin/firestore";
+import { HttpsError } from "firebase-functions/https";
 import { db } from "../lib/firebaseAdmin.js";
 
 export const createFriendRequest = (tx: Transaction, friendRequestDoc: FriendRequest) => {
@@ -45,4 +46,45 @@ export const createFeedItem = (tx: Transaction, feedItem: FeedItem) => {
 export const addFeedItemToUserFeed = (batch: WriteBatch, viewerUid: string, feedItem: FeedItem) => {
   const ref = db.doc(`userFeeds/${viewerUid}/items/${feedItem.feedItemId}`);
   batch.set(ref, feedItem);
+};
+
+export const getFeedItem = async (tx: Transaction, feedItemId: string) => {
+  const docRef = db.collection("feedItems").doc(feedItemId);
+  return (await tx.get(docRef)).data();
+};
+
+export const userHasRespectedFeedItem = async (tx: Transaction, uid: string, feedItemId: string) => {
+  const docRef = db.collection(`feedItems/${feedItemId}/respects`).doc(uid);
+  return (await tx.get(docRef)).exists;
+};
+
+export const addRespectToFeedItem = async (tx: Transaction, uid: string, feedItemId: string) => {
+  const respectRef = db.collection(`feedItems/${feedItemId}/respects`).doc(uid);
+  const feedItemRef = db.collection("feedItems").doc(feedItemId);
+  const feedItem = (await tx.get(feedItemRef)).data();
+
+  if (!feedItem) throw new HttpsError("not-found", "Feed item does not exist to add respect to.");
+
+  tx.update(feedItemRef, {
+    updatedAt: FieldValue.serverTimestamp(),
+    respectCount: (feedItem.respectCount ?? 0) + 1,
+  });
+  return tx.set(respectRef, {
+    createdAt: FieldValue.serverTimestamp(),
+    actorUid: uid,
+  });
+};
+
+export const removeRespectToFeedItem = async (tx: Transaction, uid: string, feedItemId: string) => {
+  const docRef = db.collection(`feedItems/${feedItemId}/respects`).doc(uid);
+  const feedItemRef = db.collection("feedItems").doc(feedItemId);
+  const feedItem = (await tx.get(feedItemRef)).data();
+
+  if (!feedItem) throw new HttpsError("not-found", "Feed item does not exist to remove respect from.");
+
+  tx.update(feedItemRef, {
+    updatedAt: FieldValue.serverTimestamp(),
+    respectCount: feedItem.respectCount ? feedItem.respectCount - 1 : 0,
+  });
+  return tx.delete(docRef);
 };

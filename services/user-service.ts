@@ -4,6 +4,7 @@ import {
   CreateUserProfileResponse,
   Goal,
   LeaderboardEntry,
+  PublicProfile,
   User,
   UserMonthAggregate,
   UserStats,
@@ -13,6 +14,8 @@ import {
 
 import { httpsCallable } from "firebase/functions";
 
+import { uploadImageAsync } from "@/lib/firestorage";
+import { firestoreTimestamp, firestoreTimestampV2 } from "@/packages/shared/src/types/firestore";
 import { doc, getDoc } from "firebase/firestore";
 
 export const checkForUserProfile = async (uid: string): Promise<User | undefined> => {
@@ -68,6 +71,8 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       usernameLower: data.usernameLower,
       weeklyTargetDays: data.weeklyTargetDays as WeeklyTargetDays,
       avatarUrl: typeof data.avatarUrl === "string" ? data.avatarUrl : "",
+      pendingWeeklyTargetDays: data.pendingWeeklyTargetDays as WeeklyTargetDays,
+      pendingWeeklyTargetStartsAt: data.pendingWeeklyTargetStartsAt,
     };
 
     return builtUser;
@@ -94,14 +99,12 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
  * @returns The function `createUserProfile` is returning a Promise that resolves with a
  * `CreateUserProfileResponse` object.
  */
-export const createUserProfile = async (
-  user: CreateUserProfileRequest,
-): Promise<CreateUserProfileResponse> => {
+export const createUserProfile = async (user: CreateUserProfileRequest): Promise<CreateUserProfileResponse> => {
   try {
-    const createUserProfileFunction = httpsCallable<
-      CreateUserProfileRequest,
-      CreateUserProfileResponse
-    >(functions, "createUserProfile");
+    const createUserProfileFunction = httpsCallable<CreateUserProfileRequest, CreateUserProfileResponse>(
+      functions,
+      "createUserProfile",
+    );
 
     const userResponse = await createUserProfileFunction(user);
     return userResponse.data;
@@ -150,12 +153,9 @@ export const fetchUserMonthAggregate = async ({
   }
 };
 
-export const fetchUserStats = async ({
-  params,
-}: {
-  params: { uid: string };
-}): Promise<UserStats | null> => {
+export const fetchUserStats = async ({ params }: { params: { uid: string } }): Promise<UserStats | null> => {
   const { uid } = params;
+
   try {
     const userStatsDoc = doc(db, `userStats/${uid}`);
     const snapshot = await getDoc(userStatsDoc);
@@ -170,11 +170,46 @@ export const fetchUserStats = async ({
   }
 };
 
-export const fetchUsersHomeTimezone = async ({
-  params,
-}: {
-  params: { uid: string };
-}): Promise<string | null> => {
+export const changeUserAvatarUrl = async (params: {
+  uid: string;
+  avatarUrl: string | null;
+}): Promise<PublicProfile> => {
+  const { avatarUrl, uid } = params;
+  try {
+    const changeUserAvatarUrlFunction = httpsCallable<{ avatarUrl: string | null }, PublicProfile>(
+      functions,
+      "changeUserAvatarUrl",
+    );
+    const convertedUrl = avatarUrl ? ((await uploadImageAsync(avatarUrl, `user-avatars/${uid}`)) ?? null) : null;
+    const response = await changeUserAvatarUrlFunction({ avatarUrl: convertedUrl });
+    if (!response.data || response.data === undefined) throw Error("Failed to update user avatar url");
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to update user avatar url: ", error);
+    throw error;
+  }
+};
+
+export const changeWeeklyTarget = async (params: {
+  weeklyTarget: WeeklyTargetDays;
+}): Promise<firestoreTimestamp | firestoreTimestampV2> => {
+  const { weeklyTarget } = params;
+  try {
+    const changeWeeklyTargetFunction = httpsCallable<
+      { weeklyTarget: WeeklyTargetDays },
+      firestoreTimestamp | firestoreTimestampV2
+    >(functions, "changeWeeklyTarget");
+
+    const response = await changeWeeklyTargetFunction({ weeklyTarget });
+    if (!response.data || response.data === undefined) throw Error("Failed to update weekly target");
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to update weekly target");
+    throw error;
+  }
+};
+
+export const fetchUsersHomeTimezone = async ({ params }: { params: { uid: string } }): Promise<string | null> => {
   try {
     const fetchUsersHomeTimezoneFunction = httpsCallable<{ uid: string }, string>(
       functions,
@@ -204,4 +239,27 @@ export const fetchUserLeaderboardEntry = async ({
   } catch (error: any) {
     throw error;
   }
+};
+
+export const getPublicProfile = async (uid: string): Promise<PublicProfile | null> => {
+  if (!uid) {
+    return null;
+  }
+
+  const snapshot = await getDoc(doc(db, "publicProfiles", uid));
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  const data = snapshot.data() || {};
+
+  return {
+    uid: snapshot.id,
+    displayName: typeof data.displayName === "string" ? data.displayName : "",
+    username: typeof data.username === "string" ? data.username : "",
+    avatarUrl: typeof data.avatarUrl === "string" ? data.avatarUrl : null,
+    avatarVersion: typeof data.avatarVersion === "number" ? data.avatarVersion : 0,
+    avatarUpdatedAt: data.avatarUpdatedAt,
+  };
 };

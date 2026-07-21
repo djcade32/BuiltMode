@@ -4,13 +4,16 @@ import { Timestamp } from "firebase-admin/firestore";
 import {
   addFeedItemToUserFeed,
   addFriendToUserList,
+  addRespectToFeedItem,
   createFeedItem,
   createFriendRequest,
   getFriendRequest,
   getUserFriend,
   removeFriend,
   removeFriendRequest,
+  removeRespectToFeedItem,
   updateFriendRequest,
+  userHasRespectedFeedItem,
 } from "../firestore/social.js";
 import { getUserByUid } from "../firestore/user.js";
 import { db } from "../lib/firebaseAdmin.js";
@@ -119,10 +122,7 @@ export async function handleRespondToFriendRequest(
       return false;
     }
     if (friendRequest.status !== "pending") {
-      console.error(
-        "Failed to respond to friend request. Can only respond to pending requests: ",
-        requestId,
-      );
+      console.error("Failed to respond to friend request. Can only respond to pending requests: ", requestId);
       return false;
     }
     recipientUid = friendRequest.fromUid;
@@ -186,10 +186,7 @@ export async function handleCancelFriendRequest(uid: string, requestId: string):
       return false;
     }
     if (friendRequest.status !== "pending") {
-      console.error(
-        "Failed to cancel friend request. Can only cancel pending requests: ",
-        requestId,
-      );
+      console.error("Failed to cancel friend request. Can only cancel pending requests: ", requestId);
       return false;
     }
 
@@ -321,6 +318,7 @@ type CreateWorkoutCompletedFeedItemParams = {
 
     caption: string | null;
     photoUrl: string | null;
+    respectCount: number;
     isPracticeWeek: boolean;
     completedAt: Timestamp;
   };
@@ -371,6 +369,7 @@ export function createWorkoutCompletedFeedItem({
     completedAt: workout.completedAt ?? now,
     caption: workout.caption,
     photoUrl: workout.photoUrl,
+    respectCount: workout.respectCount,
 
     weekId: workout.weekId,
     localDateKey: workout.localDateKey,
@@ -413,4 +412,16 @@ export async function fanoutFeedItemToFriends(actorUid: string, feedItem: FeedIt
   if (writeCount > 0) {
     await batch.commit();
   }
+}
+
+export async function handleRespectFeedPost(uid: string, feedItemId: string) {
+  return await db.runTransaction(async (tx) => {
+    const feedItemAlreadyRespected = await userHasRespectedFeedItem(tx, uid, feedItemId);
+    console.log("feedItemAlreadyRespected: ", feedItemAlreadyRespected);
+    if (!feedItemAlreadyRespected) {
+      await addRespectToFeedItem(tx, uid, feedItemId);
+    } else {
+      await removeRespectToFeedItem(tx, uid, feedItemId);
+    }
+  });
 }

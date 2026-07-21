@@ -11,7 +11,7 @@ import { useUserStore } from "@/stores/user-store";
 import { getWeekId } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -46,11 +46,7 @@ const profile = () => {
   });
 
   const { data: userWeekAggregate, isLoading: isLoadingUserWeekAggregate } = useQuery({
-    queryKey: [
-      "user-week-aggregate",
-      usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "",
-      uid,
-    ],
+    queryKey: ["user-week-aggregate", usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "", uid],
     queryFn: fetchUserWeekAggregate,
     params: {
       uid,
@@ -59,10 +55,7 @@ const profile = () => {
     enabled: !!usersHomeTimezone,
   });
 
-  const { data: recentWorkouts, isLoading: isLoadingRecentWorkouts } = useUserWorkoutsInfinite(
-    uid,
-    3,
-  );
+  const { data: recentWorkouts, isLoading: isLoadingRecentWorkouts } = useUserWorkoutsInfinite(uid, 3);
 
   const accountabilitySummaryData = useMemo(() => {
     if (!userStats) return null;
@@ -83,7 +76,7 @@ const profile = () => {
       targetDays: userWeekAggregate?.weeklyTargetDays || userStats?.weeklyTargetDays || 5,
       currentStreakWeek: userWeekAggregate?.streakWeeks || userStats?.currentWeekStreak || 0,
       isPracticeWeek: user?.isPracticeWeek || !userWeekAggregate?.isOfficialWeek || false,
-      isStreakActive: userWeekAggregate?.streakStatus === "active",
+      isStreakActive: userStats?.currentWeekStreak && userStats?.currentWeekStreak > 0 ? true : false,
     };
   }, [userWeekAggregate, userStats, user]);
 
@@ -100,9 +93,7 @@ const profile = () => {
         <View style={{ width: 40, height: 40 }} />
 
         <View style={{ justifyContent: "center", alignItems: "center", gap: 2 }}>
-          <ThemedText style={styles.headerText}>
-            {user?.username?.toLocaleLowerCase() ?? ""}
-          </ThemedText>
+          <ThemedText style={styles.headerText}>{user?.username?.toLocaleLowerCase() ?? ""}</ThemedText>
         </View>
 
         <TouchableOpacity
@@ -123,25 +114,20 @@ const profile = () => {
           <ThemedText style={styles.unavailableText}>Profile unavailable</ThemedText>
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.mainContentContainer}>
             {/* USER INFO */}
             <View style={styles.userInfoContainer}>
               <Avatar
-                avatarUrl={user?.avatarUrl ?? ""}
-                displayName={user?.displayName ?? "?"}
+                uid={user?.uid ?? ""}
+                displayName={user?.displayName}
                 size={65}
                 containerStyle={styles.avatar}
               />
 
               <View style={styles.userNameContainer}>
                 <ThemedText style={styles.displayName}>{user?.displayName}</ThemedText>
-                <ThemedText style={styles.username}>
-                  @{user?.username?.toLocaleLowerCase() ?? ""}
-                </ThemedText>
+                <ThemedText style={styles.username}>@{user?.username?.toLocaleLowerCase() ?? ""}</ThemedText>
               </View>
 
               <View style={styles.badgeRow}>
@@ -173,23 +159,25 @@ const profile = () => {
               <View style={styles.recentWorkoutsHeader}>
                 <ThemedText style={styles.recentWorkoutsTitle}>RECENT WORKOUTS</ThemedText>
 
-                <TouchableOpacity
-                  style={styles.viewAllRecentButton}
-                  hitSlop={15}
-                  activeOpacity={0.8}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(protected)/(tabs)/(workout)/(viewHistory)/[id]",
-                      params: {
-                        id: uid,
-                        returnTo: "/(protected)/(tabs)/profile",
-                      },
-                    })
-                  }
-                >
-                  <ThemedText style={styles.recentWorkoutsTitle}>VIEW ALL</ThemedText>
-                  <FontAwesome6 name="arrow-right" size={9} color={Colors.icon} />
-                </TouchableOpacity>
+                {recentWorkoutsData.length ? (
+                  <TouchableOpacity
+                    style={styles.viewAllRecentButton}
+                    hitSlop={15}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(protected)/(tabs)/(workout)/(viewHistory)/[id]",
+                        params: {
+                          id: uid,
+                          returnTo: "/(protected)/(tabs)/profile",
+                        },
+                      })
+                    }
+                  >
+                    <ThemedText style={styles.recentWorkoutsTitle}>VIEW ALL</ThemedText>
+                    <FontAwesome6 name="arrow-right" size={9} color={Colors.icon} />
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               <View style={styles.recentWorkoutsList}>
@@ -200,8 +188,7 @@ const profile = () => {
                       workout={workout}
                       onPress={() =>
                         router.push({
-                          pathname:
-                            "/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]",
+                          pathname: "/(protected)/(workoutHistoryDetails)/[sessionId]",
                           params: {
                             sessionId: workout.sessionId,
                             returnTo: "/(protected)/(tabs)/profile",

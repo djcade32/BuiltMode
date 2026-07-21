@@ -22,13 +22,7 @@ export const friendListItemSchema = z.object({
   isDeloadWeek: z.boolean(),
 });
 
-export const relationshipStatusSchema = z.enum([
-  "self",
-  "none",
-  "request_sent",
-  "request_received",
-  "friends",
-]);
+export const relationshipStatusSchema = z.enum(["self", "none", "request_sent", "request_received", "friends"]);
 
 export const searchUserResultSchema = z.object({
   uid: z.string().min(1),
@@ -81,6 +75,7 @@ export const feedItemSchema = z.object({
 
   caption: z.string().nullable(),
   photoUrl: z.string().nullable(),
+  respectCount: z.number().int().nonnegative().optional(),
 
   createdAt: firestoreTimestampSchema,
   updatedAt: firestoreTimestampSchema,

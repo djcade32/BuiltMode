@@ -99,8 +99,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
           set({
             isCreatingUser: true,
           });
-          const { avatarUrl, username, goal, metrics, weeklyStandard, homeTimezone, resetState } =
-            get();
+          const { avatarUrl, username, goal, metrics, weeklyStandard, homeTimezone, resetState } = get();
           if (!username || !goal || !weeklyStandard || !homeTimezone) return;
           const displayName = useAuthStore.getState().user?.name;
           if (!displayName) {

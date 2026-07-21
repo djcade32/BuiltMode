@@ -159,6 +159,10 @@ type Props = {
   exercise: Exercise;
   index: number;
   onDeleteExercise: (exerciseId: string) => void;
+  /**
+   * @deprecated Exercise advancement now happens inside completeCurrentSet.
+   * Kept temporarily so the existing ActiveWorkout call site still compiles.
+   */
   onExerciseComplete: (
     workoutProgress: Record<
       string,
@@ -170,17 +174,19 @@ type Props = {
   ) => void;
   onChangeMetricType: (exerciseId: string, metricType: ExerciseMetricType) => void;
   setIsNotesSheetVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  scrollToTop: () => void;
 };
 
 const CurrentWorkoutCard = ({
   exercise,
   index,
-  onExerciseComplete,
   onDeleteExercise,
   onChangeMetricType,
   setIsNotesSheetVisible,
+  scrollToTop,
 }: Props) => {
-  const { updateWorkout, activeWorkoutDraft, updateWorkoutProgress, workoutProgress } = useWorkoutStore();
+  const { updateWorkout, activeWorkoutDraft, updateWorkoutProgress, completeCurrentSet, workoutProgress } =
+    useWorkoutStore();
   const { user } = useUserStore();
 
   const { name, sets, metricType, notes } = exercise;
@@ -200,7 +206,9 @@ const CurrentWorkoutCard = ({
 
   const handleChangeMetricType = useCallback(
     (exerciseId: string, metricType: ExerciseMetricType) => {
-      if (workoutProgress && workoutProgress[exerciseId].sets.length > 0) {
+      console.log("exerciseId: ", exerciseId);
+      console.log("workoutProgress: ", workoutProgress);
+      if (workoutProgress && workoutProgress[exerciseId] && workoutProgress[exerciseId].sets.length > 0) {
         return Alert.alert("Are You Sure?", "All exercise progress will be lost.", [
           {
             text: "Continue",
@@ -217,31 +225,23 @@ const CurrentWorkoutCard = ({
   );
 
   const handleCompleteSet = () => {
-    if (!currentSet) return;
+    if (!activeWorkoutDraft || !currentSet) return;
 
-    setCompletedSets((prev) => [...prev, currentSet]);
-    const updatedSets =
-      workoutProgress && workoutProgress[exercise.id]
-        ? [...workoutProgress[exercise.id].sets, currentSet]
-        : [currentSet];
-
-    const isCompleted = updatedSets.length === exercise.sets.length;
-
-    updateWorkoutProgress({
+    const result = completeCurrentSet({
+      workoutId: activeWorkoutDraft.sessionId,
       exerciseId: exercise.id,
-      sets: updatedSets,
-      completed: isCompleted,
+      setId: currentSet.id,
     });
 
-    const nextIndex = activeSetIndex + 1;
-
-    if (nextIndex < sets.length) {
-      setActiveSetIndex(nextIndex);
+    if (!result.completedSet) {
+      console.warn("Unable to complete the current workout set because the action was stale.", {
+        workoutId: activeWorkoutDraft.sessionId,
+        exerciseId: exercise.id,
+        setId: currentSet.id,
+      });
     }
 
-    if (isCompleted) {
-      onExerciseComplete(workoutProgress);
-    }
+    result.completedExercise && scrollToTop();
   };
 
   const getSetCallToActionText = useCallback(() => {

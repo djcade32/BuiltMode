@@ -5,7 +5,7 @@ import { formatFirestoreDateTimeISO } from "@/lib/utils/date";
 import { useUserStore } from "@/stores/user-store";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../themed-text";
 import Avatar from "../ui/Avatar";
@@ -66,9 +66,7 @@ const RecentFriendActivityWidget = ({ isRefreshing }: { isRefreshing?: boolean }
 
           <View style={styles.emptyCopy}>
             <ThemedText style={styles.emptyTitle}>Activity unavailable</ThemedText>
-            <ThemedText style={styles.emptyBody}>
-              We couldn&apos;t load friend activity right now.
-            </ThemedText>
+            <ThemedText style={styles.emptyBody}>We couldn&apos;t load friend activity right now.</ThemedText>
           </View>
         </View>
       );
@@ -99,7 +97,7 @@ const RecentFriendActivityWidget = ({ isRefreshing }: { isRefreshing?: boolean }
           return (
             <View style={styles.activityRow} key={item.feedItemId}>
               <Avatar
-                avatarUrl={item.actorAvatarUrl}
+                uid={item.actorUid}
                 displayName={item.actorDisplayName}
                 onPress={() => navigateToFriendProfile(item.actorUid)}
               />

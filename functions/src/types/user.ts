@@ -1,5 +1,5 @@
 import { firestoreTimestampV2 } from "@builtmode/shared/types/firestore";
-import { Goal, Metrics, } from "@builtmode/shared/types/user";
+import { Goal, Metrics } from "@builtmode/shared/types/user";
 import { Timestamp } from "firebase-admin/firestore";
 
 export type WeeklyTargetDays = 2 | 3 | 4 | 5 | 6 | 7;
@@ -20,6 +20,8 @@ export type UserDoc = {
   homeTimezone: string;
   officialStartWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
+  pendingWeeklyTargetDays?: WeeklyTargetDays | null;
+  pendingWeeklyTargetStartsAt?: Timestamp | null;
   officialStartAt: Timestamp | firestoreTimestampV2;
   officialWeekStatus: OfficialWeekStatus;
   officialStartedAt: Timestamp | null;

@@ -32,6 +32,41 @@ jest.mock("react-native-toast-message", () => ({
   show: jest.fn(),
 }));
 
+jest.mock("react-native-draggable-flatlist", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+
+  const MockDraggableFlatList = React.forwardRef(
+    ({ data = [], renderItem, ListFooterComponent, ListFooterComponentStyle }: any, ref: any) => {
+      React.useImperativeHandle(ref, () => ({
+        scrollToEnd: jest.fn(),
+        scrollToIndex: jest.fn(),
+      }));
+
+      return (
+        <View>
+          {data.map((item: any, index: number) => (
+            <React.Fragment key={item.id ?? index}>
+              {renderItem({ item, index, drag: jest.fn(), isActive: false })}
+            </React.Fragment>
+          ))}
+          {ListFooterComponent ? (
+            <View style={ListFooterComponentStyle}>
+              <ListFooterComponent />
+            </View>
+          ) : null}
+        </View>
+      );
+    },
+  );
+
+  return {
+    __esModule: true,
+    default: MockDraggableFlatList,
+    ScaleDecorator: ({ children }: any) => <>{children}</>,
+  };
+});
+
 describe("BuildWorkout", () => {
   beforeEach(() => {
     resetWorkoutStore();

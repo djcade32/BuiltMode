@@ -14,7 +14,7 @@ import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -296,7 +296,7 @@ const BuildWorkout = () => {
           return {
             ...exercise,
             metricType,
-            sets: [],
+            sets: [{ id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }],
           };
         }
 
@@ -347,7 +347,7 @@ const BuildWorkout = () => {
   };
 
   const handleBackPress = () => {
-    router.back();
+    router.dismiss();
     setInitialWorkout(null);
   };
 

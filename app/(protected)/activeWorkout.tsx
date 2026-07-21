@@ -10,13 +10,15 @@ import NextExerciseItem from "@/components/workout/NextExerciseItem";
 import { StopwatchDisplay } from "@/components/workout/StopwatchDisplay";
 import WorkoutNoteSheet from "@/components/workout/WorkoutNoteSheet";
 import { Border, Colors, Typography } from "@/constants/theme";
+import { useWorkoutLiveActivity } from "@/hooks/useWorkoutLiveActivity";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
 import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -34,6 +36,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useStopwatch } from "react-timer-hook";
+import { v4 as uuidv4 } from "uuid";
 
 const getStopwatchOffsetFromStartedAtMs = (startedAtMs?: number | null) => {
   const elapsedMs = startedAtMs ? Math.max(0, Date.now() - startedAtMs) : 0;
@@ -123,6 +126,17 @@ const ActiveWorkout = () => {
 
   const { pause, start, reset, hours, minutes, seconds, isRunning, totalSeconds } = stopwatch;
 
+  const { endWorkoutLiveActivity } = useWorkoutLiveActivity({
+    workout: activeWorkoutDraft,
+    workoutProgress,
+    currentExerciseIndex,
+
+    elapsedSeconds: totalSeconds,
+
+    isPaused: !isRunning,
+    isResting: false,
+  });
+
   useEffect(() => {
     if (!activeWorkoutDraft?.startedAtMs) return;
 
@@ -153,12 +167,15 @@ const ActiveWorkout = () => {
     return Alert.alert("Are You Sure?", "All workout progress will be lost.", [
       {
         text: "Continue",
-        onPress: () => clearWorkout(),
+        onPress: async () => {
+          await endWorkoutLiveActivity();
+          clearWorkout();
+        },
         style: "destructive",
       },
       { text: "Cancel" },
     ]);
-  }, [clearWorkout]);
+  }, [clearWorkout, endWorkoutLiveActivity]);
 
   const dropDownOptions: DropdownMenuOption[] = useMemo(
     () => [
@@ -211,9 +228,12 @@ const ActiveWorkout = () => {
       pause();
 
       const response = await logWorkout(totalSeconds);
+      await endWorkoutLiveActivity();
 
       if (response) {
         console.log("Workout logged: ", response);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
         router.replace("/(protected)/workoutComplete");
       }
     } catch (error) {
@@ -262,7 +282,7 @@ const ActiveWorkout = () => {
         return {
           ...exercise,
           metricType,
-          sets: [],
+          sets: [{ id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }],
         };
       }
       return exercise;
@@ -442,6 +462,7 @@ const ActiveWorkout = () => {
                 setIsNotesSheetVisible={setIsNotesSheetVisible}
                 onDeleteExercise={handleDeleteExercise}
                 onChangeMetricType={handleChangeMetricType}
+                scrollToTop={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
               />
             )}
 

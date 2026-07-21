@@ -18,15 +18,8 @@ import { getWeekId } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { RelativePathString, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const RecentWorkoutsEmptyState = () => {
@@ -53,6 +46,8 @@ const FriendProfile = () => {
   const { returnTo } = useLocalSearchParams<{ returnTo?: RelativePathString }>();
 
   const queryClient = useQueryClient();
+
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const { data: userInfo, isLoading: isLoadingUserInfo } = useQuery({
     queryKey: ["user-leaderboard-entry", id],
@@ -97,11 +92,7 @@ const FriendProfile = () => {
   });
 
   const { data: userWeekAggregate, isLoading: isLoadingUserWeekAggregate } = useQuery({
-    queryKey: [
-      "user-week-aggregate",
-      usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "",
-      id,
-    ],
+    queryKey: ["user-week-aggregate", usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "", id],
     queryFn: fetchUserWeekAggregate,
     params: {
       uid: id ?? "",
@@ -110,10 +101,12 @@ const FriendProfile = () => {
     enabled: !!usersHomeTimezone,
   });
 
-  const { data: recentWorkouts, isLoading: isLoadingRecentWorkouts } = useUserWorkoutsInfinite(
-    id,
-    3,
-  );
+  const { data: recentWorkouts, isLoading: isLoadingRecentWorkouts } = useUserWorkoutsInfinite(id, 3);
+
+  useEffect(() => {
+    if (isLoadingUserInfo || isLoadingUserStats || isLoadingUserWeekAggregate || isLoadingRecentWorkouts) return;
+    setIsLoadingData(false);
+  }, [isLoadingUserInfo, isLoadingUserStats, isLoadingUserWeekAggregate, isLoadingRecentWorkouts]);
 
   const accountabilitySummaryData = useMemo(() => {
     if (!userStats) return null;
@@ -150,12 +143,6 @@ const FriendProfile = () => {
     router.back();
   };
 
-  const isLoadingData =
-    isLoadingUserInfo ||
-    isLoadingUserStats ||
-    isLoadingUserWeekAggregate ||
-    isLoadingRecentWorkouts;
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
@@ -181,10 +168,7 @@ const FriendProfile = () => {
           <ThemedText style={styles.unavailableText}>Profile unavailable</ThemedText>
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.mainContentContainer}>
             {/* USER INFO */}
             <View style={styles.userInfoContainer}>
@@ -254,23 +238,25 @@ const FriendProfile = () => {
               <View style={styles.recentWorkoutsHeader}>
                 <ThemedText style={styles.recentWorkoutsTitle}>RECENT WORKOUTS</ThemedText>
 
-                <TouchableOpacity
-                  style={styles.viewAllRecentButton}
-                  hitSlop={15}
-                  activeOpacity={0.8}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(protected)/(tabs)/(workout)/(viewHistory)/[id]",
-                      params: {
-                        id,
-                        returnTo: `/(protected)/(tabs)/(feed)/(friendProfile)/${id}`,
-                      },
-                    })
-                  }
-                >
-                  <ThemedText style={styles.recentWorkoutsTitle}>VIEW ALL</ThemedText>
-                  <FontAwesome6 name="arrow-right" size={9} color={Colors.icon} />
-                </TouchableOpacity>
+                {recentWorkoutsData.length ? (
+                  <TouchableOpacity
+                    style={styles.viewAllRecentButton}
+                    hitSlop={15}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(protected)/(tabs)/(workout)/(viewHistory)/[id]",
+                        params: {
+                          id,
+                          returnTo: `/(protected)/(tabs)/(feed)/(friendProfile)/${id}`,
+                        },
+                      })
+                    }
+                  >
+                    <ThemedText style={styles.recentWorkoutsTitle}>VIEW ALL</ThemedText>
+                    <FontAwesome6 name="arrow-right" size={9} color={Colors.icon} />
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               <View style={styles.recentWorkoutsList}>
@@ -281,8 +267,7 @@ const FriendProfile = () => {
                       workout={workout}
                       onPress={() =>
                         router.push({
-                          pathname:
-                            "/(protected)/(tabs)/(workout)/(workoutHistoryDetails)/[sessionId]",
+                          pathname: "/(protected)/(workoutHistoryDetails)/[sessionId]",
                           params: {
                             sessionId: workout.sessionId,
                             returnTo: `/(protected)/(tabs)/(feed)/(friendProfile)/${id}`,
