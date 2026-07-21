@@ -9,7 +9,7 @@ import { useQuery } from "@/hooks/useQuery";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { formatWorkoutLocalDate } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
-import { getFeedItemRespectCount, respectFeedPost, userHasRespectedFeedItem } from "@/services/social-service";
+import { getFeedItemRespectInfo, respectFeedPost } from "@/services/social-service";
 import { getWorkoutBySessionId } from "@/services/workout-service";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
@@ -60,10 +60,7 @@ const WorkoutHistoryDetails = () => {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["feed-item-respect-count", feedItemId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["respected-feed-items", feedItemId],
+        queryKey: ["feed-items-respected-info", feedItemId],
       });
       await queryClient.invalidateQueries({
         queryKey: ["feed-item-respect-users", feedItemId],
@@ -71,18 +68,11 @@ const WorkoutHistoryDetails = () => {
     },
   });
 
-  const { data: respectCount } = useQuery({
-    queryKey: ["feed-item-respect-count", feedItemId],
-    queryFn: getFeedItemRespectCount,
-    params: { feedItemId: feedItemId ?? "" },
-    enabled: !!feedItemId,
-  });
-
-  const { data: isRespected } = useQuery({
-    queryKey: ["respected-feed-items", feedItemId],
-    queryFn: userHasRespectedFeedItem,
+  const { data: respectedInfo } = useQuery({
+    queryKey: ["feed-items-respected-info", feedItemId],
+    queryFn: getFeedItemRespectInfo,
     params: { uid: user?.uid ?? "", feedItemId: feedItemId ?? "" },
-    enabled: Boolean(feedItemId) && !!user?.uid,
+    enabled: !!feedItemId && !!user?.uid,
   });
 
   const workoutPhotoUrl = (data as WorkoutWithPhoto | undefined)?.photoUrl ?? null;
@@ -188,11 +178,11 @@ const WorkoutHistoryDetails = () => {
     ]);
   }
 
-  const handleRespectPress = async () => {
+  const handleRespectPress = async (count: number) => {
     if (!feedItemId) return;
 
     if (isPostOwner) {
-      if (!respectCount) return;
+      if (!count) return;
       setIsRespectUsersSheetVisible(true);
       return;
     }
@@ -205,12 +195,13 @@ const WorkoutHistoryDetails = () => {
   };
 
   const renderPostActions = () => {
+    if (!respectedInfo) return null;
     return (
       <View style={styles.postActionContainer}>
         <TouchableOpacity
           style={{
-            backgroundColor: isRespected ? "#C6A34A14" : Colors.background.secondary,
-            borderColor: isRespected ? Colors.accent.primary : Colors.cardBorder,
+            backgroundColor: respectedInfo.isRespected ? "#C6A34A14" : Colors.background.secondary,
+            borderColor: respectedInfo.isRespected ? Colors.accent.primary : Colors.cardBorder,
             borderWidth: 1,
             borderRadius: Border.radius.md,
             paddingVertical: 10,
@@ -221,15 +212,17 @@ const WorkoutHistoryDetails = () => {
             flexDirection: "row",
             gap: 5,
           }}
-          onPress={handleRespectPress}
+          onPress={() => handleRespectPress(respectedInfo.respectCount)}
           disabled={
-            !feedItemId || (!isPostOwner && isPendingRespectFeedItemAction) || (isPostOwner && !respectCount)
+            !feedItemId ||
+            (!isPostOwner && isPendingRespectFeedItemAction) ||
+            (isPostOwner && !respectedInfo.respectCount)
           }
           accessibilityRole="button"
           accessibilityLabel={
             isPostOwner
-              ? `View ${respectCount ?? 0} people who respected this post`
-              : isRespected
+              ? `View ${respectedInfo.respectCount ?? 0} people who respected this post`
+              : respectedInfo.isRespected
                 ? "Remove respect from this post"
                 : "Respect this post"
           }
@@ -239,7 +232,7 @@ const WorkoutHistoryDetails = () => {
           <ThemedText
             style={{ fontFamily: Typography.family.secondary.semibold, fontSize: 14, color: Colors.icon }}
           >
-            {respectCount ? respectCount : null}
+            {respectedInfo.respectCount ? respectedInfo.respectCount : null}
           </ThemedText>
         </TouchableOpacity>
       </View>
@@ -406,6 +399,7 @@ const WorkoutHistoryDetails = () => {
         <FeedItemRespectUsersSheet
           visible={isRespectUsersSheetVisible}
           feedItemId={feedItemId}
+          respectTotalCount={respectedInfo?.respectCount ?? 0}
           onClose={() => setIsRespectUsersSheetVisible(false)}
         />
       )}

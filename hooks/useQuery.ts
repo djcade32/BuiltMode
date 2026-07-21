@@ -5,7 +5,6 @@ type UseQueryOptions<TItem, TParams> = {
   queryFn: (args: { params: TParams }) => Promise<TItem>;
   params: TParams;
   enabled?: boolean;
-  refetchOnWindowFocus?: boolean | "always";
 };
 
 export function useQuery<TItem, TParams = void>({
@@ -13,12 +12,10 @@ export function useQuery<TItem, TParams = void>({
   queryFn,
   params,
   enabled = true,
-  refetchOnWindowFocus = false,
 }: UseQueryOptions<TItem, TParams>) {
   return tanstackUseQuery({
     queryKey: [...queryKey, { params }],
     queryFn: () => queryFn({ params }),
     enabled,
-    refetchOnWindowFocus: refetchOnWindowFocus,
   });
 }

@@ -375,41 +375,36 @@ export const respectFeedPost = async (params: {
     };
   } catch (error: any) {
     console.error("Failed to respect feed item");
-    return {
-      success: false,
-      message: "Failed to update feed item.",
-    };
+    throw error;
   }
 };
 
-export const getFeedItemRespectCount = async ({ params }: { params: { feedItemId: string } }): Promise<number> => {
-  try {
-    const feedItemRef = doc(db, `feedItems/${params.feedItemId}`);
-
-    const feedItem = await getDoc(feedItemRef);
-    if (feedItem.exists()) {
-      return feedItem.data().respectCount ? feedItem.data().respectCount : 0;
-    }
-    return 0;
-  } catch (error) {
-    console.error("Error fetching respect Count for feed item: ", error);
-    return 0;
-  }
-};
-
-export const userHasRespectedFeedItem = async ({
+export const getFeedItemRespectInfo = async ({
   params,
 }: {
-  params: { uid: string; feedItemId: string };
-}): Promise<boolean> => {
-  try {
-    const respectRef = doc(db, `feedItems/${params.feedItemId}/respects/${params.uid}`);
+  params: {
+    uid: string;
+    feedItemId: string;
+  };
+}): Promise<{
+  isRespected: boolean;
+  respectCount: number;
+}> => {
+  const feedItemRef = doc(db, "feedItems", params.feedItemId);
+  const respectRef = doc(db, "feedItems", params.feedItemId, "respects", params.uid);
 
-    const respectDoc = await getDoc(respectRef);
-    return respectDoc.exists();
+  try {
+    const [feedItemSnapshot, respectSnapshot] = await Promise.all([getDoc(feedItemRef), getDoc(respectRef)]);
+
+    const respectCount = feedItemSnapshot.data()?.respectCount;
+
+    return {
+      isRespected: respectSnapshot.exists(),
+      respectCount: typeof respectCount === "number" ? respectCount : 0,
+    };
   } catch (error) {
-    console.error("Error fetching if user has respected feed item: ", error);
-    return false;
+    console.error("Error fetching feed item respect information:", error);
+    throw error;
   }
 };
 

@@ -11,10 +11,11 @@ import Avatar from "../ui/Avatar";
 type Props = {
   visible: boolean;
   feedItemId: string;
+  respectTotalCount: number;
   onClose: () => void;
 };
 
-const FeedItemRespectUsersSheet = ({ visible, feedItemId, onClose }: Props) => {
+const FeedItemRespectUsersSheet = ({ visible, respectTotalCount, feedItemId, onClose }: Props) => {
   const [respectUsers, setIsRespectUsers] = useState<PublicProfile[]>([]);
 
   const { data, error, isLoading, refetch, hasNextPage, fetchNextPage, isFetchingNextPage, isFetching } =
@@ -24,13 +25,8 @@ const FeedItemRespectUsersSheet = ({ visible, feedItemId, onClose }: Props) => {
     const users = data?.pages.flatMap((page) => page.items) ?? [];
 
     const fetchUserProfiles = async () => {
-      const userProfiles = [];
-      for (const user of users) {
-        const profile = await getPublicProfile(user.actorUid);
-        if (profile) userProfiles.push(profile);
-      }
-
-      setIsRespectUsers(userProfiles);
+      const profiles = await Promise.all(users.map((user) => getPublicProfile(user.actorUid)));
+      setIsRespectUsers(profiles.filter((profile): profile is PublicProfile => Boolean(profile)));
     };
 
     fetchUserProfiles();
@@ -76,7 +72,7 @@ const FeedItemRespectUsersSheet = ({ visible, feedItemId, onClose }: Props) => {
               <ThemedText style={styles.headerTitle}>RESPECT</ThemedText>
               {!isLoading && !error ? (
                 <View style={styles.countBadge}>
-                  <ThemedText style={styles.countText}>{respectUsers.length}</ThemedText>
+                  <ThemedText style={styles.countText}>{respectTotalCount}</ThemedText>
                 </View>
               ) : null}
             </View>

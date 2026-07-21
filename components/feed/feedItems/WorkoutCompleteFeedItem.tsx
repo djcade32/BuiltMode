@@ -6,7 +6,7 @@ import { usePublicProfile } from "@/hooks/user/usePublicProfile";
 import dayjs from "@/lib/dayjs";
 import { formatFirestoreDateTimeISO, formatFirestoreTimestamp } from "@/lib/utils/date";
 import { durationTimeString } from "@/lib/utils/time";
-import { getFeedItemRespectCount, respectFeedPost, userHasRespectedFeedItem } from "@/services/social-service";
+import { getFeedItemRespectInfo, respectFeedPost } from "@/services/social-service";
 import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
@@ -50,10 +50,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["feed-item-respect-count", feedItemId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["respected-feed-items", feedItemId],
+        queryKey: ["feed-items-respected-info", feedItemId],
       });
       await queryClient.invalidateQueries({
         queryKey: ["feed-item-respect-users", feedItemId],
@@ -61,16 +58,9 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     },
   });
 
-  const { data: respectCount } = useQuery({
-    queryKey: ["feed-item-respect-count", feedItemId],
-    queryFn: getFeedItemRespectCount,
-    params: { feedItemId: feedItemId ?? "" },
-    enabled: !!feedItemId,
-  });
-
-  const { data: isRespected } = useQuery({
-    queryKey: ["respected-feed-items", feedItemId],
-    queryFn: userHasRespectedFeedItem,
+  const { data: respectedInfo } = useQuery({
+    queryKey: ["feed-items-respected-info", feedItemId],
+    queryFn: getFeedItemRespectInfo,
     params: { uid: currentUserUid, feedItemId },
     enabled: !!feedItemId && !!currentUserUid,
   });
@@ -178,11 +168,11 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     </View>
   );
 
-  const handleRespectPress = async () => {
+  const handleRespectPress = async (count: number) => {
     if (!feedItemId) return;
 
     if (isPostOwner) {
-      if (!respectCount) return;
+      if (!count) return;
       setIsRespectUsersSheetVisible(true);
       return;
     }
@@ -316,24 +306,32 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
       <View style={styles.footer}>
         <TouchableOpacity
           disabled={
-            !feedItemId || (!isPostOwner && isPendingRespectFeedItemAction) || (isPostOwner && !respectCount)
+            !feedItemId ||
+            (!isPostOwner && isPendingRespectFeedItemAction) ||
+            (isPostOwner && !respectedInfo?.respectCount)
           }
-          style={styles.respectCounterContainer}
+          style={[styles.respectCounterContainer, { opacity: respectedInfo?.isRespected ? 1 : 0.4 }]}
           hitSlop={15}
           onPress={() => {
-            void handleRespectPress();
+            void handleRespectPress(respectedInfo?.respectCount ?? 0);
           }}
           accessibilityRole="button"
           accessibilityLabel={
             isPostOwner
-              ? `View ${respectCount ?? 0} people who respected this post`
-              : isRespected
+              ? `View ${respectedInfo?.respectCount ?? 0} people who respected this post`
+              : respectedInfo?.isRespected
                 ? "Remove respect from this post"
                 : "Respect this post"
           }
         >
-          <FontAwesome6 name="hand-fist" size={20} color={isRespected ? Colors.accent.primary : Colors.icon} />
-          <ThemedText style={styles.respectCountText}>{respectCount === 0 ? null : respectCount}</ThemedText>
+          <FontAwesome6
+            name="hand-fist"
+            size={20}
+            color={respectedInfo?.isRespected ? Colors.accent.primary : Colors.icon}
+          />
+          <ThemedText style={styles.respectCountText}>
+            {respectedInfo?.respectCount === 0 ? null : (respectedInfo?.respectCount ?? null)}
+          </ThemedText>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -359,6 +357,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
       <FeedItemRespectUsersSheet
         visible={isRespectUsersSheetVisible}
         feedItemId={feedItemId}
+        respectTotalCount={respectedInfo?.respectCount ?? 0}
         onClose={() => setIsRespectUsersSheetVisible(false)}
       />
     </View>

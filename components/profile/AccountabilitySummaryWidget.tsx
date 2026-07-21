@@ -84,10 +84,13 @@ const AccountabilitySummaryWidget = ({ data }: Props) => {
                     },
                   ]}
                 >
-                  {adherence.adherenceRate}%
+                  {typeof adherence === "number" ? adherence : (adherence?.adherenceRate ?? 0)}%
                 </ThemedText>
               </View>
-              <Progressbar percentage={adherence.adherenceRate} height={4} />
+              <Progressbar
+                percentage={typeof adherence === "number" ? adherence : (adherence?.adherenceRate ?? 0)}
+                height={4}
+              />
             </View>
           </View>
         </View>

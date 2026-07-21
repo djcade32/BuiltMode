@@ -135,7 +135,12 @@ export const updateHomeTimezoneResponseSchema = z.object({
 export const userStatsSchema = z.object({
   currentWeekStreak: z.number().nonnegative(),
   bestWeekStreak: z.number().nonnegative(),
-  last30DayWeeklyAdherenceRate: WeeklyAdherenceResultSchema,
+  last30DayWeeklyAdherenceRate: z.preprocess((val) => {
+    if (typeof val === "number") {
+      return { adherenceRate: val, completedDays: 0, targetDays: 0, weeksIncluded: 0, weeks: [] };
+    }
+    return val;
+  }, WeeklyAdherenceResultSchema),
   activity30DayRate: z.number().nonnegative(),
   totalWorkoutsLogged: z.number().nonnegative(),
   totalTargetsMet: z.number().nonnegative(),
