@@ -59,14 +59,11 @@ export const userHasRespectedFeedItem = async (tx: Transaction, uid: string, fee
 };
 
 export const addRespectToFeedItem = async (tx: Transaction, uid: string, feedItemId: string) => {
-  console.log("Adding respect");
   const respectRef = db.collection(`feedItems/${feedItemId}/respects`).doc(uid);
   const feedItemRef = db.collection("feedItems").doc(feedItemId);
   const feedItem = (await tx.get(feedItemRef)).data();
 
-  console.log("Looking for feed Item: ", feedItemId);
   if (!feedItem) throw new HttpsError("not-found", "Feed item does not exist to add respect to.");
-  console.log("Found feed Item");
 
   tx.update(feedItemRef, {
     updatedAt: FieldValue.serverTimestamp(),

@@ -417,6 +417,7 @@ export async function fanoutFeedItemToFriends(actorUid: string, feedItem: FeedIt
 export async function handleRespectFeedPost(uid: string, feedItemId: string) {
   return await db.runTransaction(async (tx) => {
     const feedItemAlreadyRespected = await userHasRespectedFeedItem(tx, uid, feedItemId);
+    console.log("feedItemAlreadyRespected: ", feedItemAlreadyRespected);
     if (!feedItemAlreadyRespected) {
       await addRespectToFeedItem(tx, uid, feedItemId);
     } else {

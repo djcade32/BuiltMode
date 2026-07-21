@@ -1,6 +1,21 @@
 import { z } from "zod";
 import { firestoreTimestampSchema, firestoreTimestampV2Schema } from "./firestore.js";
 
+export const WeeklyAdherenceWeekSchema = z.object({
+  weekId: z.string(),
+  completedDays: z.number().int().nonnegative(),
+  targetDays: z.number().int().nonnegative(),
+  adherenceRate: z.number().nonnegative(),
+});
+
+export const WeeklyAdherenceResultSchema = z.object({
+  adherenceRate: z.number().nonnegative(),
+  completedDays: z.number().int().nonnegative(),
+  targetDays: z.number().int().nonnegative(),
+  weeksIncluded: z.number().int().nonnegative(),
+  weeks: z.array(WeeklyAdherenceWeekSchema),
+});
+
 export const goalSchema = z.union([
   z.literal("BUILD MUSCLE"),
   z.literal("CUT BODY FAT"),
@@ -120,7 +135,7 @@ export const updateHomeTimezoneResponseSchema = z.object({
 export const userStatsSchema = z.object({
   currentWeekStreak: z.number().nonnegative(),
   bestWeekStreak: z.number().nonnegative(),
-  last30DayWeeklyAdherenceRate: z.number().nonnegative(),
+  last30DayWeeklyAdherenceRate: WeeklyAdherenceResultSchema,
   activity30DayRate: z.number().nonnegative(),
   totalWorkoutsLogged: z.number().nonnegative(),
   totalTargetsMet: z.number().nonnegative(),
@@ -170,3 +185,4 @@ export type UpdateHomeTimezoneResponse = z.infer<typeof updateHomeTimezoneRespon
 export type UserStats = z.infer<typeof userStatsSchema>;
 export type UserWeekAggregate = z.infer<typeof userWeekAggregateSchema>;
 export type UserMonthAggregate = z.infer<typeof userMonthAggregateSchema>;
+export type WeeklyAdherenceResult = z.infer<typeof WeeklyAdherenceResultSchema>;

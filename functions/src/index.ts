@@ -272,7 +272,7 @@ export const respectFeedPost = onCall(async (request: CallableRequest<{ feedItem
   if (!data || typeof data.feedItemId !== "string") {
     throw new HttpsError("invalid-argument", "Invalid respectFeedPost payload.");
   }
-  console.log("handle respect feed post called");
+  console.log("calling handleRespectFeedPost");
   return await handleRespectFeedPost(request.auth.uid, data.feedItemId);
 });
 

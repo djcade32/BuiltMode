@@ -1,5 +1,5 @@
 import { Colors, Typography } from "@/constants/theme";
-import React from "react";
+import { WeeklyAdherenceResult } from "@/packages/shared/src";
 import { StyleSheet, View } from "react-native";
 import { ThemedText } from "../themed-text";
 import Progressbar from "../ui/Progressbar";
@@ -8,7 +8,7 @@ type Props = {
   data: {
     modeScore: number;
     consistency: number;
-    adherence: number;
+    adherence: WeeklyAdherenceResult;
     bestStreak: number;
     targetsMet: number;
     totalWorkouts: number;
@@ -25,6 +25,7 @@ const AccountabilitySummaryWidget = ({ data }: Props) => {
         </ThemedText>
       </View>
     );
+
   const { modeScore, consistency, adherence, bestStreak, targetsMet, totalWorkouts } = data;
   return (
     <View style={styles.container}>
@@ -83,10 +84,10 @@ const AccountabilitySummaryWidget = ({ data }: Props) => {
                     },
                   ]}
                 >
-                  {adherence}%
+                  {adherence.adherenceRate}%
                 </ThemedText>
               </View>
-              <Progressbar percentage={adherence} height={4} />
+              <Progressbar percentage={adherence.adherenceRate} height={4} />
             </View>
           </View>
         </View>

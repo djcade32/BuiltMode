@@ -10,21 +10,20 @@ import { getFeedItemRespectCount, respectFeedPost, userHasRespectedFeedItem } fr
 import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
+import FeedItemRespectUsersSheet from "../FeedItemRespectUsersSheet";
 import WeeklyProgressBar from "./WeeklyProgressBar";
 
 const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
   const { user } = useUserStore();
-
+  const queryClient = useQueryClient();
   const currentUserUid = user?.uid ?? "";
   const router = useRouter();
-
-  const [isRespected, setIsRespected] = useState<boolean>(false);
-  const [respectCount, setRespectCount] = useState<number>(0);
+  const [isRespectUsersSheetVisible, setIsRespectUsersSheetVisible] = useState(false);
 
   const {
     actorUid,
@@ -49,25 +48,29 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     onError: (error) => {
       console.error(error.message);
     },
-  });
-  useQuery({
-    queryKey: ["feed-item", feedItemId],
-    queryFn: async ({ params: { feedItemId } }) => {
-      const result = await getFeedItemRespectCount({ params: { feedItemId } });
-      setRespectCount(result);
-      return result;
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["feed-item-respect-count", feedItemId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["respected-feed-items", feedItemId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["feed-item-respect-users", feedItemId],
+      });
     },
-    params: { feedItemId },
+  });
+
+  const { data: respectCount } = useQuery({
+    queryKey: ["feed-item-respect-count", feedItemId],
+    queryFn: getFeedItemRespectCount,
+    params: { feedItemId: feedItemId ?? "" },
     enabled: !!feedItemId,
   });
 
-  useQuery({
+  const { data: isRespected } = useQuery({
     queryKey: ["respected-feed-items", feedItemId],
-    queryFn: async ({ params: { uid, feedItemId } }) => {
-      const result = await userHasRespectedFeedItem({ params: { uid, feedItemId } });
-      setIsRespected(result);
-      return result;
-    },
+    queryFn: userHasRespectedFeedItem,
     params: { uid: currentUserUid, feedItemId },
     enabled: !!feedItemId && !!currentUserUid,
   });
@@ -92,6 +95,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
   const resolvedActorUsername = actorProfile?.username || actorUsername;
 
   const hasWorkoutId = Boolean(workoutId);
+  const isPostOwner = currentUserUid === actorUid;
 
   const createdAt =
     Math.abs(dayjs(formatFirestoreDateTimeISO(completedAt)).diff(new Date(), "days")) >= 1
@@ -174,13 +178,20 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
     </View>
   );
 
-  const handleRespectFeedItem = async () => {
+  const handleRespectPress = async () => {
+    if (!feedItemId) return;
+
+    if (isPostOwner) {
+      if (!respectCount) return;
+      setIsRespectUsersSheetVisible(true);
+      return;
+    }
+
     const result = await respectFeedItemAction({ feedItemId });
+
     if (!result.success) {
       return Alert.alert("Respect failed", "We couldn't add or remove respect. Please try again.");
     }
-    setRespectCount((prev) => (isRespected ? prev - 1 : prev + 1));
-    setIsRespected((prev) => !prev);
   };
 
   return (
@@ -304,10 +315,22 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          disabled={!hasWorkoutId || isPendingRespectFeedItemAction}
+          disabled={
+            !feedItemId || (!isPostOwner && isPendingRespectFeedItemAction) || (isPostOwner && !respectCount)
+          }
           style={styles.respectCounterContainer}
           hitSlop={15}
-          onPress={handleRespectFeedItem}
+          onPress={() => {
+            void handleRespectPress();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isPostOwner
+              ? `View ${respectCount ?? 0} people who respected this post`
+              : isRespected
+                ? "Remove respect from this post"
+                : "Respect this post"
+          }
         >
           <FontAwesome6 name="hand-fist" size={20} color={isRespected ? Colors.accent.primary : Colors.icon} />
           <ThemedText style={styles.respectCountText}>{respectCount === 0 ? null : respectCount}</ThemedText>
@@ -332,6 +355,12 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
           <FontAwesome6 name="arrow-right" size={10} color={Colors.accent.primary} />
         </TouchableOpacity>
       </View>
+
+      <FeedItemRespectUsersSheet
+        visible={isRespectUsersSheetVisible}
+        feedItemId={feedItemId}
+        onClose={() => setIsRespectUsersSheetVisible(false)}
+      />
     </View>
   );
 };

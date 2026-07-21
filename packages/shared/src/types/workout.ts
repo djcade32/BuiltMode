@@ -178,3 +178,16 @@ export type WorkoutLiveActivityState = {
   isResting: boolean;
   isPaused: boolean;
 };
+
+export type WeeklyAdherenceResult = {
+  adherenceRate: number;
+  completedDays: number;
+  targetDays: number;
+  weeksIncluded: number;
+  weeks: Array<{
+    weekId: string;
+    completedDays: number;
+    targetDays: number;
+    adherenceRate: number;
+  }>;
+};

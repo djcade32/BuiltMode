@@ -1,6 +1,7 @@
 import { InfinitePage } from "@/hooks/useInfiniteQuery";
 import { db, functions } from "@/lib/firebase";
 import { chunkArray } from "@/lib/utils/chunk";
+import { firestoreTimestamp } from "@/packages/shared/src/types/firestore";
 import { FeedItem, FriendRequest, SearchUserResult } from "@builtmode/shared";
 import {
   collection,
@@ -410,4 +411,35 @@ export const userHasRespectedFeedItem = async ({
     console.error("Error fetching if user has respected feed item: ", error);
     return false;
   }
+};
+
+export const getFeedItemRespectUsers = async ({
+  pageParam,
+  params,
+  limit: pageSize,
+}: {
+  pageParam?: FeedCursor | null;
+  params: { feedItemId: string };
+  limit: number;
+}): Promise<InfinitePage<{ actorUid: string; createdAt: firestoreTimestamp }, FeedCursor>> => {
+  const respectsRef = collection(db, `feedItems/${params.feedItemId}/respects`);
+
+  const respectsQuery = pageParam
+    ? query(respectsRef, orderBy("createdAt", "desc"), startAfter(pageParam), limit(pageSize))
+    : query(respectsRef, orderBy("createdAt", "desc"), limit(pageSize));
+
+  const snapshot = await getDocs(respectsQuery);
+
+  const items: { actorUid: string; createdAt: firestoreTimestamp }[] = snapshot.docs.map((doc) => ({
+    ...(doc.data() as { actorUid: string; createdAt: firestoreTimestamp }),
+  }));
+
+  const hasMore = snapshot.docs.length === pageSize;
+  const nextCursor = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+  return {
+    items,
+    nextCursor,
+    hasMore,
+  };
 };

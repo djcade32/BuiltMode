@@ -1,3 +1,4 @@
+import FeedItemRespectUsersSheet from "@/components/feed/FeedItemRespectUsersSheet";
 import { ThemedText } from "@/components/themed-text";
 import DropdownMenu, { DropdownMenuOption } from "@/components/ui/DropdownMenu";
 import WorkoutHistoryExerciseBreakdown from "@/components/workout/workoutHistory/WorkoutHistoryExerciseBreakdown";
@@ -8,11 +9,12 @@ import { useQuery } from "@/hooks/useQuery";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { formatWorkoutLocalDate } from "@/lib/utils/date";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
+import { getFeedItemRespectCount, respectFeedPost, userHasRespectedFeedItem } from "@/services/social-service";
 import { getWorkoutBySessionId } from "@/services/workout-service";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { FontAwesome, FontAwesome6, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -35,15 +37,52 @@ const WorkoutHistoryDetails = () => {
 
   const { saveWorkoutAsTemplate, setInitialWorkout } = useWorkoutStore();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
+  const [isRespectUsersSheetVisible, setIsRespectUsersSheetVisible] = useState(false);
 
   const [isDropdownOpened, setIsDropdownOpened] = useState<boolean>(false);
   const [isWorkoutNameSheetVisible, setIsWorkoutNameSheetVisible] = useState<boolean>(false);
-
   const { data, isLoading, error } = useQuery({
     queryKey: ["workout", sessionId],
     queryFn: getWorkoutBySessionId,
     params: { sessionId },
     enabled: !!sessionId,
+  });
+
+  const feedItemId = useMemo(() => {
+    if (!sessionId || !data) return null;
+    return `workout_${data.uid}_${sessionId}`;
+  }, [sessionId, data]);
+
+  const { mutateAsync: respectFeedItemAction, isPending: isPendingRespectFeedItemAction } = useMutation({
+    mutationFn: respectFeedPost,
+    onError: (error) => {
+      console.error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["feed-item-respect-count", feedItemId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["respected-feed-items", feedItemId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["feed-item-respect-users", feedItemId],
+      });
+    },
+  });
+
+  const { data: respectCount } = useQuery({
+    queryKey: ["feed-item-respect-count", feedItemId],
+    queryFn: getFeedItemRespectCount,
+    params: { feedItemId: feedItemId ?? "" },
+    enabled: !!feedItemId,
+  });
+
+  const { data: isRespected } = useQuery({
+    queryKey: ["respected-feed-items", feedItemId],
+    queryFn: userHasRespectedFeedItem,
+    params: { uid: user?.uid ?? "", feedItemId: feedItemId ?? "" },
+    enabled: Boolean(feedItemId) && !!user?.uid,
   });
 
   const workoutPhotoUrl = (data as WorkoutWithPhoto | undefined)?.photoUrl ?? null;
@@ -149,6 +188,64 @@ const WorkoutHistoryDetails = () => {
     ]);
   }
 
+  const handleRespectPress = async () => {
+    if (!feedItemId) return;
+
+    if (isPostOwner) {
+      if (!respectCount) return;
+      setIsRespectUsersSheetVisible(true);
+      return;
+    }
+
+    const result = await respectFeedItemAction({ feedItemId });
+
+    if (!result.success) {
+      return Alert.alert("Respect failed", "We couldn't add or remove respect. Please try again.");
+    }
+  };
+
+  const renderPostActions = () => {
+    return (
+      <View style={styles.postActionContainer}>
+        <TouchableOpacity
+          style={{
+            backgroundColor: isRespected ? "#C6A34A14" : Colors.background.secondary,
+            borderColor: isRespected ? Colors.accent.primary : Colors.cardBorder,
+            borderWidth: 1,
+            borderRadius: Border.radius.md,
+            paddingVertical: 10,
+            paddingHorizontal: 16,
+            justifyContent: "center",
+            alignItems: "center",
+            alignSelf: "flex-start",
+            flexDirection: "row",
+            gap: 5,
+          }}
+          onPress={handleRespectPress}
+          disabled={
+            !feedItemId || (!isPostOwner && isPendingRespectFeedItemAction) || (isPostOwner && !respectCount)
+          }
+          accessibilityRole="button"
+          accessibilityLabel={
+            isPostOwner
+              ? `View ${respectCount ?? 0} people who respected this post`
+              : isRespected
+                ? "Remove respect from this post"
+                : "Respect this post"
+          }
+        >
+          <FontAwesome6 name="hand-fist" size={14} color={Colors.accent.primary} />
+          <ThemedText style={{ fontFamily: Typography.family.primary.semibold, fontSize: 14 }}>Respect</ThemedText>
+          <ThemedText
+            style={{ fontFamily: Typography.family.secondary.semibold, fontSize: 14, color: Colors.icon }}
+          >
+            {respectCount ? respectCount : null}
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderWorkoutOverview = () => {
     if (!data) return null;
 
@@ -234,6 +331,8 @@ const WorkoutHistoryDetails = () => {
     );
   };
 
+  const isPostOwner = user?.uid === data?.uid;
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {isDropdownOpened && (
@@ -291,6 +390,7 @@ const WorkoutHistoryDetails = () => {
           keyExtractor={(exercise) => exercise.id}
           ItemSeparatorComponent={() => <View style={styles.exerciseSeparator} />}
           contentContainerStyle={styles.listContentContainer}
+          ListFooterComponent={renderPostActions}
         />
       )}
       <WorkoutNameSheet
@@ -302,6 +402,13 @@ const WorkoutHistoryDetails = () => {
           handleSaveAsTemplate(name);
         }}
       />
+      {feedItemId && (
+        <FeedItemRespectUsersSheet
+          visible={isRespectUsersSheetVisible}
+          feedItemId={feedItemId}
+          onClose={() => setIsRespectUsersSheetVisible(false)}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -538,5 +645,13 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     paddingTop: 24,
+  },
+
+  postActionContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: Colors.cardBorder,
+    marginTop: 24,
   },
 });
