@@ -9,6 +9,7 @@ const mockInvalidateQueries = jest.fn();
 const mockSaveWorkoutAsTemplate = jest.fn();
 const mockSetInitialWorkout = jest.fn();
 const mockToastShow = jest.fn();
+const mockMutateAsync = jest.fn();
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({
@@ -23,6 +24,10 @@ jest.mock("expo-router", () => ({
 jest.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({
     invalidateQueries: mockInvalidateQueries,
+  }),
+  useMutation: ({ onSuccess, onError }: any) => ({
+    mutateAsync: mockMutateAsync,
+    isPending: false,
   }),
 }));
 
@@ -45,6 +50,22 @@ jest.mock("@/stores/workout-store", () => ({
 
 jest.mock("react-native-toast-message", () => ({
   show: (...args: any[]) => mockToastShow(...args),
+}));
+
+jest.mock("@/components/feed/FeedItemRespectUsersSheet", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+
+  return {
+    __esModule: true,
+    default: ({ visible }: any) => (visible ? <View testID="respect-users-sheet" /> : null),
+  };
+});
+
+jest.mock("@/services/social-service", () => ({
+  getFeedItemRespectCount: jest.fn(),
+  respectFeedPost: jest.fn(),
+  userHasRespectedFeedItem: jest.fn(),
 }));
 
 jest.mock("@/components/themed-text", () => {
@@ -168,13 +189,19 @@ const mockWorkout = {
 };
 
 const setupSuccessState = (overrides = {}) => {
-  mockUseQuery.mockReturnValue({
-    data: {
-      ...mockWorkout,
-      ...overrides,
-    },
-    isLoading: false,
-    error: null,
+  mockUseQuery.mockImplementation(({ queryKey }: any) => {
+    const [key] = queryKey;
+    if (key === "workout") {
+      return {
+        data: {
+          ...mockWorkout,
+          ...overrides,
+        },
+        isLoading: false,
+        error: null,
+      };
+    }
+    return { data: undefined, isLoading: false, error: null };
   });
 };
 
