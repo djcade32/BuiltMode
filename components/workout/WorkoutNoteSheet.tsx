@@ -1,6 +1,6 @@
 import { Border, Colors, Typography } from "@/constants/theme";
 import { FontAwesome5 } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -51,7 +51,13 @@ const WorkoutNoteSheet = ({ visible, workoutName, initialValue = "", onClose, on
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" presentationStyle="overFullScreen" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      presentationStyle="overFullScreen"
+      onRequestClose={handleClose}
+    >
       <View style={styles.modalRoot}>
         <Pressable style={styles.backdrop} onPress={handleClose} />
 
@@ -138,7 +144,7 @@ const styles = StyleSheet.create({
   },
 
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.45)",
   },
 

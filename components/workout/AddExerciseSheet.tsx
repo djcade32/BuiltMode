@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { EXERCISES_GROUPED } from "@/constants/exercises";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
-import { Exercise, ExerciseMetricType, ExerciseType } from "@builtmode/shared";
+import { Exercise, ExerciseMetricType, ExerciseType, ExerciseUnit } from "@builtmode/shared";
 import { Entypo, MaterialIcons } from "@expo/vector-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -96,10 +96,18 @@ const AddExerciseSheet = ({ visible, onClose, onSelect }: Props) => {
   const buildExerciseObject = (item: { name: string; type: ExerciseType; metricType: ExerciseMetricType }) => {
     const { name, metricType } = item;
     const id = `${uuidv4()}-exercise`;
+    let units: ExerciseUnit | null = null;
+    if (metricType === "distance") {
+      units = "mi";
+    } else if (metricType === "weight_reps") {
+      units = "lbs";
+    }
+
     const exercise: Exercise = {
       id,
       name,
       metricType,
+      units,
       sets: [{ id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }],
     };
     return exercise;

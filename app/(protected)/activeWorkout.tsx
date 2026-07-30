@@ -12,7 +12,7 @@ import WorkoutNoteSheet from "@/components/workout/WorkoutNoteSheet";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useWorkoutLiveActivity } from "@/hooks/useWorkoutLiveActivity";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
-import { Exercise, ExerciseMetricType } from "@/packages/shared/src";
+import { Exercise, ExerciseMetricType, ExerciseUnit } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -279,10 +279,46 @@ const ActiveWorkout = () => {
 
     const updatedExercises = activeWorkoutDraft.exercises.map((exercise) => {
       if (exerciseId === exercise.id) {
+        let units: ExerciseUnit | null = null;
+        if (metricType === "distance") {
+          units = "mi";
+        } else if (metricType === "weight_reps") {
+          units = "lbs";
+        }
+
         return {
           ...exercise,
           metricType,
+          units,
           sets: [{ id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }],
+        };
+      }
+      return exercise;
+    });
+
+    updateWorkout({
+      sessionId: activeWorkoutDraft.sessionId,
+      uid: user.uid,
+      exercises: updatedExercises,
+    });
+
+    if (!workoutProgress || !workoutProgress[exerciseId]) return;
+
+    updateWorkoutProgress({
+      exerciseId,
+      sets: [],
+      completed: false,
+    });
+  };
+
+  const handleChangeExerciseUnit = (exerciseId: string, exerciseUnit: ExerciseUnit) => {
+    if (!user?.uid || !activeWorkoutDraft) return;
+
+    const updatedExercises = activeWorkoutDraft.exercises.map((exercise) => {
+      if (exerciseId === exercise.id) {
+        return {
+          ...exercise,
+          units: exerciseUnit,
         };
       }
       return exercise;
@@ -461,6 +497,7 @@ const ActiveWorkout = () => {
                 onExerciseComplete={handleExerciseCompleted}
                 setIsNotesSheetVisible={setIsNotesSheetVisible}
                 onDeleteExercise={handleDeleteExercise}
+                onChangeExerciseUnit={handleChangeExerciseUnit}
                 onChangeMetricType={handleChangeMetricType}
                 scrollToTop={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
               />
