@@ -1,3 +1,4 @@
+import { ExerciseUnit } from "@/packages/shared/src";
 import { Button, HStack, Image, Spacer, Text, VStack } from "@expo/ui/swift-ui";
 import {
   background,
@@ -93,6 +94,7 @@ export type WorkoutLiveActivityProps = {
   durationSeconds?: number;
   distance?: number;
   distanceUnit?: "mi" | "km" | "m";
+  units: ExerciseUnit | null;
 
   /**
    * Unix timestamp representing when the rest timer ends.
@@ -151,13 +153,14 @@ function WorkoutLiveActivityView(props: WorkoutLiveActivityProps) {
   if (props.isWorkoutComplete) {
     metricLabel = "WORKOUT COMPLETE";
   } else if (props.weight != null && props.reps != null) {
-    metricLabel = `${formatNumber(props.weight)} LB × ${formatNumber(props.reps)}`;
+    const unit = props.units ? props.units.toLocaleUpperCase() : "LB";
+    metricLabel = `${formatNumber(props.weight)} ${unit} × ${formatNumber(props.reps)}`;
   } else if (props.reps != null) {
     metricLabel = `${formatNumber(props.reps)} REPS`;
   } else if (props.durationSeconds != null) {
     metricLabel = formatDuration(props.durationSeconds);
   } else if (props.distance != null) {
-    const unit = props.distanceUnit ? props.distanceUnit.toLocaleUpperCase() : "MI";
+    const unit = props.units ? props.units.toLocaleUpperCase() : "MI";
     metricLabel = `${formatNumber(props.distance)} ${unit}`;
   }
 

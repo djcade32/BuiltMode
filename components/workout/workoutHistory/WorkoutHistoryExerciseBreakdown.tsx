@@ -4,7 +4,6 @@ import { breakdownSeconds } from "@/lib/utils/conversions";
 import { formatTimeInput } from "@/lib/utils/time";
 import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
 import { FontAwesome } from "@expo/vector-icons";
-import React from "react";
 import { StyleSheet, View } from "react-native";
 
 type Props = {
@@ -12,7 +11,7 @@ type Props = {
 };
 
 const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
-  const { name, metricType, notes } = exercise;
+  const { name, metricType, notes, units } = exercise;
 
   const SetItem = ({ set, order, type }: { set: ExerciseSet; order: number; type: ExerciseMetricType }) => {
     const formatNumber = (value?: number, suffix = "") =>
@@ -39,7 +38,7 @@ const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
           <View style={styles.exerciseSetContainer}>
             <ThemedText style={styles.setText}>Distance</ThemedText>
             <ThemedText style={{ ...styles.setWeightText, color: Colors.accent.secondary }}>
-              {formatNumber(set.distanceMiles, " miles")}
+              {formatNumber(set.distanceMiles, ` ${units ?? "mi"}`)}
             </ThemedText>
           </View>
         </View>
@@ -50,7 +49,7 @@ const WorkoutHistoryExerciseBreakdown = ({ exercise }: Props) => {
           <ThemedText style={styles.setText}>Set {order}</ThemedText>
           <View style={{ flexDirection: "row", gap: 15 }}>
             <ThemedText style={styles.setRepText}>{formatNumber(set.reps, " reps")}</ThemedText>
-            <ThemedText style={styles.setWeightText}>{formatNumber(set.weight, " lbs")}</ThemedText>
+            <ThemedText style={styles.setWeightText}>{formatNumber(set.weight, ` ${units ?? "lbs"}`)}</ThemedText>
           </View>
         </View>
       );

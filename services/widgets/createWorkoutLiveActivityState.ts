@@ -73,6 +73,7 @@ export const createWorkoutLiveActivityState = ({
 
     weight: currentSet?.weight,
     reps: currentSet?.reps,
+    units: currentExercise?.units ?? null,
 
     isResting,
     isPaused,
