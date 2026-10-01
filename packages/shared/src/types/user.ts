@@ -41,6 +41,8 @@ export type User = {
   weeklyTargetDays: WeeklyTargetDays;
   pendingWeeklyTargetDays?: WeeklyTargetDays | null;
   pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
+  pendingDeloadWeekStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
+  lastDeloadWeekStartedAt?: firestoreTimestamp | firestoreTimestampV2 | null;
 
   // Meta
   createdAt: firestoreTimestamp;
@@ -111,6 +113,8 @@ export type CreateUserProfileResponse = {
   weeklyTargetDays: WeeklyTargetDays;
   pendingWeeklyTargetDays?: WeeklyTargetDays | null;
   pendingWeeklyTargetStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
+  pendingDeloadWeekStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
+  lastDeloadWeekStartedAt?: firestoreTimestamp | firestoreTimestampV2 | null;
   isPracticeWeek: boolean;
 };
 

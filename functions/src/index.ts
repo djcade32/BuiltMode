@@ -29,6 +29,7 @@ import {
   handleChangingWeeklyTarget,
   handleCreateUserProfile,
   handleFetchingUserHomeTimezone,
+  handleStartDeloadWeek,
 } from "./functions/user.js";
 import { handleCompleteWorkout, handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
 import { WeeklyTargetDays } from "./types/user.js";
@@ -261,6 +262,14 @@ export const changeWeeklyTarget = onCall(async (request: CallableRequest<{ weekl
   }
 
   return await handleChangingWeeklyTarget(request.auth.uid, parsed.data);
+});
+
+export const startDeloadWeek = onCall(async (request: CallableRequest<void>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+
+  return await handleStartDeloadWeek(request.auth.uid);
 });
 
 export const respectFeedPost = onCall(async (request: CallableRequest<{ feedItemId: string }>) => {

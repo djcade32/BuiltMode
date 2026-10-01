@@ -73,6 +73,7 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       avatarUrl: typeof data.avatarUrl === "string" ? data.avatarUrl : "",
       pendingWeeklyTargetDays: data.pendingWeeklyTargetDays as WeeklyTargetDays,
       pendingWeeklyTargetStartsAt: data.pendingWeeklyTargetStartsAt,
+      pendingDeloadWeekStartsAt: data.pendingDeloadWeekStartsAt,
     };
 
     return builtUser;
@@ -205,6 +206,22 @@ export const changeWeeklyTarget = async (params: {
     return response.data;
   } catch (error: any) {
     console.error("Failed to update weekly target");
+    throw error;
+  }
+};
+
+export const startDeloadWeek = async (): Promise<{ success: boolean; msg: string }> => {
+  try {
+    const startDeloadWeekFunction = httpsCallable<void, { success: boolean; msg: string }>(
+      functions,
+      "startDeloadWeek",
+    );
+
+    const response = await startDeloadWeekFunction();
+    if (!response.data || response.data === undefined) throw Error("Failed to start deload week");
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to start deload week");
     throw error;
   }
 };

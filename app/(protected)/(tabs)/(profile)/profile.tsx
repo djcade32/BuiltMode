@@ -77,6 +77,7 @@ const profile = () => {
       currentStreakWeek: userWeekAggregate?.streakWeeks || userStats?.currentWeekStreak || 0,
       isPracticeWeek: user?.isPracticeWeek || !userWeekAggregate?.isOfficialWeek || false,
       isStreakActive: userStats?.currentWeekStreak && userStats?.currentWeekStreak > 0 ? true : false,
+      isDeloadWeek: userWeekAggregate?.isDeloadWeek,
     };
   }, [userWeekAggregate, userStats, user]);
 

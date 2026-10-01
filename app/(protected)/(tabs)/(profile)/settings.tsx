@@ -6,15 +6,18 @@ import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useUpdateProfileAvatar } from "@/hooks/user/useUpdateProfileAvatar";
+import { formatFirestoreTimestamp } from "@/lib/utils/date";
+// import { getWeekId } from "@/packages/shared/src";
 // import { deleteBuiltModeAccount } from "@/services/delete-account-service";
-import { changeWeeklyTarget } from "@/services/user-service";
+import { changeWeeklyTarget, startDeloadWeek } from "@/services/user-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUserStore } from "@/stores/user-store";
 import { Entypo, Feather, FontAwesome, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -33,13 +36,22 @@ type SettingsRowProps = {
   subtitle?: string;
   preIcon?: { familyIcon: any; name: string; color?: string };
   postIcon?: { familyIcon: any; name: string; color?: string };
+  disabled?: boolean;
   onPress: () => void;
 };
 
-const SettingsRow = ({ title, subtitle, onPress, preIcon, postIcon, titleStyle }: SettingsRowProps) => {
+const SettingsRow = ({
+  title,
+  subtitle,
+  onPress,
+  preIcon,
+  postIcon,
+  titleStyle,
+  disabled = false,
+}: SettingsRowProps) => {
   return (
-    <TouchableOpacity style={styles.settingsSectionRow} onPress={onPress}>
-      <View style={{ gap: 12, alignItems: "center", flexDirection: "row", flexShrink: 1 }}>
+    <TouchableOpacity style={styles.settingsSectionRow} onPress={onPress} disabled={disabled}>
+      <View style={{ flexDirection: "row", flex: 1, gap: 12, alignItems: "center" }}>
         {preIcon && (
           <View style={styles.settingsRowIcon}>
             {React.createElement(preIcon.familyIcon, {
@@ -49,20 +61,22 @@ const SettingsRow = ({ title, subtitle, onPress, preIcon, postIcon, titleStyle }
             })}
           </View>
         )}
-        <View style={{ gap: 5 }}>
+        <View style={{ gap: 5, flexShrink: 1 }}>
           <ThemedText style={[styles.settingsRowTitle, titleStyle]}>{title}</ThemedText>
           {subtitle && <ThemedText style={styles.settingsRowSubtitle}>{subtitle}</ThemedText>}
         </View>
       </View>
-      {postIcon ? (
-        React.createElement(postIcon.familyIcon, {
-          name: postIcon.name,
-          size: 20,
-          color: postIcon.color ? postIcon.color : Colors.gray,
-        })
-      ) : (
-        <Entypo name="chevron-right" size={24} color={Colors.gray} />
-      )}
+      <View>
+        {postIcon ? (
+          React.createElement(postIcon.familyIcon, {
+            name: postIcon.name,
+            size: 20,
+            color: postIcon.color ? postIcon.color : Colors.gray,
+          })
+        ) : (
+          <Entypo name="chevron-right" size={24} color={Colors.gray} />
+        )}
+      </View>
     </TouchableOpacity>
   );
 };
@@ -72,6 +86,7 @@ const settings = () => {
   const { user } = useUserStore();
   const { signout, user: authUser } = useAuthStore();
   const uid = user?.uid ?? "";
+  const usersHomeTimezone = user?.homeTimezone;
 
   const [isChangeEmailVisible, setIsChangeEmailVisible] = useState(false);
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
@@ -82,6 +97,9 @@ const settings = () => {
   const { mutateAsync: handleChangingWeeklyTarget, isPending: isChangingWeeklyTarget } = useMutation({
     mutationFn: changeWeeklyTarget,
   });
+  const { mutateAsync: handleStartDeloadWeek, isPending: isStartingDeloadWeek } = useMutation({
+    mutationFn: startDeloadWeek,
+  });
 
   // const { mutateAsync: handleDeletingAccount, isPending: isDeletingAccount } = useMutation({
   //   mutationFn: deleteBuiltModeAccount,
@@ -90,6 +108,38 @@ const settings = () => {
   //     await signout();
   //   },
   // });
+
+  // const { data: userWeekAggregate, isLoading: isLoadingUserWeekAggregate } = useQuery({
+  //   queryKey: ["user-week-aggregate", usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "", uid],
+  //   queryFn: fetchUserWeekAggregate,
+  //   params: {
+  //     uid,
+  //     weekId: usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "",
+  //   },
+  //   enabled: !!usersHomeTimezone,
+  // });
+
+  const isDeloadWeekEligible = useMemo(() => {
+    if (user?.pendingDeloadWeekStartsAt) return false;
+    if (user?.lastDeloadWeekStartedAt) {
+      let seconds = null;
+      let nanoseconds = null;
+      if ("_seconds" in user.lastDeloadWeekStartedAt) {
+        seconds = user.lastDeloadWeekStartedAt._seconds;
+        nanoseconds = user.lastDeloadWeekStartedAt._nanoseconds;
+      } else {
+        ((seconds = user.lastDeloadWeekStartedAt.seconds),
+          (nanoseconds = user.lastDeloadWeekStartedAt.nanoseconds));
+      }
+      // Calculate 8 weeks from last deload week
+      const nextEligibleDeloadWeek = dayjs(formatFirestoreTimestamp({ seconds, nanoseconds }))
+        .add(8, "weeks")
+        .toDate();
+      console.log("nextEligibleDeloadWeek: ", nextEligibleDeloadWeek);
+      return dayjs(new Date()).isAfter(nextEligibleDeloadWeek);
+    }
+    return true;
+  }, [user]);
 
   const currentWeeklyTarget: WeeklyTargetDays =
     user?.weeklyTargetDays === 2 ||
@@ -234,6 +284,34 @@ const settings = () => {
     // await handleDeletingAccount();
   };
 
+  const showDeloadWeekConfirmationModal = () => {
+    Alert.alert(
+      "Start Deload Week?",
+      "Your deload week will begin next Monday at 4:00 AM. During your deload week, you can take time to recover without affecting your BuiltMode streak.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Schedule Deload",
+          onPress: async () => {
+            const result = await handleStartDeloadWeek();
+            if (result.success) {
+              console.log("Deload week started");
+              Alert.alert("", result.msg);
+            } else if (result.msg.includes("pending")) {
+              Alert.alert("", result.msg);
+            } else {
+              console.error("Error starting deload week: ", result.msg);
+              Alert.alert("", result.msg);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* HEADER */}
@@ -316,6 +394,19 @@ const settings = () => {
               }}
               onPress={() => setIsChangeWeeklyTargetVisible(true)}
             />
+
+            <View style={styles.separator} />
+
+            <SettingsRow
+              title="Deload Week"
+              subtitle="Declare next week a deload week for recovery"
+              preIcon={{
+                familyIcon: MaterialIcons,
+                name: "restore",
+              }}
+              onPress={() => showDeloadWeekConfirmationModal()}
+              disabled={isStartingDeloadWeek || !isDeloadWeekEligible}
+            />
           </View>
 
           <View
@@ -331,7 +422,7 @@ const settings = () => {
           >
             <FontAwesome5 name="info-circle" size={12} color={Colors.accent.secondary} />
             <ThemedText style={styles.settingsInfoText}>
-              Weekly target changes take effect the following Monday at 4:00 AM
+              Weekly target changes and Deload week take effect the following Monday at 4:00 AM
             </ThemedText>
           </View>
         </View>
@@ -479,8 +570,8 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: "center",
     padding: 16,
-    width: "100%",
     justifyContent: "space-between",
+    width: "100%",
   },
   settingsRowTitle: {
     fontSize: 14,
@@ -509,5 +600,7 @@ const styles = StyleSheet.create({
   settingsInfoText: {
     fontSize: 10,
     color: Colors.icon,
+    flexShrink: 1,
+    lineHeight: 18,
   },
 });
