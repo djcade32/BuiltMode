@@ -25,6 +25,12 @@ export const exerciseMetricTypeSchema = z.enum([
   "time",
 ]);
 
+export const weightUnitSchema = z.enum(["lbs", "kg"]);
+
+export const distanceUnitSchema = z.enum(["mi", "km", "m", "yd"]);
+
+export const unitsSchema = z.enum(["mi", "km", "m", "yd", "lbs", "kg"]);
+
 const workoutLocalDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected date format YYYY-MM-DD");
 
 const workoutLocalTimeSchema = z.string().regex(/^\d{2}:\d{2}$/, "Expected time format HH:mm");
@@ -43,9 +49,12 @@ export const exerciseSetSchema = z.object({
   id: z.string().min(1),
   reps: z.number().int().nonnegative().optional(),
   weight: z.number().nonnegative().optional(),
+  weightUnit: weightUnitSchema.optional(),
   durationSec: z.number().int().nonnegative().optional(),
   distanceMiles: z.number().nonnegative().optional(),
+  distanceUnit: distanceUnitSchema.optional(),
   calories: z.number().nonnegative().optional(),
+  timeSeconds: z.number().nonnegative().optional(),
   completed: z.boolean().optional(),
   rpe: z.number().min(1).max(10).optional(),
 });
@@ -55,6 +64,7 @@ export const exerciseSchema = z.object({
   name: z.string().min(1),
   metricType: exerciseMetricTypeSchema,
   sets: z.array(exerciseSetSchema),
+  units: unitsSchema.nullable(),
   notes: z.string().trim().max(500).optional(),
 });
 

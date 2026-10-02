@@ -25,10 +25,12 @@ import {
 } from "./functions/social.js";
 import { handleDeleteTemplate, handleSaveAsTemplate } from "./functions/template.js";
 import {
+  handleCancelDeloadWeek,
   handleChangingUserAvatarUrl,
   handleChangingWeeklyTarget,
   handleCreateUserProfile,
   handleFetchingUserHomeTimezone,
+  handleStartDeloadWeek,
 } from "./functions/user.js";
 import { handleCompleteWorkout, handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
 import { WeeklyTargetDays } from "./types/user.js";
@@ -263,6 +265,22 @@ export const changeWeeklyTarget = onCall(async (request: CallableRequest<{ weekl
   return await handleChangingWeeklyTarget(request.auth.uid, parsed.data);
 });
 
+export const startDeloadWeek = onCall(async (request: CallableRequest<void>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+
+  return await handleStartDeloadWeek(request.auth.uid);
+});
+
+export const cancelDeloadWeek = onCall(async (request: CallableRequest<void>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+
+  return await handleCancelDeloadWeek(request.auth.uid);
+});
+
 export const respectFeedPost = onCall(async (request: CallableRequest<{ feedItemId: string }>) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
@@ -279,4 +297,5 @@ export const respectFeedPost = onCall(async (request: CallableRequest<{ feedItem
 export { activateOfficialWeeks } from "./scheduled/activateOfficialWeek.js";
 export { changeUsersWeeklyTargetDays } from "./scheduled/changeUsersWeeklyTargetDays.js";
 export { ensureCurrentWeekAggregates } from "./scheduled/ensureCurrentWeekAggregates.js";
+export { processDeloadWeeks } from "./scheduled/processDeloadWeeks.js";
 export { finalizeExpiredWeeks } from "./scheduled/finalizeExpiredWeeks.js";

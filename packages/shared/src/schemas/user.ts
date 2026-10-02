@@ -100,6 +100,8 @@ export const createUserProfileResponseSchema = z.object({
     .union([firestoreTimestampSchema, firestoreTimestampV2Schema])
     .nullable()
     .optional(),
+  pendingDeloadWeekStartsAt: z.union([firestoreTimestampSchema, firestoreTimestampV2Schema]).nullable().optional(),
+  lastDeloadWeekStartedAt: z.union([firestoreTimestampSchema, firestoreTimestampV2Schema]).nullable().optional(),
   isPracticeWeek: z.boolean(),
 });
 

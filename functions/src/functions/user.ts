@@ -4,7 +4,7 @@ import { PublicProfile, User, UserStats } from "@builtmode/shared/types/user";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/https";
 import { createInitialEntry } from "../firestore/leaderboard.js";
 import {
@@ -21,7 +21,7 @@ import {
 import { db } from "../lib/firebaseAdmin.js";
 import { LeaderboardEntry } from "../types/leaderboard.js";
 import { UserDoc, WeeklyTargetDays } from "../types/user.js";
-import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "../utils/weekId.js";
+import { handleGetNextOfficialStartWeekId, handleGetWeekId, handleGetWeekWindow } from "../utils/weekId.js";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -258,4 +258,65 @@ export function handleGetOfficialStartAt(
   }
 
   return Timestamp.fromDate(officialStartLocal.toDate());
+}
+
+export async function handleCancelDeloadWeek(uid: string): Promise<{ success: boolean; msg: string }> {
+  const userRef = db.collection("users").doc(uid);
+
+  return db.runTransaction(async (tx) => {
+    const userSnap = await tx.get(userRef);
+    if (!userSnap.exists) throw new HttpsError("not-found", "User not found.");
+
+    const user = userSnap.data() as UserDoc;
+    const pendingStart = user.pendingDeloadWeekStartsAt;
+    if (!pendingStart) {
+      return { success: false, msg: "There is no pending deload week to cancel." };
+    }
+    // Check inside the transaction so retries cannot cancel an activated deload.
+    if (pendingStart.toMillis() <= Timestamp.now().toMillis()) {
+      return { success: false, msg: "Your deload week has already started and cannot be canceled." };
+    }
+
+    tx.update(userRef, {
+      pendingDeloadWeekStartsAt: null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { success: true, msg: "Your scheduled deload week has been canceled." };
+  });
+}
+
+export async function handleStartDeloadWeek(uid: string) {
+  const result = await db.runTransaction(async (tx) => {
+    const fetchedUser = (await getUserByUid(tx, uid)).data();
+    if (!fetchedUser || fetchedUser === undefined) return undefined;
+
+    let pendingDeloadWeekStartsAt = fetchedUser?.pendingDeloadWeekStartsAt;
+    const lastDeloadWeekStartedAt = fetchedUser?.lastDeloadWeekStartedAt ?? null;
+    console.log("lastDeloadWeekStartedAt: ", lastDeloadWeekStartedAt);
+
+    // There is a deload already pending
+    if (pendingDeloadWeekStartsAt && pendingDeloadWeekStartsAt !== null)
+      return { success: false, msg: "There is a deload week already pending for next Monday." };
+
+    const now = new Date();
+    if (lastDeloadWeekStartedAt) {
+      // Calculate 8 weeks from last deload week
+      const nextEligibleDeloadWeek = dayjs(lastDeloadWeekStartedAt.toDate()).add(8, "weeks").toDate();
+      console.log("nextEligibleDeloadWeek calculated is: ", nextEligibleDeloadWeek);
+      const eligibleToDeload = dayjs(now).isAfter(nextEligibleDeloadWeek);
+      if (!eligibleToDeload) return { success: false, msg: "You are not within the deload window." };
+    }
+
+    pendingDeloadWeekStartsAt = handleGetWeekWindow(now, fetchedUser.homeTimezone).weekEndAt;
+    console.log("pendingDeloadWeekStartsAt: ", pendingDeloadWeekStartsAt);
+    const updatedUserDoc: User = {
+      ...(fetchedUser as User),
+      pendingDeloadWeekStartsAt,
+      lastDeloadWeekStartedAt,
+    };
+    const userRef = db.collection("users").doc(uid);
+    tx.set(userRef, { ...updatedUserDoc, updatedAt: FieldValue.serverTimestamp() });
+    return { success: true, msg: "Your deload week will start next Monday at 4:00 AM" };
+  });
+  return result;
 }

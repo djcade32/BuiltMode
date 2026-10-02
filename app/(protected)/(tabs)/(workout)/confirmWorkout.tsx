@@ -6,7 +6,6 @@ import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
-import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { v4 as uuidv4 } from "uuid";
@@ -34,7 +33,7 @@ const ExerciseListRow = ({ exercise, index }: { exercise: Exercise; index: numbe
     }
   };
 
-  const setValue = exercise.metricType === "distance" ? (exercise.sets[0]?.distanceMiles ?? 0) : exercise.sets.length;
+  const setValue = exercise.sets.length;
   return (
     <View key={exercise.id} style={styles.exerciseListRowContainer}>
       <View style={styles.listNumberContainer}>

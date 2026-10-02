@@ -1,10 +1,25 @@
+/// <reference types="jest" />
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
-import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "../../utils/weekId.js";
+import { handleGetNextOfficialStartWeekId, handleGetWeekId, handleGetWeekWindow } from "../../utils/weekId.js";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+describe("handleGetWeekWindow", () => {
+  test.each([
+    ["2026-03-02T09:01:00Z", "America/New_York", "2026-03-02T09:00:00.000Z", "2026-03-09T08:00:00.000Z"],
+    ["2026-03-08T16:00:00Z", "America/New_York", "2026-03-02T09:00:00.000Z", "2026-03-09T08:00:00.000Z"],
+    ["2026-10-26T08:01:00Z", "America/New_York", "2026-10-26T08:00:00.000Z", "2026-11-02T09:00:00.000Z"],
+    ["2026-10-05T08:01:00Z", "America/Los_Angeles", "2026-09-28T11:00:00.000Z", "2026-10-05T11:00:00.000Z"],
+    ["2026-10-04T22:16:00Z", "Asia/Kathmandu", "2026-10-04T22:15:00.000Z", "2026-10-11T22:15:00.000Z"],
+  ])("resolves local boundaries for %s in %s", (now, zone, start, end) => {
+    const result = handleGetWeekWindow(new Date(now), zone);
+    expect(result.weekStartAt.toDate().toISOString()).toBe(start);
+    expect(result.weekEndAt.toDate().toISOString()).toBe(end);
+  });
+});
 
 describe("handleGetWeekId", () => {
   test("returns previous Monday Feb 23, 2026 when date is Monday March 2, 2026 3:59 am", () => {

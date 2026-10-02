@@ -91,13 +91,15 @@ export function handleGetWeekWindow(date: Date, homeTimezone: string): BuiltMode
     weekStartLocal = weekStartLocal.subtract(7, "day");
   }
 
-  const weekEndLocal = weekStartLocal.add(7, "day");
-
   const weekId = weekStartLocal.format("YYYY-MM-DD");
+  // Resolve each boundary independently so DST changes use the correct offset.
+  const weekEndDate = weekStartLocal.add(7, "day").format("YYYY-MM-DD");
+  const weekStart = dayjs.tz(`${weekId}T04:00:00`, homeTimezone);
+  const weekEnd = dayjs.tz(`${weekEndDate}T04:00:00`, homeTimezone);
 
   return {
     weekId,
-    weekStartAt: Timestamp.fromDate(weekStartLocal.toDate()),
-    weekEndAt: Timestamp.fromDate(weekEndLocal.toDate()),
+    weekStartAt: Timestamp.fromDate(weekStart.toDate()),
+    weekEndAt: Timestamp.fromDate(weekEnd.toDate()),
   };
 }
