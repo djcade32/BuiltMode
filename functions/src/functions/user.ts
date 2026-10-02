@@ -260,6 +260,31 @@ export function handleGetOfficialStartAt(
   return Timestamp.fromDate(officialStartLocal.toDate());
 }
 
+export async function handleCancelDeloadWeek(uid: string): Promise<{ success: boolean; msg: string }> {
+  const userRef = db.collection("users").doc(uid);
+
+  return db.runTransaction(async (tx) => {
+    const userSnap = await tx.get(userRef);
+    if (!userSnap.exists) throw new HttpsError("not-found", "User not found.");
+
+    const user = userSnap.data() as UserDoc;
+    const pendingStart = user.pendingDeloadWeekStartsAt;
+    if (!pendingStart) {
+      return { success: false, msg: "There is no pending deload week to cancel." };
+    }
+    // Check inside the transaction so retries cannot cancel an activated deload.
+    if (pendingStart.toMillis() <= Timestamp.now().toMillis()) {
+      return { success: false, msg: "Your deload week has already started and cannot be canceled." };
+    }
+
+    tx.update(userRef, {
+      pendingDeloadWeekStartsAt: null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { success: true, msg: "Your scheduled deload week has been canceled." };
+  });
+}
+
 export async function handleStartDeloadWeek(uid: string) {
   const result = await db.runTransaction(async (tx) => {
     const fetchedUser = (await getUserByUid(tx, uid)).data();

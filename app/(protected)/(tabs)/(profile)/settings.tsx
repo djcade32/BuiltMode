@@ -6,21 +6,22 @@ import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useUpdateProfileAvatar } from "@/hooks/user/useUpdateProfileAvatar";
-import { formatFirestoreTimestamp } from "@/lib/utils/date";
+import dayjs from "@/lib/dayjs";
+import { handleGetWeekId } from "@/lib/utils/weekId";
 // import { getWeekId } from "@/packages/shared/src";
 // import { deleteBuiltModeAccount } from "@/services/delete-account-service";
-import { changeWeeklyTarget, startDeloadWeek } from "@/services/user-service";
+import { cancelDeloadWeek, changeWeeklyTarget, checkForUserProfile, startDeloadWeek } from "@/services/user-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUserStore } from "@/stores/user-store";
 import { Entypo, Feather, FontAwesome, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Linking,
   ScrollView,
   StyleSheet,
@@ -97,49 +98,79 @@ const settings = () => {
   const { mutateAsync: handleChangingWeeklyTarget, isPending: isChangingWeeklyTarget } = useMutation({
     mutationFn: changeWeeklyTarget,
   });
+  const runDeloadWeekAction = async (action: typeof startDeloadWeek) => {
+    const actionUid = useUserStore.getState().user?.uid;
+    const result = await action();
+    if (!result.success) return result;
+
+    try {
+      if (!actionUid) throw new Error("Missing user for deload refresh");
+      const refreshedUser = await checkForUserProfile(actionUid, "server");
+      if (!refreshedUser) throw new Error("User profile could not be refreshed");
+
+      // Do not restore a signed-out user or overwrite a different account.
+      if (useUserStore.getState().user?.uid === actionUid) {
+        useUserStore.getState().setUser({
+          ...refreshedUser,
+          isPracticeWeek:
+            handleGetWeekId(new Date(), refreshedUser.homeTimezone) < refreshedUser.officialStartWeekId,
+        });
+      }
+      return result;
+    } catch (error) {
+      console.error("Deload saved, but user refresh failed:", error);
+      return {
+        ...result,
+        msg: `${result.msg}\n\nYour change was saved, but the screen could not refresh. It may still show your previous deload status.`,
+      };
+    }
+  };
+
   const { mutateAsync: handleStartDeloadWeek, isPending: isStartingDeloadWeek } = useMutation({
-    mutationFn: startDeloadWeek,
+    mutationFn: () => runDeloadWeekAction(startDeloadWeek),
+  });
+  const { mutateAsync: handleCancelDeloadWeek, isPending: isCancelingDeloadWeek } = useMutation({
+    mutationFn: () => runDeloadWeekAction(cancelDeloadWeek),
   });
 
-  // const { mutateAsync: handleDeletingAccount, isPending: isDeletingAccount } = useMutation({
-  //   mutationFn: deleteBuiltModeAccount,
-  //   onSuccess: async () => {
-  //     setIsDeleteAccountVisible(false);
-  //     await signout();
-  //   },
-  // });
+  const hasPendingDeloadWeek = !!user?.pendingDeloadWeekStartsAt;
+  const [now, setNow] = useState(Date.now);
 
-  // const { data: userWeekAggregate, isLoading: isLoadingUserWeekAggregate } = useQuery({
-  //   queryKey: ["user-week-aggregate", usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "", uid],
-  //   queryFn: fetchUserWeekAggregate,
-  //   params: {
-  //     uid,
-  //     weekId: usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "",
-  //   },
-  //   enabled: !!usersHomeTimezone,
-  // });
+  useEffect(() => {
+    const refreshNow = () => setNow(Date.now());
+    const interval = setInterval(refreshNow, 60_000);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") refreshNow();
+    });
 
-  const isDeloadWeekEligible = useMemo(() => {
-    if (user?.pendingDeloadWeekStartsAt) return false;
-    if (user?.lastDeloadWeekStartedAt) {
-      let seconds = null;
-      let nanoseconds = null;
-      if ("_seconds" in user.lastDeloadWeekStartedAt) {
-        seconds = user.lastDeloadWeekStartedAt._seconds;
-        nanoseconds = user.lastDeloadWeekStartedAt._nanoseconds;
-      } else {
-        ((seconds = user.lastDeloadWeekStartedAt.seconds),
-          (nanoseconds = user.lastDeloadWeekStartedAt.nanoseconds));
-      }
-      // Calculate 8 weeks from last deload week
-      const nextEligibleDeloadWeek = dayjs(formatFirestoreTimestamp({ seconds, nanoseconds }))
-        .add(8, "weeks")
-        .toDate();
-      console.log("nextEligibleDeloadWeek: ", nextEligibleDeloadWeek);
-      return dayjs(new Date()).isAfter(nextEligibleDeloadWeek);
-    }
-    return true;
-  }, [user]);
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, []);
+
+  const lastDeloadWeekStartedAt = user?.lastDeloadWeekStartedAt;
+  let nextEligibleDeloadWeekAt = 0;
+  if (lastDeloadWeekStartedAt) {
+    const seconds =
+      "_seconds" in lastDeloadWeekStartedAt ? lastDeloadWeekStartedAt._seconds : lastDeloadWeekStartedAt.seconds;
+    const nanoseconds =
+      "_nanoseconds" in lastDeloadWeekStartedAt
+        ? lastDeloadWeekStartedAt._nanoseconds
+        : lastDeloadWeekStartedAt.nanoseconds;
+    const lastStartedAt = seconds * 1000 + Math.floor(nanoseconds / 1_000_000);
+    nextEligibleDeloadWeekAt = dayjs.utc(lastStartedAt).add(8, "weeks").valueOf();
+  }
+
+  const isDeloadWeekOnCooldown = !!lastDeloadWeekStartedAt && now <= nextEligibleDeloadWeekAt;
+  const isDeloadWeekEligible = !hasPendingDeloadWeek && !isDeloadWeekOnCooldown;
+  // Round partial days up so the countdown never promises availability early.
+  const remainingDays = isDeloadWeekOnCooldown
+    ? Math.max(1, Math.ceil((nextEligibleDeloadWeekAt - now) / 86_400_000))
+    : 0;
+  const weeks = Math.floor(remainingDays / 7);
+  const days = remainingDays % 7;
+  const deloadCooldownLabel = `Available in ${weeks} ${weeks === 1 ? "week" : "weeks"} and ${days} ${days === 1 ? "day" : "days"}`;
 
   const currentWeeklyTarget: WeeklyTargetDays =
     user?.weeklyTargetDays === 2 ||
@@ -284,7 +315,35 @@ const settings = () => {
     // await handleDeletingAccount();
   };
 
+  const showCancelDeloadWeekConfirmationModal = () => {
+    if (isStartingDeloadWeek || isCancelingDeloadWeek || !hasPendingDeloadWeek) return;
+
+    Alert.alert(
+      "Cancel Scheduled Deload?",
+      "Next week will remain a regular training week.",
+      [
+        { text: "Keep Scheduled", style: "cancel" },
+        {
+          text: "Cancel Deload",
+          style: "destructive",
+          onPress: async () => {
+            if (!useUserStore.getState().user?.pendingDeloadWeekStartsAt) return;
+            try {
+              const result = await handleCancelDeloadWeek();
+              Alert.alert(result.success ? "Deload Canceled" : "Unable to Cancel", result.msg);
+            } catch (error) {
+              console.error("Error canceling deload week:", error);
+              Alert.alert("Unable to Cancel", "Please try again. Your cancellation could not be confirmed.");
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const showDeloadWeekConfirmationModal = () => {
+    if (isStartingDeloadWeek || isCancelingDeloadWeek || !isDeloadWeekEligible) return;
+
     Alert.alert(
       "Start Deload Week?",
       "Your deload week will begin next Monday at 4:00 AM. During your deload week, you can take time to recover without affecting your BuiltMode streak.",
@@ -296,15 +355,14 @@ const settings = () => {
         {
           text: "Schedule Deload",
           onPress: async () => {
-            const result = await handleStartDeloadWeek();
-            if (result.success) {
-              console.log("Deload week started");
-              Alert.alert("", result.msg);
-            } else if (result.msg.includes("pending")) {
-              Alert.alert("", result.msg);
-            } else {
-              console.error("Error starting deload week: ", result.msg);
-              Alert.alert("", result.msg);
+            if (useUserStore.getState().user?.pendingDeloadWeekStartsAt) return;
+
+            try {
+              const result = await handleStartDeloadWeek();
+              Alert.alert(result.success ? "Deload Scheduled" : "Unable to Schedule", result.msg);
+            } catch (error) {
+              console.error("Error scheduling deload week:", error);
+              Alert.alert("Unable to Schedule", "Please try again. Your scheduled deload could not be confirmed.");
             }
           },
         },
@@ -398,14 +456,37 @@ const settings = () => {
             <View style={styles.separator} />
 
             <SettingsRow
-              title="Deload Week"
-              subtitle="Declare next week a deload week for recovery"
+              title={
+                hasPendingDeloadWeek
+                  ? "Deload Week Scheduled"
+                  : isDeloadWeekOnCooldown
+                    ? "Deload Week Cooldown"
+                    : "Deload Week"
+              }
+              subtitle={
+                hasPendingDeloadWeek
+                  ? "Your deload week starts next Monday at 4:00 AM. Tap to cancel."
+                  : isDeloadWeekOnCooldown
+                    ? deloadCooldownLabel
+                    : "Declare next week a deload week for recovery"
+              }
               preIcon={{
                 familyIcon: MaterialIcons,
                 name: "restore",
               }}
-              onPress={() => showDeloadWeekConfirmationModal()}
-              disabled={isStartingDeloadWeek || !isDeloadWeekEligible}
+              postIcon={
+                hasPendingDeloadWeek
+                  ? { familyIcon: Feather, name: "clock" }
+                  : isDeloadWeekOnCooldown
+                    ? { familyIcon: Feather, name: "lock" }
+                    : undefined
+              }
+              onPress={
+                hasPendingDeloadWeek ? showCancelDeloadWeekConfirmationModal : showDeloadWeekConfirmationModal
+              }
+              disabled={
+                isStartingDeloadWeek || isCancelingDeloadWeek || (!hasPendingDeloadWeek && !isDeloadWeekEligible)
+              }
             />
           </View>
 

@@ -24,6 +24,7 @@ export type UserDoc = {
   pendingWeeklyTargetStartsAt?: Timestamp | null;
   pendingDeloadWeekStartsAt?: Timestamp | null;
   lastDeloadWeekStartedAt?: Timestamp | null;
+  deloadWeekEndsAt?: Timestamp | null;
   officialStartAt: Timestamp | firestoreTimestampV2;
   officialWeekStatus: OfficialWeekStatus;
   officialStartedAt: Timestamp | null;
