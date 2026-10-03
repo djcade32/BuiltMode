@@ -1,3 +1,5 @@
+import SettingsRow from "@/components/settings/SettingsRow";
+import HomeTimezoneSetting from "@/components/settings/HomeTimezoneSetting";
 import ChangeEmailSheet from "@/components/settings/ChangeEmailModal";
 import ChangePasswordModal from "@/components/settings/ChangePasswordModal";
 import ChangeWeeklyTargetModal, { type WeeklyTargetDays } from "@/components/settings/ChangeWeeklyTargetModal";
@@ -28,62 +30,10 @@ import {
   Linking,
   ScrollView,
   StyleSheet,
-  TextStyle,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-type SettingsRowProps = {
-  title: string;
-  titleStyle?: TextStyle;
-  subtitle?: string;
-  preIcon?: { familyIcon: any; name: string; color?: string };
-  postIcon?: { familyIcon: any; name: string; color?: string };
-  disabled?: boolean;
-  onPress: () => void;
-};
-
-const SettingsRow = ({
-  title,
-  subtitle,
-  onPress,
-  preIcon,
-  postIcon,
-  titleStyle,
-  disabled = false,
-}: SettingsRowProps) => {
-  return (
-    <TouchableOpacity style={styles.settingsSectionRow} onPress={onPress} disabled={disabled}>
-      <View style={{ flexDirection: "row", flex: 1, gap: 12, alignItems: "center" }}>
-        {preIcon && (
-          <View style={styles.settingsRowIcon}>
-            {React.createElement(preIcon.familyIcon, {
-              name: preIcon.name,
-              size: 16,
-              color: preIcon.color ? preIcon.color : Colors.gray,
-            })}
-          </View>
-        )}
-        <View style={{ gap: 5, flexShrink: 1 }}>
-          <ThemedText style={[styles.settingsRowTitle, titleStyle]}>{title}</ThemedText>
-          {subtitle && <ThemedText style={styles.settingsRowSubtitle}>{subtitle}</ThemedText>}
-        </View>
-      </View>
-      <View>
-        {postIcon ? (
-          React.createElement(postIcon.familyIcon, {
-            name: postIcon.name,
-            size: 20,
-            color: postIcon.color ? postIcon.color : Colors.gray,
-          })
-        ) : (
-          <Entypo name="chevron-right" size={24} color={Colors.gray} />
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 const settings = () => {
   const router = useRouter();
@@ -91,7 +41,6 @@ const settings = () => {
   const { user } = useUserStore();
   const { signout, user: authUser } = useAuthStore();
   const uid = user?.uid ?? "";
-  const usersHomeTimezone = user?.homeTimezone;
 
   const [isChangeEmailVisible, setIsChangeEmailVisible] = useState(false);
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
@@ -470,6 +419,8 @@ const settings = () => {
         <View style={{ gap: 8 }}>
           <ThemedText style={styles.settingsSectionTitle}>APP PREFERENCES</ThemedText>
           <View style={styles.settingsSection}>
+            <HomeTimezoneSetting />
+            <View style={styles.separator} />
             <SettingsRow
               title="Weekly Target"
               subtitle={`Change weekly target from ${currentWeeklyTarget} days`}
@@ -694,16 +645,7 @@ const styles = StyleSheet.create({
     height: 1,
     width: "90%",
   },
-  settingsRowIcon: {
-    backgroundColor: Colors.background.primary,
-    width: 40,
-    height: 40,
-    borderRadius: Border.radius.md,
-    borderColor: Colors.cardBorder,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
+
   settingsInfoText: {
     fontSize: 10,
     color: Colors.icon,

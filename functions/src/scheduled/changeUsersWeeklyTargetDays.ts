@@ -3,8 +3,8 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/scheduler";
-import { UserDoc } from "src/types/user.js";
-import { handleGetWeekWindow } from "src/utils/weekId.js";
+import { UserDoc } from "../types/user.js";
+import { handleGetWeekWindow } from "../utils/weekId.js";
 
 type ChangeUsersWeeklyTargetDaysResult =
   | {
@@ -109,6 +109,10 @@ async function handleChangeWeeklyTargetDays(
     if (await isAccountDeleting(freshUserSnap.id, tx)) return { status: "skipped", reason: "account_deleting" };
 
     const user = freshUserSnap.data() as UserDoc;
+    // A job that started before a timezone switch must retry with a fresh clock.
+    if (user.homeTimezoneUpdatedAt && user.homeTimezoneUpdatedAt.toMillis() > now.toMillis()) {
+      return { status: "skipped", reason: "timezone_changed_during_run" };
+    }
     const uid = freshUserSnap.id;
 
     if (user.officialWeekStatus !== "official") {
@@ -132,7 +136,7 @@ async function handleChangeWeeklyTargetDays(
       };
     }
 
-    if (!user.pendingWeeklyTargetStartsAt) {
+    if (!user.pendingWeeklyTargetStartsAt || user.pendingWeeklyTargetStartsAt.toMillis() > now.toMillis()) {
       return {
         status: "skipped",
         reason: "missing_pending_weekly_target_starts_at",

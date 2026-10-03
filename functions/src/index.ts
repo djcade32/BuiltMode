@@ -8,7 +8,7 @@
  */
 
 import { saveAsTemplateRequestSchema } from "@builtmode/shared/schemas/template";
-import { createUserProfileRequestSchema, weeklyTargetDaysSchema } from "@builtmode/shared/schemas/user";
+import { createUserProfileRequestSchema, weeklyTargetDaysSchema, updateHomeTimezoneRequestSchema } from "@builtmode/shared/schemas/user";
 import { completeWorkoutRequestSchema } from "@builtmode/shared/schemas/workout";
 import { SaveAsTemplateRequest } from "@builtmode/shared/types/template";
 import { CreateUserProfileRequest } from "@builtmode/shared/types/user";
@@ -32,6 +32,7 @@ import {
   handleFetchingUserHomeTimezone,
   handleStartDeloadWeek,
 } from "./functions/user.js";
+import { handleUpdateHomeTimezone } from "./functions/homeTimezone.js";
 import { handleCompleteWorkout, handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
 import { assertAccountActive } from "./services/accountDeletionGuard.js";
 import { WeeklyTargetDays } from "./types/user.js";
@@ -318,3 +319,12 @@ export { processDeloadWeeks } from "./scheduled/processDeloadWeeks.js";
 export { finalizeExpiredWeeks } from "./scheduled/finalizeExpiredWeeks.js";
 
 export { deleteBuiltModeAccount, retryAccountDeletions } from "./functions/deleteAccount.js";
+
+export const updateHomeTimezone = onCall(async (request) => {
+  if (!request.auth?.uid) throw new HttpsError("unauthenticated", "User must be signed in.");
+  const parsed = updateHomeTimezoneRequestSchema.safeParse(request.data);
+  if (!parsed.success) throw new HttpsError("invalid-argument", "Invalid home timezone payload.");
+  return handleUpdateHomeTimezone(request.auth.uid, parsed.data.homeTimezone);
+});
+
+export { changeUsersHomeTimezone } from "./scheduled/changeUsersHomeTimezone.js";

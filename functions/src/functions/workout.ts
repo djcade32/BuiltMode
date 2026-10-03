@@ -94,12 +94,11 @@ export async function handleCompleteWorkout(
 ): Promise<CompleteWorkoutResponse> {
   const { sessionId, workoutType, notes, exercises, name, duration } = workout;
 
-  const now = Timestamp.now();
-  const lockedAt = now.toDate();
-  lockedAt.setMinutes(lockedAt.getMinutes() + 5);
-  const lockedAtTimestamp = Timestamp.fromDate(lockedAt);
   const result = await db.runTransaction(async (tx) => {
     const user = await getUserByUid(tx, uid);
+    // Refresh on transaction retries so a concurrent timezone switch cannot send this workout backward.
+    const now = Timestamp.now();
+    const lockedAtTimestamp = Timestamp.fromMillis(now.toMillis() + 5 * 60_000);
 
     const fetchedUserStats = await getUserStats(tx, uid);
     const userStatsExists = fetchedUserStats.exists;
@@ -128,13 +127,17 @@ export async function handleCompleteWorkout(
 
     const isOfficialWeek = dayjs(officialStartWeekId).isBefore(dayjs(weekId)) || officialStartWeekId === weekId;
 
+    const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
+    const weekAggregateExists = weekAggregate.exists;
+    if (weekAggregate.get("finalizedAt")) {
+      throw new HttpsError("failed-precondition", "This training week has already ended. Please try again after your weekly reset.");
+    }
+
     const dayMarkerExists = (await getDayMarker(tx, uid, weekId, localDateKey)).exists;
     const numOfCompletedWorkoutsLast30Days = await getWorkoutsWithinLast30Days(tx, uid, localDateKey);
     const completedWorkoutsLast30Days = dayMarkerExists
       ? numOfCompletedWorkoutsLast30Days
       : numOfCompletedWorkoutsLast30Days + 1;
-    const weekAggregate = await getUserWeekAggregate(tx, uid, weekId);
-    const weekAggregateExists = weekAggregate.exists;
 
     const last4WeekAggregates = await getLastFourWeekAggregates(tx, uid, weekId);
 
@@ -270,7 +273,7 @@ export async function handleCompleteWorkout(
       weekId,
       isDeloadWeek,
       weekEndAt: weekWindow.weekEndAt,
-      weekStartAt: weekWindow.weekStartAt,
+      weekStartAt: weekAggregate.get("weekStartAt") ?? weekWindow.weekStartAt,
       streakCreditedAt,
       finalizedAt: null,
       targetMetAt,
