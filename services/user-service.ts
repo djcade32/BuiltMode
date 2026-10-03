@@ -10,13 +10,15 @@ import {
   UserStats,
   UserWeekAggregate,
   WeeklyTargetDays,
+  UpdateHomeTimezoneRequest,
+  UpdateHomeTimezoneResponse,
 } from "@builtmode/shared";
 
 import { httpsCallable } from "firebase/functions";
 
 import { uploadImageAsync } from "@/lib/firestorage";
 import { firestoreTimestamp, firestoreTimestampV2 } from "@/packages/shared/src/types/firestore";
-import { doc, getDoc, getDocFromServer } from "firebase/firestore";
+import { doc, getDoc, getDocFromServer, onSnapshot } from "firebase/firestore";
 
 export const checkForUserProfile = async (
   uid: string,
@@ -61,6 +63,9 @@ export const checkForUserProfile = async (
       createdAt,
       displayName: data.displayName,
       homeTimezone: data.homeTimezone,
+      pendingHomeTimezone: data.pendingHomeTimezone ?? null,
+      pendingHomeTimezoneStartsAt: data.pendingHomeTimezoneStartsAt ?? null,
+      pendingHomeTimezoneWeekId: data.pendingHomeTimezoneWeekId ?? null,
       goal: data.goal as Goal,
       metrics: data.metrics ?? undefined,
       homeTimezoneSetAt,
@@ -294,3 +299,25 @@ export const getPublicProfile = async (uid: string): Promise<PublicProfile | nul
     avatarUpdatedAt: data.avatarUpdatedAt,
   };
 };
+
+export const updateHomeTimezone = async (params: UpdateHomeTimezoneRequest): Promise<UpdateHomeTimezoneResponse> => {
+  const update = httpsCallable<UpdateHomeTimezoneRequest, UpdateHomeTimezoneResponse>(functions, "updateHomeTimezone");
+  return (await update(params)).data;
+};
+
+type HomeTimezoneFields = Pick<User, "homeTimezone" | "homeTimezoneUpdatedAt" | "pendingHomeTimezone"
+  | "pendingHomeTimezoneWeekId" | "pendingHomeTimezoneStartsAt" | "currentWeekId">;
+
+export const subscribeToHomeTimezone = (uid: string, onChange: (fields: HomeTimezoneFields) => void) =>
+  onSnapshot(doc(db, `users/${uid}`), (snapshot) => {
+    const data = snapshot.data();
+    if (!data || typeof data.homeTimezone !== "string") return;
+    onChange({
+      homeTimezone: data.homeTimezone,
+      homeTimezoneUpdatedAt: data.homeTimezoneUpdatedAt,
+      pendingHomeTimezone: data.pendingHomeTimezone ?? null,
+      pendingHomeTimezoneWeekId: data.pendingHomeTimezoneWeekId ?? null,
+      pendingHomeTimezoneStartsAt: data.pendingHomeTimezoneStartsAt ?? null,
+      currentWeekId: data.currentWeekId,
+    });
+  }, (error) => console.error("Unable to sync home timezone:", error));

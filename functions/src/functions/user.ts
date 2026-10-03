@@ -19,6 +19,7 @@ import {
   getUsernameIndex,
 } from "../firestore/user.js";
 import { db } from "../lib/firebaseAdmin.js";
+import { getHomeTimezoneChangeSchedule } from "../utils/homeTimezoneChange.js";
 import { LeaderboardEntry } from "../types/leaderboard.js";
 import { UserDoc, WeeklyTargetDays } from "../types/user.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId, handleGetWeekWindow } from "../utils/weekId.js";
@@ -314,6 +315,12 @@ export async function handleStartDeloadWeek(uid: string) {
       ...(fetchedUser as User),
       pendingDeloadWeekStartsAt,
       lastDeloadWeekStartedAt,
+      // A newly scheduled deload finishes before an existing timezone change.
+      ...(fetchedUser.pendingHomeTimezone ? getHomeTimezoneChangeSchedule(
+        { ...fetchedUser, pendingDeloadWeekStartsAt } as UserDoc,
+        fetchedUser.pendingHomeTimezone,
+        now,
+      ) : {}),
     };
     const userRef = db.collection("users").doc(uid);
     tx.set(userRef, { ...updatedUserDoc, updatedAt: FieldValue.serverTimestamp() });

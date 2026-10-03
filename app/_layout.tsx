@@ -157,6 +157,8 @@ export default function RootLayout() {
           <Stack screenOptions={{ contentStyle: { backgroundColor: Colors.background.primary } }}>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(protected)" options={{ headerShown: false }} />
+            <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
+            <Stack.Screen name="terms-of-service" options={{ headerShown: false }} />
           </Stack>
           <Toast position="bottom" config={toastConfig} bottomOffset={80} swipeable />
         </ThemedView>

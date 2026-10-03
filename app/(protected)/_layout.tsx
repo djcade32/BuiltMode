@@ -1,3 +1,4 @@
+import HomeTimezoneSync from "@/components/system/HomeTimezoneSync";
 import PendingWorkoutPublisher from "@/components/system/PendingWorkoutPublisher";
 import {
   handleInitialNotification,
@@ -71,6 +72,7 @@ const ProtectedLayout = () => {
 
   return (
     <MenuProvider>
+      <HomeTimezoneSync />
       {pathname !== "/workoutComplete" ? <PendingWorkoutPublisher /> : null}
       <Stack>
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
