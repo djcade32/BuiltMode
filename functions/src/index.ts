@@ -33,6 +33,7 @@ import {
   handleStartDeloadWeek,
 } from "./functions/user.js";
 import { handleCompleteWorkout, handlePublishCompletedWorkoutToFeed } from "./functions/workout.js";
+import { assertAccountActive } from "./services/accountDeletionGuard.js";
 import { WeeklyTargetDays } from "./types/user.js";
 import { assertValidTimezone } from "./utils/time.js";
 import { handleGetNextOfficialStartWeekId, handleGetWeekId } from "./utils/weekId.js";
@@ -56,6 +57,7 @@ export const createUserProfile = onCall(async (request: CallableRequest<CreateUs
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const parsed = createUserProfileRequestSchema.safeParse(request.data);
 
@@ -88,6 +90,7 @@ export const completeWorkout = onCall(async (request: CallableRequest<CompleteWo
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const parsed = completeWorkoutRequestSchema.safeParse(request.data);
 
@@ -101,6 +104,7 @@ export const saveAsTemplate = onCall(async (request: CallableRequest<SaveAsTempl
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const parsed = saveAsTemplateRequestSchema.safeParse(request.data);
 
@@ -115,6 +119,7 @@ export const deleteTemplate = onCall(async (request: CallableRequest<{ id: strin
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const { id } = request.data;
 
@@ -129,6 +134,7 @@ export const sendFriendRequest = onCall(async (request: CallableRequest<{ id: st
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const { id } = request.data;
 
@@ -144,6 +150,7 @@ export const respondToFriendRequest = onCall(
     if (!request.auth?.uid) {
       throw new HttpsError("unauthenticated", "User must be signed in.");
     }
+    await assertAccountActive(request.auth.uid);
 
     const { requestId, action } = request.data;
 
@@ -162,6 +169,7 @@ export const cancelFriendRequest = onCall(async (request: CallableRequest<{ requ
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const { requestId } = request.data;
 
@@ -176,6 +184,7 @@ export const searchUserByUsername = onCall(async (request: CallableRequest<{ use
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const { username } = request.data;
 
@@ -190,6 +199,7 @@ export const removeFriend = onCall(async (request: CallableRequest<{ friendUid: 
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const { friendUid } = request.data;
 
@@ -204,6 +214,7 @@ export const fetchUsersHomeTimezone = onCall(async (request: CallableRequest<{ u
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const data = request.data;
   if (!data || typeof data.uid !== "string" || !data.uid.trim()) {
@@ -219,6 +230,7 @@ export const publishCompletedWorkoutToFeed = onCall(
     if (!request.auth?.uid) {
       throw new HttpsError("unauthenticated", "User must be signed in.");
     }
+    await assertAccountActive(request.auth.uid);
 
     const data = request.data;
     if (
@@ -242,6 +254,7 @@ export const changeUserAvatarUrl = onCall(async (request: CallableRequest<{ avat
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
   const data = request.data;
 
   if (!data || (data.avatarUrl !== null && typeof data.avatarUrl !== "string")) {
@@ -255,6 +268,7 @@ export const changeWeeklyTarget = onCall(async (request: CallableRequest<{ weekl
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   const parsed = weeklyTargetDaysSchema.safeParse(request.data?.weeklyTarget);
 
@@ -269,6 +283,7 @@ export const startDeloadWeek = onCall(async (request: CallableRequest<void>) => 
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   return await handleStartDeloadWeek(request.auth.uid);
 });
@@ -277,6 +292,7 @@ export const cancelDeloadWeek = onCall(async (request: CallableRequest<void>) =>
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
 
   return await handleCancelDeloadWeek(request.auth.uid);
 });
@@ -285,6 +301,7 @@ export const respectFeedPost = onCall(async (request: CallableRequest<{ feedItem
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "User must be signed in.");
   }
+  await assertAccountActive(request.auth.uid);
   const data = request.data;
 
   if (!data || typeof data.feedItemId !== "string") {
@@ -299,3 +316,5 @@ export { changeUsersWeeklyTargetDays } from "./scheduled/changeUsersWeeklyTarget
 export { ensureCurrentWeekAggregates } from "./scheduled/ensureCurrentWeekAggregates.js";
 export { processDeloadWeeks } from "./scheduled/processDeloadWeeks.js";
 export { finalizeExpiredWeeks } from "./scheduled/finalizeExpiredWeeks.js";
+
+export { deleteBuiltModeAccount, retryAccountDeletions } from "./functions/deleteAccount.js";

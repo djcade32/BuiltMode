@@ -9,12 +9,15 @@ import { useUpdateProfileAvatar } from "@/hooks/user/useUpdateProfileAvatar";
 import dayjs from "@/lib/dayjs";
 import { handleGetWeekId } from "@/lib/utils/weekId";
 // import { getWeekId } from "@/packages/shared/src";
-// import { deleteBuiltModeAccount } from "@/services/delete-account-service";
+import { deleteBuiltModeAccount } from "@/services/delete-account-service";
+import { signOutUser } from "@/services/auth-service";
+import { useWorkoutStore } from "@/stores/workout-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import { cancelDeloadWeek, changeWeeklyTarget, checkForUserProfile, startDeloadWeek } from "@/services/user-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUserStore } from "@/stores/user-store";
 import { Entypo, Feather, FontAwesome, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -84,6 +87,7 @@ const SettingsRow = ({
 
 const settings = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useUserStore();
   const { signout, user: authUser } = useAuthStore();
   const uid = user?.uid ?? "";
@@ -93,6 +97,9 @@ const settings = () => {
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
   const [isChangeWeeklyTargetVisible, setIsChangeWeeklyTargetVisible] = useState(false);
   const [isDeleteAccountVisible, setIsDeleteAccountVisible] = useState(false);
+  const { mutateAsync: handleDeleteAccount, isPending: isDeletingAccount } = useMutation({
+    mutationFn: deleteBuiltModeAccount,
+  });
 
   const { mutateAsync: changeUserAvatarUrl, isPending: isChangingAvatar } = useUpdateProfileAvatar();
   const { mutateAsync: handleChangingWeeklyTarget, isPending: isChangingWeeklyTarget } = useMutation({
@@ -312,7 +319,27 @@ const settings = () => {
   };
 
   const deleteAccount = async () => {
-    // await handleDeletingAccount();
+    const result = await handleDeleteAccount();
+    setIsDeleteAccountVisible(false);
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    useWorkoutStore.getState().clearWorkout();
+    useOnboardingStore.getState().resetState();
+    useUserStore.getState().setUser(null);
+    useAuthStore.getState().reset();
+    // Tokens were already removed server-side; ordinary signout would try to
+    // unregister them again using the deleted account's credentials.
+    try {
+      await signOutUser();
+    } catch (error) {
+      console.error("Account deletion accepted, but local signout failed:", error);
+    }
+    Alert.alert(
+      result.status === "completed" ? "Account Deleted" : "Account Deletion Started",
+      result.status === "completed"
+        ? "Your BuiltMode account has been deleted."
+        : "Your deletion request is saved. Cleanup will continue automatically; you do not need to keep the app open.",
+    );
   };
 
   const showCancelDeloadWeekConfirmationModal = () => {
@@ -535,7 +562,7 @@ const settings = () => {
               }}
             />
 
-            {/* <View style={styles.separator} />
+            <View style={styles.separator} />
 
             <SettingsRow
               title="Delete Account"
@@ -546,7 +573,7 @@ const settings = () => {
                 name: "chevron-right",
                 color: Colors.error,
               }}
-            /> */}
+            />
           </View>
         </View>
 
@@ -577,8 +604,7 @@ const settings = () => {
 
       <DeleteAccountModal
         visible={isDeleteAccountVisible}
-        isDeleting={false}
-        // isDeleting={isDeletingAccount}
+        isDeleting={isDeletingAccount}
         onClose={() => setIsDeleteAccountVisible(false)}
         onDeleteAccount={deleteAccount}
       />
