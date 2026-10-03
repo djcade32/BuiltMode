@@ -18,6 +18,9 @@ export type UserDoc = {
 
   // Time & eligibility
   homeTimezone: string;
+  pendingHomeTimezone?: string | null;
+  pendingHomeTimezoneWeekId?: string | null;
+  pendingHomeTimezoneStartsAt?: Timestamp | null;
   officialStartWeekId: string;
   weeklyTargetDays: WeeklyTargetDays;
   pendingWeeklyTargetDays?: WeeklyTargetDays | null;

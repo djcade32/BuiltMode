@@ -34,6 +34,9 @@ export type User = {
 
   // Discipline / eligibility
   homeTimezone: HomeTimezone;
+  pendingHomeTimezone?: string | null;
+  pendingHomeTimezoneWeekId?: string | null;
+  pendingHomeTimezoneStartsAt?: firestoreTimestamp | firestoreTimestampV2 | null;
   officialStartWeekId: string;
   currentWeekId: string;
   officialWeekStatus: OfficialWeekStatus;
@@ -144,7 +147,8 @@ export type UpdateHomeTimezoneRequest = {
 
 export type UpdateHomeTimezoneResponse = {
   homeTimezone: HomeTimezone;
-  effectiveWeekId: string;
+  effectiveWeekId: string | null;
+  effectiveAt: number | null;
 };
 
 export type PublicProfile = {

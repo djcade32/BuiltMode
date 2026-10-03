@@ -216,8 +216,21 @@ const Signup = () => {
                 }}
               >
                 <ThemedText style={styles.footerText}>
-                  By continuing, you agree to our Terms and Privacy Policy
+                  By continuing, you agree to our
                 </ThemedText>
+                <View style={styles.legalLinks}>
+                  <Link href="/terms-of-service" push asChild>
+                    <TouchableOpacity accessibilityRole="link" style={styles.legalLinkButton}>
+                      <ThemedText style={styles.legalLinkText}>Terms of Service</ThemedText>
+                    </TouchableOpacity>
+                  </Link>
+                  <ThemedText style={styles.footerText}>and</ThemedText>
+                  <Link href="/privacy-policy" push asChild>
+                    <TouchableOpacity accessibilityRole="link" style={styles.legalLinkButton}>
+                      <ThemedText style={styles.legalLinkText}>Privacy Policy</ThemedText>
+                    </TouchableOpacity>
+                  </Link>
+                </View>
               </View>
             </ThemedView>
 
@@ -248,10 +261,13 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontFamily: Typography.family.primary.regular,
-    fontSize: 10,
-    color: Colors.inputBorder,
+    fontSize: 12,
+    color: Colors.gray,
     textAlign: "center",
   },
+  legalLinks: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: "center", columnGap: 8 },
+  legalLinkButton: { minHeight: 44, justifyContent: "center" },
+  legalLinkText: { fontSize: 12, color: Colors.accent.primary, textDecorationLine: "underline" },
   formError: {
     color: "red",
     fontSize: Typography.size.xs,

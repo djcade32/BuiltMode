@@ -176,6 +176,10 @@ async function finalizeWeekAggregate(
     if (await isAccountDeleting(freshUserSnap.id, tx)) return { status: "skipped", reason: "account_deleting" };
 
     const user = freshUserSnap.data() as UserDoc;
+    // A job that started before a timezone switch must retry with a fresh clock.
+    if (user.homeTimezoneUpdatedAt && user.homeTimezoneUpdatedAt.toMillis() > now.toMillis()) {
+      return { status: "skipped", reason: "timezone_changed_during_run" };
+    }
 
     if (user.officialWeekStatus !== "official") {
       return {

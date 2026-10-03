@@ -10,10 +10,11 @@ type Props = {
   visible: boolean;
   selectedTimezone: string;
   onClose: () => void;
+  onDismiss?: () => void;
   onSelect: (timezone: TimezoneOption) => void;
 };
 
-const TimezonePickerSheet = ({ visible, selectedTimezone, onClose, onSelect }: Props) => {
+const TimezonePickerSheet = ({ visible, selectedTimezone, onClose, onSelect, onDismiss }: Props) => {
   const [query, setQuery] = useState("");
 
   const timezoneOptions = useMemo(() => getTimezoneOptions(), []);
@@ -44,6 +45,7 @@ const TimezonePickerSheet = ({ visible, selectedTimezone, onClose, onSelect }: P
       animationType="slide"
       presentationStyle="overFullScreen"
       onRequestClose={handleClose}
+      onDismiss={onDismiss}
     >
       <Pressable style={styles.backdrop} onPress={handleClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>

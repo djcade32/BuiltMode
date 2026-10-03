@@ -131,7 +131,8 @@ export const updateHomeTimezoneRequestSchema = z.object({
 
 export const updateHomeTimezoneResponseSchema = z.object({
   homeTimezone: homeTimezoneSchema,
-  effectiveWeekId: z.string().min(1),
+  effectiveWeekId: z.string().min(1).nullable(),
+  effectiveAt: z.number().nullable(),
 });
 
 export const userStatsSchema = z.object({

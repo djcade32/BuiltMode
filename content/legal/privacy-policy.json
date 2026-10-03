@@ -1,0 +1,51 @@
+{
+  "title": "BuiltMode Privacy Policy",
+  "effectiveDate": "October 3, 2026",
+  "introduction": "BuiltMode is operated by Norman Cade in the United States. This Privacy Policy explains how we collect, use, store, and share personal information when you use BuiltMode, and how you can exercise your privacy rights.\n\nFor questions or requests concerning your personal information, contact **normancade@gmail.com**.",
+  "sections": [
+    {
+      "title": "1. Information We Collect",
+      "body": "### Information you provide\n\nWe collect information you provide when creating an account and using BuiltMode, including:\n\n- **Account information:** Your name, email address, and username.\n- **Optional profile information:** Your profile picture, height, and weight.\n- **Workout information:** Workout logs and workout pictures you upload.\n- **Body measurements:** Measurements you enter into the app.\n- **Following information:** Which users you follow and which users follow you.\n- **Communications:** Information you provide when contacting us for support or submitting a privacy request.\n\n### Information processed automatically\n\nBuiltMode processes your timezone to support time-related app functionality.\n\nBuiltMode uses Google Firebase services, which may also process technical information, including IP addresses, authentication-related device or browser information, and service logs, to operate and secure the app.\n\n### Apple Health\n\nBuiltMode does not currently access Apple Health data. If we introduce an Apple Health integration, we will update this policy and request the necessary permissions before accessing that information."
+    },
+    {
+      "title": "2. How We Use Your Information",
+      "body": "We use personal information to:\n\n- Create and manage your account.\n- Store and display your profile, workout logs, pictures, and body measurements.\n- Provide following functionality and display eligible content to your followers.\n- Support time-related app functionality.\n- Respond to support inquiries and privacy requests.\n- Operate, maintain, and secure BuiltMode.\n- Comply with applicable legal obligations.\n\nBuiltMode does not display advertisements, use advertising tracking, sell personal information, share personal information for targeted advertising, or use your personal information to train AI models."
+    },
+    {
+      "title": "3. Visibility to Other Users",
+      "body": "Your name, username, profile picture, workout logs, and workout pictures are visible only to other signed-in BuiltMode users who follow you. This information is not publicly visible.\n\nYour email address, body measurements, and the list of users you follow are not shared with other users.\n\nUsers who can view your content may save screenshots or other copies. Account deletion cannot remove copies that other people have independently saved.\n\nBuiltMode does not currently offer comments."
+    },
+    {
+      "title": "4. How We Share Information",
+      "body": "### Google Firebase\n\nBuiltMode uses the following Google Firebase services:\n\n- **Firebase Authentication** for account authentication.\n- **Cloud Firestore** for database storage.\n- **Cloud Storage for Firebase** for uploaded files.\n- **Cloud Functions for Firebase** for backend functionality.\n\nGoogle processes personal information in connection with providing these services. More information is available in [Firebase’s Privacy and Security documentation](https://firebase.google.com/support/privacy).\n\n### Other BuiltMode users\n\nWe share eligible profile and workout information with your followers as described in Section 3.\n\n### Legal requirements\n\nWe may disclose information when required by applicable law or valid legal process.\n\nApart from the disclosures described in this policy, we do not routinely share your personal information with other parties."
+    },
+    {
+      "title": "5. Data Retention and Account Deletion",
+      "body": "We retain your account information, workout logs, pictures, body measurements, timezone, and following information while your account remains open, unless earlier deletion is required by applicable law.\n\nYou can delete your account by opening **Settings** and selecting **Delete Account**. This initiates deletion of your Firebase Authentication account and associated BuiltMode data from our active databases and file storage.\n\nDeletion from active systems does not necessarily mean every backup copy or technical record is immediately erased. Google Firebase applies service-specific retention and deletion schedules. Firebase Authentication states that logged IP addresses are retained for a few weeks and other authentication information is removed from live and backup systems within 180 days after deletion is initiated. This period does not apply uniformly to all BuiltMode data.\n\n\nFor help with account deletion, contact **normancade@gmail.com**."
+    },
+    {
+      "title": "6. Your Choices and Privacy Rights",
+      "body": "Providing a profile picture, height, and weight is optional.\n\nYou can delete your account through the app. To request an export of your account information, email **normancade@gmail.com**.\n\nDepending on your location and applicable law, you may also have rights to:\n\n- Access your personal information.\n- Request correction of inaccurate information.\n- Request deletion of information.\n- Receive a portable copy of information.\n- Restrict or object to certain processing.\n- Withdraw consent where processing relies on consent.\n\nThese rights may apply even where a corresponding control is not available within the app. To submit a request, contact **normancade@gmail.com**.\n\nWe may request information reasonably necessary to verify your identity before responding. We will handle requests within the time required by applicable law.\n\nWhere applicable, you may also lodge a complaint with your local data protection authority."
+    },
+    {
+      "title": "7. International Processing",
+      "body": "BuiltMode is operated from the United States and uses Google Firebase infrastructure. Personal information may be processed in the United States and other countries where the applicable service providers operate."
+    },
+    {
+      "title": "8. Additional Information for Users in the European Economic Area and United Kingdom",
+      "body": "### Controller\n\nNorman Cade is the controller responsible for BuiltMode’s processing of your personal information.\n\n**Contact:** normancade@gmail.com\n\n### Legal bases for processing\n\nWhere workout information or body measurements qualify as protected health data, processing requires an additional legal condition.\n\n### Withdrawal of consent\n\nWhere processing relies on consent, you may withdraw that consent at any time by contacting **normancade@gmail.com**. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.\n\nYour other privacy rights are described in Section 6."
+    },
+    {
+      "title": "9. Security",
+      "body": "BuiltMode uses Firebase Authentication and Cloud Firestore security rules to control access to accounts and database information.\n\nNo method of electronic transmission or storage is completely secure, and we cannot guarantee absolute security."
+    },
+    {
+      "title": "10. Changes to This Policy",
+      "body": "We may update this Privacy Policy as BuiltMode’s features or information practices change.\n\nWhen we update the policy, we will revise the effective date above. We will provide additional notice or request consent where required by applicable law."
+    },
+    {
+      "title": "11. Contact Us",
+      "body": "For privacy questions, account information exports, or other privacy requests, contact:\n\n**Norman Cade**  \nOperator of BuiltMode  \nUnited States  \n**Email:** normancade@gmail.com"
+    }
+  ]
+}

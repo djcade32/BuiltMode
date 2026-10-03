@@ -76,6 +76,10 @@ export async function processUserDeloadWeek(
     if (await isAccountDeleting(userSnap.id, tx)) return { status: "skipped", reason: "account_deleting" };
 
     const user = userSnap.data() as UserDoc;
+    // A job that started before a timezone switch must retry with a fresh clock.
+    if (user.homeTimezoneUpdatedAt && user.homeTimezoneUpdatedAt.toMillis() > now.toMillis()) {
+      return { status: "skipped", reason: "timezone_changed_during_run" };
+    }
     const uid = userSnap.id;
     if (user.officialWeekStatus !== "official" || !user.homeTimezone) {
       return { status: "skipped", reason: "missing_timezone_or_not_official" };
