@@ -1,7 +1,7 @@
 {
   "title": "BuiltMode Privacy Policy",
   "effectiveDate": "October 3, 2026",
-  "introduction": "BuiltMode is operated by Norman Cade in the United States. This Privacy Policy explains how we collect, use, store, and share personal information when you use BuiltMode, and how you can exercise your privacy rights.\n\nFor questions or requests concerning your personal information, contact **normancade@gmail.com**.",
+  "introduction": "BuiltMode is operated by Norman Cade in the United States. This Privacy Policy explains how we collect, use, store, and share personal information when you use BuiltMode, and how you can exercise your privacy rights.\n\nFor questions or requests concerning your personal information, contact **support@getbuiltmode.com**.",
   "sections": [
     {
       "title": "1. Information We Collect",
@@ -21,11 +21,11 @@
     },
     {
       "title": "5. Data Retention and Account Deletion",
-      "body": "We retain your account information, workout logs, pictures, body measurements, timezone, and following information while your account remains open, unless earlier deletion is required by applicable law.\n\nYou can delete your account by opening **Settings** and selecting **Delete Account**. This initiates deletion of your Firebase Authentication account and associated BuiltMode data from our active databases and file storage.\n\nDeletion from active systems does not necessarily mean every backup copy or technical record is immediately erased. Google Firebase applies service-specific retention and deletion schedules. Firebase Authentication states that logged IP addresses are retained for a few weeks and other authentication information is removed from live and backup systems within 180 days after deletion is initiated. This period does not apply uniformly to all BuiltMode data.\n\n\nFor help with account deletion, contact **normancade@gmail.com**."
+      "body": "We retain your account information, workout logs, pictures, body measurements, timezone, and following information while your account remains open, unless earlier deletion is required by applicable law.\n\nYou can delete your account by opening **Settings** and selecting **Delete Account**. This initiates deletion of your Firebase Authentication account and associated BuiltMode data from our active databases and file storage.\n\nDeletion from active systems does not necessarily mean every backup copy or technical record is immediately erased. Google Firebase applies service-specific retention and deletion schedules. Firebase Authentication states that logged IP addresses are retained for a few weeks and other authentication information is removed from live and backup systems within 180 days after deletion is initiated. This period does not apply uniformly to all BuiltMode data.\n\n\nFor help with account deletion, contact **support@getbuiltmode.com**."
     },
     {
       "title": "6. Your Choices and Privacy Rights",
-      "body": "Providing a profile picture, height, and weight is optional.\n\nYou can delete your account through the app. To request an export of your account information, email **normancade@gmail.com**.\n\nDepending on your location and applicable law, you may also have rights to:\n\n- Access your personal information.\n- Request correction of inaccurate information.\n- Request deletion of information.\n- Receive a portable copy of information.\n- Restrict or object to certain processing.\n- Withdraw consent where processing relies on consent.\n\nThese rights may apply even where a corresponding control is not available within the app. To submit a request, contact **normancade@gmail.com**.\n\nWe may request information reasonably necessary to verify your identity before responding. We will handle requests within the time required by applicable law.\n\nWhere applicable, you may also lodge a complaint with your local data protection authority."
+      "body": "Providing a profile picture, height, and weight is optional.\n\nYou can delete your account through the app. To request an export of your account information, email **support@getbuiltmode.com**.\n\nDepending on your location and applicable law, you may also have rights to:\n\n- Access your personal information.\n- Request correction of inaccurate information.\n- Request deletion of information.\n- Receive a portable copy of information.\n- Restrict or object to certain processing.\n- Withdraw consent where processing relies on consent.\n\nThese rights may apply even where a corresponding control is not available within the app. To submit a request, contact **support@getbuiltmode.com**.\n\nWe may request information reasonably necessary to verify your identity before responding. We will handle requests within the time required by applicable law.\n\nWhere applicable, you may also lodge a complaint with your local data protection authority."
     },
     {
       "title": "7. International Processing",
@@ -33,7 +33,7 @@
     },
     {
       "title": "8. Additional Information for Users in the European Economic Area and United Kingdom",
-      "body": "### Controller\n\nNorman Cade is the controller responsible for BuiltMode’s processing of your personal information.\n\n**Contact:** normancade@gmail.com\n\n### Legal bases for processing\n\nWhere workout information or body measurements qualify as protected health data, processing requires an additional legal condition.\n\n### Withdrawal of consent\n\nWhere processing relies on consent, you may withdraw that consent at any time by contacting **normancade@gmail.com**. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.\n\nYour other privacy rights are described in Section 6."
+      "body": "### Controller\n\nNorman Cade is the controller responsible for BuiltMode’s processing of your personal information.\n\n**Contact:** support@getbuiltmode.com\n\n### Legal bases for processing\n\nWhere workout information or body measurements qualify as protected health data, processing requires an additional legal condition.\n\n### Withdrawal of consent\n\nWhere processing relies on consent, you may withdraw that consent at any time by contacting **support@getbuiltmode.com**. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.\n\nYour other privacy rights are described in Section 6."
     },
     {
       "title": "9. Security",
@@ -45,7 +45,7 @@
     },
     {
       "title": "11. Contact Us",
-      "body": "For privacy questions, account information exports, or other privacy requests, contact:\n\n**Norman Cade**  \nOperator of BuiltMode  \nUnited States  \n**Email:** normancade@gmail.com"
+      "body": "For privacy questions, account information exports, or other privacy requests, contact:\n\n**Norman Cade**  \nOperator of BuiltMode  \nUnited States  \n**Email:** support@getbuiltmode.com"
     }
   ]
 }
