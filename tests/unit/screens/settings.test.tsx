@@ -8,6 +8,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import React from "react";
 import { Alert } from "react-native";
 
+const mockPush = jest.fn();
+jest.mock("expo-router", () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }));
+
 jest.mock("@/services/user-service", () => ({
   cancelDeloadWeek: jest.fn(), startDeloadWeek: jest.fn(),
   checkForUserProfile: jest.fn(), changeWeeklyTarget: jest.fn(),
@@ -73,6 +76,14 @@ describe("Settings deload refresh", () => {
     const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)[2];
     await act(async () => { await buttons.find((button: { text: string }) => button.text === label).onPress(); });
   };
+
+  test("opens legal documents from Settings", () => {
+    renderSettings();
+    fireEvent.press(screen.getByText("Terms of Service"));
+    expect(mockPush).toHaveBeenLastCalledWith("/terms-of-service");
+    fireEvent.press(screen.getByText("Privacy Policy"));
+    expect(mockPush).toHaveBeenLastCalledWith("/privacy-policy");
+  });
 
   test("refreshes the store and pending row before showing scheduling success", async () => {
     (checkForUserProfile as jest.Mock).mockResolvedValue({ ...profile, pendingDeloadWeekStartsAt: pending });

@@ -540,7 +540,7 @@ const settings = () => {
           <View style={styles.settingsSection}>
             <SettingsRow
               title="Terms of Service"
-              onPress={() => {}}
+              onPress={() => router.push("/terms-of-service")}
               titleStyle={{ color: Colors.text.secondary }}
               postIcon={{
                 familyIcon: MaterialIcons,
@@ -553,7 +553,7 @@ const settings = () => {
 
             <SettingsRow
               title="Privacy Policy"
-              onPress={() => {}}
+              onPress={() => router.push("/privacy-policy")}
               titleStyle={{ color: Colors.text.secondary }}
               postIcon={{
                 familyIcon: MaterialIcons,
