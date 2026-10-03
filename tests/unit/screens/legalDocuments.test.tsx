@@ -1,8 +1,7 @@
+import Signup from "@/app/(auth)/signup";
 import PrivacyPolicy from "@/app/privacy-policy";
 import TermsOfService from "@/app/terms-of-service";
-import Signup from "@/app/(auth)/signup";
 import { fireEvent, render, screen } from "@testing-library/react-native";
-import React from "react";
 import { Linking } from "react-native";
 
 const mockPush = jest.fn();
@@ -13,7 +12,9 @@ jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush, back: mockBack, replace: mockReplace, canGoBack: () => mockCanGoBack }),
   Link: ({ href, children }: any) => require("react").cloneElement(children, { onPress: () => mockPush(href) }),
 }));
-jest.mock("@/stores/auth-store", () => ({ useAuthStore: () => ({ signup: jest.fn(), isSigningIn: false, error: null }) }));
+jest.mock("@/stores/auth-store", () => ({
+  useAuthStore: () => ({ signup: jest.fn(), isSigningIn: false, error: null }),
+}));
 jest.mock("@/components/auth/AuthHeader", () => () => null);
 jest.mock("@/components/ui/FormInput", () => () => null);
 jest.mock("@/components/ui/ThemedButton", () => () => null);
@@ -21,18 +22,22 @@ jest.mock("@/components/themed-text", () => ({ ThemedText: require("react-native
 jest.mock("@/components/themed-view", () => ({ ThemedView: require("react-native").View }));
 jest.mock("react-native-safe-area-context", () => ({ SafeAreaView: require("react-native").View }));
 
-beforeEach(() => { jest.clearAllMocks(); mockCanGoBack = true; });
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockCanGoBack = true;
+});
 
-test.each([["Privacy Policy", PrivacyPolicy, "11. Contact Us"], ["Terms of Service", TermsOfService, "14. Contact"]] as const)(
-  "%s displays the supplied document without requiring an account", (title, Screen, lastHeading) => {
-    render(<Screen />);
-    expect(screen.getByText(title)).toBeTruthy();
-    expect(screen.getByText(`BuiltMode ${title}`)).toBeTruthy();
-    expect(screen.getByText("Effective date: October 3, 2026")).toBeTruthy();
-    expect(screen.queryByText(/Placeholder/)).toBeNull();
-    expect(screen.getByText(lastHeading)).toBeTruthy();
-  },
-);
+test.each([
+  ["Privacy Policy", PrivacyPolicy, "11. Contact Us"],
+  ["Terms of Service", TermsOfService, "14. Contact"],
+] as const)("%s displays the supplied document without requiring an account", (title, Screen, lastHeading) => {
+  render(<Screen />);
+  expect(screen.getByText(title)).toBeTruthy();
+  expect(screen.getByText(`BuiltMode ${title}`)).toBeTruthy();
+  expect(screen.getByText("Effective date: October 3, 2026")).toBeTruthy();
+  expect(screen.queryByText(/Placeholder/)).toBeNull();
+  expect(screen.getByText(lastHeading)).toBeTruthy();
+});
 
 test("privacy policy renders subheadings and opens the supplied documentation link", () => {
   const openURL = jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
@@ -47,8 +52,8 @@ test("privacy policy renders subheadings and opens the supplied documentation li
 test("contact email opens the email app", () => {
   const openURL = jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
   render(<TermsOfService />);
-  fireEvent.press(screen.getAllByText("normancade@gmail.com")[0]);
-  expect(openURL).toHaveBeenCalledWith("mailto:normancade@gmail.com");
+  fireEvent.press(screen.getAllByText("support@getbuiltmode.com")[0]);
+  expect(openURL).toHaveBeenCalledWith("mailto:support@getbuiltmode.com");
   openURL.mockRestore();
 });
 
