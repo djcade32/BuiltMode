@@ -7,6 +7,8 @@ type WorkoutFeedStatus = "pending_publish" | "published";
 
 export type WorkoutType = "strength" | "conditioning" | "mixed" | "skill" | "recovery" | "cardio" | "other";
 
+export type ExerciseUnit = "mi" | "km" | "m" | "yd" | "lbs" | "kg";
+
 export type ExerciseMetricType =
   | "weight_reps"
   | "reps_only"
@@ -20,9 +22,10 @@ export type ExerciseSet = {
   id: string;
   reps?: number;
   weight?: number;
+  weightUnit?: "lbs" | "kg";
   durationSec?: number;
   distanceMiles?: number;
-  distanceUnit?: "mi" | "km" | "m";
+  distanceUnit?: "mi" | "km" | "m" | "yd";
   calories?: number;
   timeSeconds?: number;
   completed?: boolean;
@@ -34,6 +37,7 @@ export type Exercise = {
   name: string;
   metricType: ExerciseMetricType;
   sets: ExerciseSet[];
+  units: ExerciseUnit | null;
   notes?: string;
 };
 
@@ -172,6 +176,7 @@ export type WorkoutLiveActivityState = {
   durationSeconds?: number;
   distance?: number;
   distanceUnit?: "mi" | "km" | "m";
+  units: ExerciseUnit | null;
 
   restEndsAtMs?: number;
 

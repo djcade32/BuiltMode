@@ -1,5 +1,5 @@
 import { Border, Colors, Typography } from "@/constants/theme";
-import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
+import { Exercise, ExerciseMetricType, ExerciseSet, ExerciseUnit } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { Entypo, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ThemedText } from "../themed-text";
 import DropdownMenu, { DropdownMenuOption } from "../ui/DropdownMenu";
 import ThemedButton from "../ui/ThemedButton";
+import ChangeExerciseUnitSheet from "./ChangeExerciseUnitSheet";
 import ChangeMetricTypeSheet from "./ChangeMetricTypeSheet";
 import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
 import DurationSetItem from "./exerciseSetItems/DurationSetItem";
@@ -173,6 +174,7 @@ type Props = {
     > | null,
   ) => void;
   onChangeMetricType: (exerciseId: string, metricType: ExerciseMetricType) => void;
+  onChangeExerciseUnit: (exerciseId: string, exerciseUnit: ExerciseUnit) => void;
   setIsNotesSheetVisible: React.Dispatch<React.SetStateAction<boolean>>;
   scrollToTop: () => void;
 };
@@ -183,20 +185,23 @@ const CurrentWorkoutCard = ({
   onDeleteExercise,
   onChangeMetricType,
   setIsNotesSheetVisible,
+  onChangeExerciseUnit,
   scrollToTop,
 }: Props) => {
   const { updateWorkout, activeWorkoutDraft, updateWorkoutProgress, completeCurrentSet, workoutProgress } =
     useWorkoutStore();
   const { user } = useUserStore();
 
-  const { name, sets, metricType, notes } = exercise;
+  const { name, sets, metricType, notes, units } = exercise;
 
   const [completedSets, setCompletedSets] = useState<ExerciseSet[]>([]);
   const [activeSetIndex, setActiveSetIndex] = useState(0);
   const [isMetricSheetVisible, setIsMetricSheetVisible] = useState(false);
+  const [isUnitSheetVisible, setIsUnitSheetVisible] = useState(false);
 
   const currentSet = useMemo(() => sets[activeSetIndex], [sets, activeSetIndex]);
   const hasNotes = Boolean(notes?.trim());
+  const canChangeUnit = metricType === "weight_reps" || metricType === "distance";
 
   useEffect(() => {
     let sets = workoutProgress && workoutProgress[exercise.id] ? workoutProgress[exercise.id].sets : [];
@@ -206,8 +211,6 @@ const CurrentWorkoutCard = ({
 
   const handleChangeMetricType = useCallback(
     (exerciseId: string, metricType: ExerciseMetricType) => {
-      console.log("exerciseId: ", exerciseId);
-      console.log("workoutProgress: ", workoutProgress);
       if (workoutProgress && workoutProgress[exerciseId] && workoutProgress[exerciseId].sets.length > 0) {
         return Alert.alert("Are You Sure?", "All exercise progress will be lost.", [
           {
@@ -223,6 +226,11 @@ const CurrentWorkoutCard = ({
     },
     [onChangeMetricType, workoutProgress],
   );
+
+  const handleChangeExerciseUnit = (exerciseUnit: ExerciseUnit) => {
+    if (exerciseUnit === units) return;
+    onChangeExerciseUnit(exercise.id, exerciseUnit);
+  };
 
   const handleCompleteSet = () => {
     if (!activeWorkoutDraft || !currentSet) return;
@@ -363,8 +371,8 @@ const CurrentWorkoutCard = ({
     });
   };
 
-  const dropDownOptions: DropdownMenuOption[] = useMemo(
-    () => [
+  const dropDownOptions: DropdownMenuOption[] = useMemo(() => {
+    const options = [
       {
         onSelect: () => setIsNotesSheetVisible(true),
         text: hasNotes ? "Edit Note" : "Add Note",
@@ -373,6 +381,11 @@ const CurrentWorkoutCard = ({
       {
         onSelect: () => setIsMetricSheetVisible(true),
         text: "Change Metric",
+        icon: <FontAwesome6 name="table-list" size={10} color={Colors.icon} />,
+      },
+      {
+        onSelect: () => setIsUnitSheetVisible(true),
+        text: "Change Unit",
         icon: <FontAwesome6 name="ruler" size={10} color={Colors.icon} />,
       },
       {
@@ -381,9 +394,9 @@ const CurrentWorkoutCard = ({
         icon: <FontAwesome6 name="trash" size={10} color={Colors.error} />,
         menuOptionCustomStyles: { optionText: { color: Colors.error } },
       },
-    ],
-    [hasNotes, exercise.id, onDeleteExercise],
-  );
+    ];
+    return canChangeUnit ? options : options.filter((option) => option.text !== "Change Unit");
+  }, [hasNotes, exercise.id, onDeleteExercise]);
 
   if (!exercise) return null;
 
@@ -474,6 +487,16 @@ const CurrentWorkoutCard = ({
         onClose={() => setIsMetricSheetVisible(false)}
         onSelectMetricType={(metricType) => handleChangeMetricType(exercise.id, metricType)}
       />
+      {canChangeUnit && (
+        <ChangeExerciseUnitSheet
+          visible={isUnitSheetVisible}
+          metricType={exercise.metricType}
+          currentUnit={exercise.units}
+          exerciseName={exercise.name}
+          onClose={() => setIsUnitSheetVisible(false)}
+          onSelectUnit={handleChangeExerciseUnit}
+        />
+      )}
     </View>
   );
 };

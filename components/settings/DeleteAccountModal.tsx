@@ -3,7 +3,7 @@ import { Border, Colors, Typography } from "@/constants/theme";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { FirebaseError } from "firebase/app";
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
@@ -28,7 +28,7 @@ const DELETE_CONFIRMATION = "DELETE";
 
 const getDeleteAccountErrorMessage = (error: unknown) => {
   if (!(error instanceof FirebaseError)) {
-    return "BuiltMode could not delete your account. No changes were made. Please try again.";
+    return "Account deletion could not be confirmed. If cleanup has started, it will retry automatically.";
   }
 
   switch (error.code) {
@@ -39,6 +39,7 @@ const getDeleteAccountErrorMessage = (error: unknown) => {
       return "Too many attempts were made. Please wait a moment and try again.";
     case "auth/network-request-failed":
       return "A network error occurred. Check your connection and try again.";
+    case "functions/failed-precondition":
     case "auth/requires-recent-login":
       return "For security, sign out and sign back in before deleting your account.";
     case "auth/user-token-expired":
@@ -47,21 +48,24 @@ const getDeleteAccountErrorMessage = (error: unknown) => {
     case "functions/unavailable":
       return "The account deletion service is temporarily unavailable. Please try again.";
     case "functions/deadline-exceeded":
-      return "Account deletion took too long to complete. Please try again.";
+      return "Account deletion is taking longer than expected. If cleanup has started, it will continue automatically.";
     default:
-      return "BuiltMode could not delete your account. No changes were made. Please try again.";
+      return "Account deletion could not be confirmed. If cleanup has started, it will retry automatically.";
   }
 };
 
 const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: DeleteAccountModalProps) => {
   const [currentPassword, setCurrentPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const isBusy = isDeleting || isSubmitting;
   const [confirmationText, setConfirmationText] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const normalizedConfirmation = confirmationText.trim().toUpperCase();
   const isConfirmationValid = normalizedConfirmation === DELETE_CONFIRMATION;
-  const isSubmitDisabled = isDeleting || !currentPassword || !isConfirmationValid;
+  const isSubmitDisabled = isBusy || !currentPassword || !isConfirmationValid;
 
   useEffect(() => {
     if (!visible) return;
@@ -73,13 +77,14 @@ const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: D
   }, [visible]);
 
   const handleClose = () => {
-    if (isDeleting) return;
+    if (isBusy) return;
 
     Keyboard.dismiss();
     onClose();
   };
 
   const handleDelete = async () => {
+    if (submittingRef.current || isDeleting) return;
     if (!isConfirmationValid) {
       setErrorMessage(`Type ${DELETE_CONFIRMATION} to confirm account deletion.`);
       return;
@@ -113,6 +118,8 @@ const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: D
       return;
     }
 
+    submittingRef.current = true;
+    setIsSubmitting(true);
     try {
       setErrorMessage(null);
 
@@ -129,6 +136,9 @@ const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: D
     } catch (error) {
       console.error("Unable to delete account:", error);
       setErrorMessage(getDeleteAccountErrorMessage(error));
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -149,7 +159,7 @@ const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: D
             <TouchableOpacity
               style={styles.closeButton}
               onPress={handleClose}
-              disabled={isDeleting}
+              disabled={isBusy}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Close account deletion"
@@ -188,14 +198,14 @@ const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: D
                 autoComplete="current-password"
                 autoCapitalize="none"
                 autoCorrect={false}
-                editable={!isDeleting}
+                editable={!isBusy}
                 returnKeyType="next"
               />
 
               <TouchableOpacity
                 style={styles.visibilityButton}
                 onPress={() => setIsPasswordVisible((current) => !current)}
-                disabled={isDeleting}
+                disabled={isBusy}
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={isPasswordVisible ? "Hide password" : "Show password"}
@@ -219,7 +229,7 @@ const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: D
               placeholderTextColor={Colors.icon}
               autoCapitalize="characters"
               autoCorrect={false}
-              editable={!isDeleting}
+              editable={!isBusy}
               returnKeyType="done"
               onSubmitEditing={() => {
                 if (!isSubmitDisabled) {
@@ -240,7 +250,7 @@ const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: D
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={handleClose}
-              disabled={isDeleting}
+              disabled={isBusy}
               activeOpacity={0.8}
             >
               <ThemedText style={styles.cancelButtonText}>Keep Account</ThemedText>
@@ -254,7 +264,7 @@ const DeleteAccountModal = ({ visible, isDeleting, onClose, onDeleteAccount }: D
               disabled={isSubmitDisabled}
               activeOpacity={0.8}
             >
-              {isDeleting ? (
+              {isBusy ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <ThemedText style={styles.deleteButtonText}>Delete Forever</ThemedText>

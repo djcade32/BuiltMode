@@ -2,13 +2,14 @@ import AccountabilitySummaryWidget from "@/components/profile/AccountabilitySumm
 import ThisWeekWidget from "@/components/profile/ThisWeekWidget";
 import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
+import DeloadWeekBadge from "@/components/ui/DeloadWeekBadge";
 import WorkoutHistoryCard from "@/components/workout/workoutHistory/WorkoutHistoryCard";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
+import { useCurrentWeekAggregate } from "@/hooks/user/useCurrentWeekAggregate";
 import { useUserWorkoutsInfinite } from "@/hooks/workouts/useUserWorkoutsInfinite";
-import { fetchUserStats, fetchUserWeekAggregate } from "@/services/user-service";
+import { fetchUserStats } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
-import { getWeekId } from "@builtmode/shared";
 import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
@@ -32,10 +33,9 @@ const RecentWorkoutsEmptyState = () => {
   );
 };
 
-const profile = () => {
+const Profile = () => {
   const { user } = useUserStore();
   const uid = user?.uid ?? "";
-  const usersHomeTimezone = user?.homeTimezone;
   const router = useRouter();
 
   const { data: userStats, isLoading: isLoadingUserStats } = useQuery({
@@ -45,15 +45,7 @@ const profile = () => {
     enabled: !!uid,
   });
 
-  const { data: userWeekAggregate, isLoading: isLoadingUserWeekAggregate } = useQuery({
-    queryKey: ["user-week-aggregate", usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "", uid],
-    queryFn: fetchUserWeekAggregate,
-    params: {
-      uid,
-      weekId: usersHomeTimezone ? getWeekId(new Date(), usersHomeTimezone) : "",
-    },
-    enabled: !!usersHomeTimezone,
-  });
+  const { data: userWeekAggregate, isLoading: isLoadingUserWeekAggregate } = useCurrentWeekAggregate();
 
   const { data: recentWorkouts, isLoading: isLoadingRecentWorkouts } = useUserWorkoutsInfinite(uid, 3);
 
@@ -77,6 +69,7 @@ const profile = () => {
       currentStreakWeek: userWeekAggregate?.streakWeeks || userStats?.currentWeekStreak || 0,
       isPracticeWeek: user?.isPracticeWeek || !userWeekAggregate?.isOfficialWeek || false,
       isStreakActive: userStats?.currentWeekStreak && userStats?.currentWeekStreak > 0 ? true : false,
+      isDeloadWeek: userWeekAggregate?.isDeloadWeek,
     };
   }, [userWeekAggregate, userStats, user]);
 
@@ -131,6 +124,7 @@ const profile = () => {
               </View>
 
               <View style={styles.badgeRow}>
+                {userWeekAggregate?.isDeloadWeek && <DeloadWeekBadge />}
                 {userWeekAggregateData.isStreakActive && (
                   <View style={styles.streakWeekButton}>
                     <View style={styles.streakBadgeInner}>
@@ -209,7 +203,7 @@ const profile = () => {
   );
 };
 
-export default profile;
+export default Profile;
 
 const styles = StyleSheet.create({
   container: {
@@ -300,6 +294,8 @@ const styles = StyleSheet.create({
 
   badgeRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     gap: 10,
   },
 

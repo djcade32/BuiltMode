@@ -1,5 +1,6 @@
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
+import { isAccountDeleting } from "./accountDeletionGuard.js";
 
 const db = getFirestore();
 
@@ -31,6 +32,7 @@ export async function sendPushNotificationToUser({
   type,
   data = {},
 }: SendPushNotificationInput): Promise<void> {
+  if (await isAccountDeleting(recipientUid)) return;
   const tokenSnapshot = await db
     .collection(`users/${recipientUid}/pushTokens`)
     .where("enabled", "==", true)
@@ -171,16 +173,22 @@ async function createNotificationLog(input: {
   successCount?: number;
   failureCount?: number;
 }): Promise<void> {
-  await db.collection(`users/${input.recipientUid}/notifications`).add({
-    title: input.title,
-    body: input.body,
-    type: input.type,
-    data: input.data,
-    status: input.status,
-    successCount: input.successCount ?? 0,
-    failureCount: input.failureCount ?? 0,
-    readAt: null,
-    createdAt: FieldValue.serverTimestamp(),
+  await db.runTransaction(async (tx) => {
+    const relatedUids = [input.recipientUid, input.data.fromUid, input.data.targetUid, input.data.actorUid];
+    for (const uid of relatedUids) {
+      if (uid && await isAccountDeleting(uid, tx)) return;
+    }
+    tx.create(db.collection(`users/${input.recipientUid}/notifications`).doc(), {
+      title: input.title,
+      body: input.body,
+      type: input.type,
+      data: input.data,
+      status: input.status,
+      successCount: input.successCount ?? 0,
+      failureCount: input.failureCount ?? 0,
+      readAt: null,
+      createdAt: FieldValue.serverTimestamp(),
+    });
   });
 }
 

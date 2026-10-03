@@ -5,9 +5,11 @@ import PerformanceSnapshotWidget from "@/components/home/PerformanceSnapshotWidg
 import RecentFriendActivityWidget from "@/components/home/RecentFriendActivityWidget";
 import TrainingTargetWidget from "@/components/home/TrainingTargetWidget";
 import { ThemedText } from "@/components/themed-text";
+import DeloadWeekBadge from "@/components/ui/DeloadWeekBadge";
 import ThemedButton from "@/components/ui/ThemedButton";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
+import { useCurrentWeekAggregate } from "@/hooks/user/useCurrentWeekAggregate";
 import { fetchUserStats } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
@@ -25,7 +27,9 @@ export default function HomeScreen() {
 
   const uid = user?.uid;
 
-  const { data, isLoading, error, refetch, isRefetching } = useQuery({
+  const { data: currentWeek, refetch: refetchCurrentWeek } = useCurrentWeekAggregate();
+
+  const { data, refetch } = useQuery({
     queryKey: ["user-stats", uid],
     queryFn: fetchUserStats,
     params: { uid: uid ?? "" },
@@ -34,12 +38,8 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    refetch().finally(() => setRefreshing(false));
-  }, [data]);
-
-  // useEffect(() => {
-  //   if (!isRefetching && refreshing) setRefreshing(false);
-  // }, [isRefetching]);
+    Promise.allSettled([refetch(), refetchCurrentWeek()]).finally(() => setRefreshing(false));
+  }, [refetch, refetchCurrentWeek]);
 
   if (!user) return null;
   return (
@@ -151,6 +151,14 @@ export default function HomeScreen() {
 
         {/* WIDGETS */}
         <View style={styles.widgetsContainer}>
+          {currentWeek?.isDeloadWeek && (
+            <View style={styles.deloadReminder}>
+              <DeloadWeekBadge />
+              <ThemedText style={styles.deloadReminderText}>
+                Take time to recover. Your streak is protected this week.
+              </ThemedText>
+            </View>
+          )}
           <TrainingTargetWidget isRefreshing={refreshing} />
           {user.isPracticeWeek ? null : <ModeScoreWidget />}
           <ThemedButton
@@ -193,6 +201,19 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  deloadReminder: {
+    padding: 16,
+    gap: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#4A6C8C52",
+    backgroundColor: Colors.background.secondary,
+  },
+  deloadReminderText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: Colors.gray,
+  },
   container: {
     backgroundColor: Colors.background.primary,
     flex: 1,

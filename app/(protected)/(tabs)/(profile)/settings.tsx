@@ -6,18 +6,25 @@ import { ThemedText } from "@/components/themed-text";
 import Avatar from "@/components/ui/Avatar";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useUpdateProfileAvatar } from "@/hooks/user/useUpdateProfileAvatar";
-// import { deleteBuiltModeAccount } from "@/services/delete-account-service";
-import { changeWeeklyTarget } from "@/services/user-service";
+import dayjs from "@/lib/dayjs";
+import { handleGetWeekId } from "@/lib/utils/weekId";
+// import { getWeekId } from "@/packages/shared/src";
+import { deleteBuiltModeAccount } from "@/services/delete-account-service";
+import { signOutUser } from "@/services/auth-service";
+import { useWorkoutStore } from "@/stores/workout-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
+import { cancelDeloadWeek, changeWeeklyTarget, checkForUserProfile, startDeloadWeek } from "@/services/user-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUserStore } from "@/stores/user-store";
 import { Entypo, Feather, FontAwesome, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Linking,
   ScrollView,
   StyleSheet,
@@ -33,13 +40,22 @@ type SettingsRowProps = {
   subtitle?: string;
   preIcon?: { familyIcon: any; name: string; color?: string };
   postIcon?: { familyIcon: any; name: string; color?: string };
+  disabled?: boolean;
   onPress: () => void;
 };
 
-const SettingsRow = ({ title, subtitle, onPress, preIcon, postIcon, titleStyle }: SettingsRowProps) => {
+const SettingsRow = ({
+  title,
+  subtitle,
+  onPress,
+  preIcon,
+  postIcon,
+  titleStyle,
+  disabled = false,
+}: SettingsRowProps) => {
   return (
-    <TouchableOpacity style={styles.settingsSectionRow} onPress={onPress}>
-      <View style={{ gap: 12, alignItems: "center", flexDirection: "row", flexShrink: 1 }}>
+    <TouchableOpacity style={styles.settingsSectionRow} onPress={onPress} disabled={disabled}>
+      <View style={{ flexDirection: "row", flex: 1, gap: 12, alignItems: "center" }}>
         {preIcon && (
           <View style={styles.settingsRowIcon}>
             {React.createElement(preIcon.familyIcon, {
@@ -49,47 +65,119 @@ const SettingsRow = ({ title, subtitle, onPress, preIcon, postIcon, titleStyle }
             })}
           </View>
         )}
-        <View style={{ gap: 5 }}>
+        <View style={{ gap: 5, flexShrink: 1 }}>
           <ThemedText style={[styles.settingsRowTitle, titleStyle]}>{title}</ThemedText>
           {subtitle && <ThemedText style={styles.settingsRowSubtitle}>{subtitle}</ThemedText>}
         </View>
       </View>
-      {postIcon ? (
-        React.createElement(postIcon.familyIcon, {
-          name: postIcon.name,
-          size: 20,
-          color: postIcon.color ? postIcon.color : Colors.gray,
-        })
-      ) : (
-        <Entypo name="chevron-right" size={24} color={Colors.gray} />
-      )}
+      <View>
+        {postIcon ? (
+          React.createElement(postIcon.familyIcon, {
+            name: postIcon.name,
+            size: 20,
+            color: postIcon.color ? postIcon.color : Colors.gray,
+          })
+        ) : (
+          <Entypo name="chevron-right" size={24} color={Colors.gray} />
+        )}
+      </View>
     </TouchableOpacity>
   );
 };
 
 const settings = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useUserStore();
   const { signout, user: authUser } = useAuthStore();
   const uid = user?.uid ?? "";
+  const usersHomeTimezone = user?.homeTimezone;
 
   const [isChangeEmailVisible, setIsChangeEmailVisible] = useState(false);
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
   const [isChangeWeeklyTargetVisible, setIsChangeWeeklyTargetVisible] = useState(false);
   const [isDeleteAccountVisible, setIsDeleteAccountVisible] = useState(false);
+  const { mutateAsync: handleDeleteAccount, isPending: isDeletingAccount } = useMutation({
+    mutationFn: deleteBuiltModeAccount,
+  });
 
   const { mutateAsync: changeUserAvatarUrl, isPending: isChangingAvatar } = useUpdateProfileAvatar();
   const { mutateAsync: handleChangingWeeklyTarget, isPending: isChangingWeeklyTarget } = useMutation({
     mutationFn: changeWeeklyTarget,
   });
+  const runDeloadWeekAction = async (action: typeof startDeloadWeek) => {
+    const actionUid = useUserStore.getState().user?.uid;
+    const result = await action();
+    if (!result.success) return result;
 
-  // const { mutateAsync: handleDeletingAccount, isPending: isDeletingAccount } = useMutation({
-  //   mutationFn: deleteBuiltModeAccount,
-  //   onSuccess: async () => {
-  //     setIsDeleteAccountVisible(false);
-  //     await signout();
-  //   },
-  // });
+    try {
+      if (!actionUid) throw new Error("Missing user for deload refresh");
+      const refreshedUser = await checkForUserProfile(actionUid, "server");
+      if (!refreshedUser) throw new Error("User profile could not be refreshed");
+
+      // Do not restore a signed-out user or overwrite a different account.
+      if (useUserStore.getState().user?.uid === actionUid) {
+        useUserStore.getState().setUser({
+          ...refreshedUser,
+          isPracticeWeek:
+            handleGetWeekId(new Date(), refreshedUser.homeTimezone) < refreshedUser.officialStartWeekId,
+        });
+      }
+      return result;
+    } catch (error) {
+      console.error("Deload saved, but user refresh failed:", error);
+      return {
+        ...result,
+        msg: `${result.msg}\n\nYour change was saved, but the screen could not refresh. It may still show your previous deload status.`,
+      };
+    }
+  };
+
+  const { mutateAsync: handleStartDeloadWeek, isPending: isStartingDeloadWeek } = useMutation({
+    mutationFn: () => runDeloadWeekAction(startDeloadWeek),
+  });
+  const { mutateAsync: handleCancelDeloadWeek, isPending: isCancelingDeloadWeek } = useMutation({
+    mutationFn: () => runDeloadWeekAction(cancelDeloadWeek),
+  });
+
+  const hasPendingDeloadWeek = !!user?.pendingDeloadWeekStartsAt;
+  const [now, setNow] = useState(Date.now);
+
+  useEffect(() => {
+    const refreshNow = () => setNow(Date.now());
+    const interval = setInterval(refreshNow, 60_000);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") refreshNow();
+    });
+
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, []);
+
+  const lastDeloadWeekStartedAt = user?.lastDeloadWeekStartedAt;
+  let nextEligibleDeloadWeekAt = 0;
+  if (lastDeloadWeekStartedAt) {
+    const seconds =
+      "_seconds" in lastDeloadWeekStartedAt ? lastDeloadWeekStartedAt._seconds : lastDeloadWeekStartedAt.seconds;
+    const nanoseconds =
+      "_nanoseconds" in lastDeloadWeekStartedAt
+        ? lastDeloadWeekStartedAt._nanoseconds
+        : lastDeloadWeekStartedAt.nanoseconds;
+    const lastStartedAt = seconds * 1000 + Math.floor(nanoseconds / 1_000_000);
+    nextEligibleDeloadWeekAt = dayjs.utc(lastStartedAt).add(8, "weeks").valueOf();
+  }
+
+  const isDeloadWeekOnCooldown = !!lastDeloadWeekStartedAt && now <= nextEligibleDeloadWeekAt;
+  const isDeloadWeekEligible = !hasPendingDeloadWeek && !isDeloadWeekOnCooldown;
+  // Round partial days up so the countdown never promises availability early.
+  const remainingDays = isDeloadWeekOnCooldown
+    ? Math.max(1, Math.ceil((nextEligibleDeloadWeekAt - now) / 86_400_000))
+    : 0;
+  const weeks = Math.floor(remainingDays / 7);
+  const days = remainingDays % 7;
+  const deloadCooldownLabel = `Available in ${weeks} ${weeks === 1 ? "week" : "weeks"} and ${days} ${days === 1 ? "day" : "days"}`;
 
   const currentWeeklyTarget: WeeklyTargetDays =
     user?.weeklyTargetDays === 2 ||
@@ -231,7 +319,82 @@ const settings = () => {
   };
 
   const deleteAccount = async () => {
-    // await handleDeletingAccount();
+    const result = await handleDeleteAccount();
+    setIsDeleteAccountVisible(false);
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    useWorkoutStore.getState().clearWorkout();
+    useOnboardingStore.getState().resetState();
+    useUserStore.getState().setUser(null);
+    useAuthStore.getState().reset();
+    // Tokens were already removed server-side; ordinary signout would try to
+    // unregister them again using the deleted account's credentials.
+    try {
+      await signOutUser();
+    } catch (error) {
+      console.error("Account deletion accepted, but local signout failed:", error);
+    }
+    Alert.alert(
+      result.status === "completed" ? "Account Deleted" : "Account Deletion Started",
+      result.status === "completed"
+        ? "Your BuiltMode account has been deleted."
+        : "Your deletion request is saved. Cleanup will continue automatically; you do not need to keep the app open.",
+    );
+  };
+
+  const showCancelDeloadWeekConfirmationModal = () => {
+    if (isStartingDeloadWeek || isCancelingDeloadWeek || !hasPendingDeloadWeek) return;
+
+    Alert.alert(
+      "Cancel Scheduled Deload?",
+      "Next week will remain a regular training week.",
+      [
+        { text: "Keep Scheduled", style: "cancel" },
+        {
+          text: "Cancel Deload",
+          style: "destructive",
+          onPress: async () => {
+            if (!useUserStore.getState().user?.pendingDeloadWeekStartsAt) return;
+            try {
+              const result = await handleCancelDeloadWeek();
+              Alert.alert(result.success ? "Deload Canceled" : "Unable to Cancel", result.msg);
+            } catch (error) {
+              console.error("Error canceling deload week:", error);
+              Alert.alert("Unable to Cancel", "Please try again. Your cancellation could not be confirmed.");
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const showDeloadWeekConfirmationModal = () => {
+    if (isStartingDeloadWeek || isCancelingDeloadWeek || !isDeloadWeekEligible) return;
+
+    Alert.alert(
+      "Start Deload Week?",
+      "Your deload week will begin next Monday at 4:00 AM. During your deload week, you can take time to recover without affecting your BuiltMode streak.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Schedule Deload",
+          onPress: async () => {
+            if (useUserStore.getState().user?.pendingDeloadWeekStartsAt) return;
+
+            try {
+              const result = await handleStartDeloadWeek();
+              Alert.alert(result.success ? "Deload Scheduled" : "Unable to Schedule", result.msg);
+            } catch (error) {
+              console.error("Error scheduling deload week:", error);
+              Alert.alert("Unable to Schedule", "Please try again. Your scheduled deload could not be confirmed.");
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -316,6 +479,42 @@ const settings = () => {
               }}
               onPress={() => setIsChangeWeeklyTargetVisible(true)}
             />
+
+            <View style={styles.separator} />
+
+            <SettingsRow
+              title={
+                hasPendingDeloadWeek
+                  ? "Deload Week Scheduled"
+                  : isDeloadWeekOnCooldown
+                    ? "Deload Week Cooldown"
+                    : "Deload Week"
+              }
+              subtitle={
+                hasPendingDeloadWeek
+                  ? "Your deload week starts next Monday at 4:00 AM. Tap to cancel."
+                  : isDeloadWeekOnCooldown
+                    ? deloadCooldownLabel
+                    : "Declare next week a deload week for recovery"
+              }
+              preIcon={{
+                familyIcon: MaterialIcons,
+                name: "restore",
+              }}
+              postIcon={
+                hasPendingDeloadWeek
+                  ? { familyIcon: Feather, name: "clock" }
+                  : isDeloadWeekOnCooldown
+                    ? { familyIcon: Feather, name: "lock" }
+                    : undefined
+              }
+              onPress={
+                hasPendingDeloadWeek ? showCancelDeloadWeekConfirmationModal : showDeloadWeekConfirmationModal
+              }
+              disabled={
+                isStartingDeloadWeek || isCancelingDeloadWeek || (!hasPendingDeloadWeek && !isDeloadWeekEligible)
+              }
+            />
           </View>
 
           <View
@@ -331,7 +530,7 @@ const settings = () => {
           >
             <FontAwesome5 name="info-circle" size={12} color={Colors.accent.secondary} />
             <ThemedText style={styles.settingsInfoText}>
-              Weekly target changes take effect the following Monday at 4:00 AM
+              Weekly target changes and Deload week take effect the following Monday at 4:00 AM
             </ThemedText>
           </View>
         </View>
@@ -363,7 +562,7 @@ const settings = () => {
               }}
             />
 
-            {/* <View style={styles.separator} />
+            <View style={styles.separator} />
 
             <SettingsRow
               title="Delete Account"
@@ -374,7 +573,7 @@ const settings = () => {
                 name: "chevron-right",
                 color: Colors.error,
               }}
-            /> */}
+            />
           </View>
         </View>
 
@@ -405,8 +604,7 @@ const settings = () => {
 
       <DeleteAccountModal
         visible={isDeleteAccountVisible}
-        isDeleting={false}
-        // isDeleting={isDeletingAccount}
+        isDeleting={isDeletingAccount}
         onClose={() => setIsDeleteAccountVisible(false)}
         onDeleteAccount={deleteAccount}
       />
@@ -479,8 +677,8 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: "center",
     padding: 16,
-    width: "100%",
     justifyContent: "space-between",
+    width: "100%",
   },
   settingsRowTitle: {
     fontSize: 14,
@@ -509,5 +707,7 @@ const styles = StyleSheet.create({
   settingsInfoText: {
     fontSize: 10,
     color: Colors.icon,
+    flexShrink: 1,
+    lineHeight: 18,
   },
 });

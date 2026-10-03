@@ -8,9 +8,9 @@ import WorkoutNameSheet from "@/components/workout/WorkoutNameSheet";
 import WorkoutNoteSheet from "@/components/workout/WorkoutNoteSheet";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { firstLetterToUpperCase } from "@/lib/utils/string";
-import { Exercise, ExerciseMetricType, ExerciseSet, WorkoutType } from "@/packages/shared/src";
 import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
+import { Exercise, ExerciseMetricType, ExerciseSet, ExerciseUnit, WorkoutType } from "@builtmode/shared";
 import { Entypo, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -293,10 +293,33 @@ const BuildWorkout = () => {
     setExercises((prevExercises) =>
       prevExercises.map((exercise) => {
         if (exercise.id === exerciseId) {
+          let units: ExerciseUnit | null = null;
+          if (metricType === "distance") {
+            units = "mi";
+          } else if (metricType === "weight_reps") {
+            units = "lbs";
+          }
           return {
             ...exercise,
+            units,
             metricType,
             sets: [{ id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }, { id: `${uuidv4()}-set` }],
+          };
+        }
+
+        return exercise;
+      }),
+    );
+  };
+
+  const handleChangeExerciseUnit = (exerciseId: string, exerciseUnit: ExerciseUnit) => {
+    pendingScrollActionRef.current = null;
+    setExercises((prevExercises) =>
+      prevExercises.map((exercise) => {
+        if (exercise.id === exerciseId) {
+          return {
+            ...exercise,
+            units: exerciseUnit,
           };
         }
 
@@ -369,6 +392,7 @@ const BuildWorkout = () => {
             onEditSet={handleEditSet}
             onChangeExerciseNotes={handleChangeExerciseNotes}
             onChangeMetricType={handleChangeMetricType}
+            onChangeExerciseUnit={handleChangeExerciseUnit}
             onExerciseInputFocus={handleExerciseInputFocus}
             onExerciseInputBlur={handleExerciseInputBlur}
           />

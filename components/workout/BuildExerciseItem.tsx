@@ -1,5 +1,5 @@
 import { Border, Colors, Typography } from "@/constants/theme";
-import { Exercise, ExerciseMetricType, ExerciseSet } from "@/packages/shared/src";
+import { Exercise, ExerciseMetricType, ExerciseSet, ExerciseUnit } from "@/packages/shared/src";
 import { Entypo, FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import {
@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ThemedText } from "../themed-text";
 import DropdownMenu, { DropdownMenuOption } from "../ui/DropdownMenu";
 import ThemedButton from "../ui/ThemedButton";
+import ChangeExerciseUnitSheet from "./ChangeExerciseUnitSheet";
 import ChangeMetricTypeSheet from "./ChangeMetricTypeSheet";
 import DistanceSetItem from "./exerciseSetItems/DistanceSetItem";
 import DurationSetItem from "./exerciseSetItems/DurationSetItem";
@@ -32,15 +33,14 @@ export type SetUpdateTransaction = {
 };
 
 type Props = {
-  exercise: Exercise & {
-    notes?: string;
-  };
+  exercise: Exercise;
   onAddSet: (id: string, set: ExerciseSet) => void;
   onDeleteSet: (exerciseId: string, setId: string) => void;
   onEditSet: (exerciseId: string, setId: string, set: ExerciseSet) => void;
   onDragLongPress?: () => void;
   onDeleteExercise?: (exercise: Exercise) => void;
   onChangeMetricType?: (exerciseId: string, metricType: ExerciseMetricType) => void;
+  onChangeExerciseUnit?: (exerciseId: string, exerciseUnit: ExerciseUnit) => void;
   onChangeExerciseNotes?: (exerciseId: string, notes: string) => void;
   onExerciseInputFocus?: () => void;
   onExerciseInputBlur?: () => void;
@@ -54,18 +54,21 @@ const BuildExerciseItem = ({
   onDeleteSet,
   onEditSet,
   onChangeMetricType,
+  onChangeExerciseUnit,
   onChangeExerciseNotes,
   onExerciseInputFocus,
   onExerciseInputBlur,
 }: Props) => {
-  const { id, name, metricType, sets, notes } = exercise;
+  const { id, name, metricType, sets, notes, units } = exercise;
 
   const [isMetricSheetVisible, setIsMetricSheetVisible] = useState(false);
+  const [isUnitSheetVisible, setIsUnitSheetVisible] = useState(false);
   const [isNotesSheetVisible, setIsNotesSheetVisible] = useState(false);
   const [draftNotes, setDraftNotes] = useState(notes ?? "");
   const [setUpdateTransactions, setSetUpdateTransactions] = useState<SetUpdateTransaction[] | null>(null);
 
   const hasNotes = Boolean(notes?.trim());
+  const canChangeUnit = metricType === "weight_reps" || metricType === "distance";
 
   const openNotesSheet = () => {
     setDraftNotes(notes ?? "");
@@ -88,8 +91,8 @@ const BuildExerciseItem = ({
     setIsNotesSheetVisible(false);
   };
 
-  const dropDownOptions: DropdownMenuOption[] = useMemo(
-    () => [
+  const dropDownOptions: DropdownMenuOption[] = useMemo(() => {
+    const options = [
       {
         onSelect: openNotesSheet,
         text: hasNotes ? "Edit Note" : "Add Note",
@@ -98,6 +101,11 @@ const BuildExerciseItem = ({
       {
         onSelect: () => setIsMetricSheetVisible(true),
         text: "Change Metric",
+        icon: <FontAwesome6 name="table-list" size={10} color={Colors.icon} />,
+      },
+      {
+        onSelect: () => setIsUnitSheetVisible(true),
+        text: "Change Unit",
         icon: <FontAwesome6 name="ruler" size={10} color={Colors.icon} />,
       },
       {
@@ -106,9 +114,9 @@ const BuildExerciseItem = ({
         icon: <FontAwesome6 name="trash" size={10} color={Colors.error} />,
         menuOptionCustomStyles: { optionText: { color: Colors.error } },
       },
-    ],
-    [hasNotes, notes, onDeleteExercise, exercise],
-  );
+    ];
+    return canChangeUnit ? options : options.filter((option) => option.text !== "Change Unit");
+  }, [hasNotes, notes, onDeleteExercise, exercise, canChangeUnit]);
 
   const handleAddSet = () => {
     const setId = `${uuidv4()}-set`;
@@ -124,6 +132,11 @@ const BuildExerciseItem = ({
     if (nextMetricType === metricType) return;
 
     onChangeMetricType?.(id, nextMetricType);
+  };
+
+  const handleChangeExerciseUnit = (exerciseUnit: ExerciseUnit) => {
+    if (exerciseUnit === units) return;
+    onChangeExerciseUnit?.(id, exerciseUnit);
   };
 
   const setCallToActionText = () => {
@@ -269,7 +282,6 @@ const BuildExerciseItem = ({
           <ThemedText style={styles.addSetButtonText}>{setCallToActionText()}</ThemedText>
         </TouchableOpacity>
       </View>
-
       <ChangeMetricTypeSheet
         visible={isMetricSheetVisible}
         exerciseName={name}
@@ -277,7 +289,16 @@ const BuildExerciseItem = ({
         onClose={() => setIsMetricSheetVisible(false)}
         onSelectMetricType={handleChangeMetricType}
       />
-
+      {canChangeUnit && (
+        <ChangeExerciseUnitSheet
+          visible={isUnitSheetVisible}
+          metricType={exercise.metricType}
+          currentUnit={exercise.units}
+          exerciseName={exercise.name}
+          onClose={() => setIsUnitSheetVisible(false)}
+          onSelectUnit={handleChangeExerciseUnit}
+        />
+      )}
       <Modal
         visible={isNotesSheetVisible}
         transparent

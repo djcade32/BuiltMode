@@ -1,11 +1,12 @@
 import { PublicProfile, User, UserMonthAggregate, UserStats } from "@builtmode/shared/types/user";
 import { FieldValue, Timestamp, Transaction } from "firebase-admin/firestore";
 import { db } from "../lib/firebaseAdmin.js";
+import { assertAccountActive } from "../services/accountDeletionGuard.js";
 import { UserDoc, UsernameIndexDoc } from "../types/user.js";
 import { UserWeekAggregate } from "../types/workout.js";
 
 export const getUserByUid = (tx: Transaction, uid: string) => {
-  return tx.get(db.collection("users").doc(uid));
+  return assertAccountActive(uid, tx).then(() => tx.get(db.collection("users").doc(uid)));
 };
 
 export const getUsernameIndex = (tx: Transaction, usernameLower: string) => {

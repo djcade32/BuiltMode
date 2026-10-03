@@ -1,7 +1,7 @@
 {
   "name": "builtmode",
   "main": "expo-router/entry",
-  "version": "alpha.2.1.0",
+  "version": "beta.0.0.1",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",

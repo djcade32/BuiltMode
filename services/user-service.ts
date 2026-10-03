@@ -16,12 +16,15 @@ import { httpsCallable } from "firebase/functions";
 
 import { uploadImageAsync } from "@/lib/firestorage";
 import { firestoreTimestamp, firestoreTimestampV2 } from "@/packages/shared/src/types/firestore";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocFromServer } from "firebase/firestore";
 
-export const checkForUserProfile = async (uid: string): Promise<User | undefined> => {
+export const checkForUserProfile = async (
+  uid: string,
+  source: "default" | "server" = "default",
+): Promise<User | undefined> => {
   try {
     const userDocRef = doc(db, `users/${uid}`);
-    const userSnap = await getDoc(userDocRef);
+    const userSnap = await (source === "server" ? getDocFromServer(userDocRef) : getDoc(userDocRef));
 
     if (!userSnap.exists()) {
       return undefined;
@@ -73,6 +76,8 @@ export const checkForUserProfile = async (uid: string): Promise<User | undefined
       avatarUrl: typeof data.avatarUrl === "string" ? data.avatarUrl : "",
       pendingWeeklyTargetDays: data.pendingWeeklyTargetDays as WeeklyTargetDays,
       pendingWeeklyTargetStartsAt: data.pendingWeeklyTargetStartsAt,
+      pendingDeloadWeekStartsAt: data.pendingDeloadWeekStartsAt,
+      lastDeloadWeekStartedAt: data.lastDeloadWeekStartedAt,
     };
 
     return builtUser;
@@ -205,6 +210,32 @@ export const changeWeeklyTarget = async (params: {
     return response.data;
   } catch (error: any) {
     console.error("Failed to update weekly target");
+    throw error;
+  }
+};
+
+export const cancelDeloadWeek = async (): Promise<{ success: boolean; msg: string }> => {
+  const cancelDeloadWeekFunction = httpsCallable<void, { success: boolean; msg: string }>(
+    functions,
+    "cancelDeloadWeek",
+  );
+  const response = await cancelDeloadWeekFunction();
+  if (!response.data) throw Error("Failed to cancel deload week");
+  return response.data;
+};
+
+export const startDeloadWeek = async (): Promise<{ success: boolean; msg: string }> => {
+  try {
+    const startDeloadWeekFunction = httpsCallable<void, { success: boolean; msg: string }>(
+      functions,
+      "startDeloadWeek",
+    );
+
+    const response = await startDeloadWeekFunction();
+    if (!response.data || response.data === undefined) throw Error("Failed to start deload week");
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to start deload week");
     throw error;
   }
 };
