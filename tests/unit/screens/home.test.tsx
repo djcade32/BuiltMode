@@ -8,6 +8,10 @@ import HomeScreen from "@/app/(protected)/(tabs)/index";
 const mockPush = jest.fn();
 const mockSetInitialWorkout = jest.fn();
 
+jest.mock("@/hooks/user/useCurrentWeekAggregate", () => ({
+  useCurrentWeekAggregate: () => ({ ...mockQueryResponses.currentWeekAggregate, refetch: jest.fn() }),
+}));
+
 let mockUser: any;
 
 let mockQueryResponses: any = {
