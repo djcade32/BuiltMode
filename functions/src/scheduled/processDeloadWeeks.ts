@@ -1,3 +1,4 @@
+import { isAccountDeleting } from "../services/accountDeletionGuard.js";
 import { UserStats } from "@builtmode/shared/types/user";
 import { FieldValue, Timestamp, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
@@ -72,6 +73,8 @@ export async function processUserDeloadWeek(
   return db.runTransaction(async (tx) => {
     const userSnap = await tx.get(userRef);
     if (!userSnap.exists) return { status: "skipped", reason: "user_not_found" };
+    if (await isAccountDeleting(userSnap.id, tx)) return { status: "skipped", reason: "account_deleting" };
+
     const user = userSnap.data() as UserDoc;
     const uid = userSnap.id;
     if (user.officialWeekStatus !== "official" || !user.homeTimezone) {

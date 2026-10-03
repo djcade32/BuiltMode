@@ -1,3 +1,4 @@
+import { isAccountDeleting } from "../services/accountDeletionGuard.js";
 import { UserStats } from "@builtmode/shared/types/user";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
@@ -102,6 +103,8 @@ async function createCurrentWeekAggregate(
         reason: "user_not_found",
       };
     }
+
+    if (await isAccountDeleting(freshUserSnap.id, tx)) return { status: "skipped", reason: "account_deleting" };
 
     const user = freshUserSnap.data() as UserDoc;
     const uid = freshUserSnap.id;

@@ -1,3 +1,4 @@
+import { isAccountDeleting } from "../services/accountDeletionGuard.js";
 import { UserStats } from "@builtmode/shared/types/user";
 import {
   DocumentData,
@@ -171,6 +172,8 @@ async function finalizeWeekAggregate(
         reason: "user_not_found",
       };
     }
+
+    if (await isAccountDeleting(freshUserSnap.id, tx)) return { status: "skipped", reason: "account_deleting" };
 
     const user = freshUserSnap.data() as UserDoc;
 

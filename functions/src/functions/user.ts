@@ -176,6 +176,7 @@ export async function handleChangingUserAvatarUrl(
   avatarUrl: string | null,
 ): Promise<PublicProfile | undefined> {
   const result = await db.runTransaction(async (tx) => {
+    await getUserByUid(tx, uid);
     const fetchedProfile = (await getPublicProfile(tx, uid)).data();
     if (!fetchedProfile) {
       throw new HttpsError("not-found", "Public profile not found.");

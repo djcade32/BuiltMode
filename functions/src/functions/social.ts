@@ -2,7 +2,6 @@ import { FeedItem, Friend, FriendRequest, SearchUserResult } from "@builtmode/sh
 import { Exercise } from "@builtmode/shared/types/workout";
 import { Timestamp } from "firebase-admin/firestore";
 import {
-  addFeedItemToUserFeed,
   addFriendToUserList,
   addRespectToFeedItem,
   createFeedItem,
@@ -16,6 +15,7 @@ import {
   userHasRespectedFeedItem,
 } from "../firestore/social.js";
 import { getUserByUid } from "../firestore/user.js";
+import { isAccountDeleting } from "../services/accountDeletionGuard.js";
 import { db } from "../lib/firebaseAdmin.js";
 import { sendPushNotificationToUser } from "../services/notificationService.js";
 
@@ -125,6 +125,8 @@ export async function handleRespondToFriendRequest(
       console.error("Failed to respond to friend request. Can only respond to pending requests: ", requestId);
       return false;
     }
+    await getUserByUid(tx, friendRequest.fromUid);
+    await getUserByUid(tx, friendRequest.toUid);
     recipientUid = friendRequest.fromUid;
     toUserDisplayName = friendRequest.toDisplayName;
 
@@ -166,6 +168,7 @@ export async function handleRespondToFriendRequest(
       type: "friend_request",
       data: {
         targetUid: recipientUid,
+        fromUid: uid,
         screen: "friendsList",
       },
     }));
@@ -388,34 +391,22 @@ export function createWorkoutCompletedFeedItem({
   return feedItem;
 }
 
-const MAX_BATCH_WRITES = 450;
-
 export async function fanoutFeedItemToFriends(actorUid: string, feedItem: FeedItem) {
   const friendsSnap = await db.collection(`users/${actorUid}/friends`).get();
 
   const viewerUids = [actorUid, ...friendsSnap.docs.map((doc) => doc.id)];
 
-  let batch = db.batch();
-  let writeCount = 0;
-
   for (const viewerUid of viewerUids) {
-    addFeedItemToUserFeed(batch, viewerUid, feedItem);
-    writeCount += 1;
-
-    if (writeCount >= MAX_BATCH_WRITES) {
-      await batch.commit();
-      batch = db.batch();
-      writeCount = 0;
-    }
-  }
-
-  if (writeCount > 0) {
-    await batch.commit();
+    await db.runTransaction(async (tx) => {
+      if (await isAccountDeleting(actorUid, tx) || await isAccountDeleting(viewerUid, tx)) return;
+      tx.set(db.doc(`userFeeds/${viewerUid}/items/${feedItem.feedItemId}`), feedItem);
+    });
   }
 }
 
 export async function handleRespectFeedPost(uid: string, feedItemId: string) {
   return await db.runTransaction(async (tx) => {
+    await getUserByUid(tx, uid);
     const feedItemAlreadyRespected = await userHasRespectedFeedItem(tx, uid, feedItemId);
     console.log("feedItemAlreadyRespected: ", feedItemAlreadyRespected);
     if (!feedItemAlreadyRespected) {

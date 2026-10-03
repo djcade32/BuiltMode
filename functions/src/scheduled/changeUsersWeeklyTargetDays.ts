@@ -1,3 +1,4 @@
+import { isAccountDeleting } from "../services/accountDeletionGuard.js";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
@@ -104,6 +105,8 @@ async function handleChangeWeeklyTargetDays(
         reason: "user_not_found",
       };
     }
+
+    if (await isAccountDeleting(freshUserSnap.id, tx)) return { status: "skipped", reason: "account_deleting" };
 
     const user = freshUserSnap.data() as UserDoc;
     const uid = freshUserSnap.id;

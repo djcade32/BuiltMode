@@ -1,3 +1,4 @@
+import { isAccountDeleting } from "../services/accountDeletionGuard.js";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
@@ -57,14 +58,16 @@ export const activateOfficialWeeks = onSchedule(
     let activatedCount = 0;
     let skippedCount = 0;
 
+    let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
     while (true) {
-      const snapshot = await db
+      let query = db
         .collection("users")
         .where("officialWeekStatus", "==", "practice")
         .where("officialStartAt", "<=", now)
         .orderBy("officialStartAt", "asc")
-        .limit(PAGE_SIZE)
-        .get();
+        .limit(PAGE_SIZE);
+      if (lastDoc) query = query.startAfter(lastDoc);
+      const snapshot = await query.get();
 
       if (snapshot.empty) {
         break;
@@ -99,13 +102,8 @@ export const activateOfficialWeeks = onSchedule(
         }
       }
 
-      /**
-       * No startAfter pagination needed because activated users are removed
-       * from this query by changing officialWeekStatus from "practice" to "official".
-       *
-       * Invalid records are also marked with officialWeekActivationError so they
-       * can be inspected instead of silently failing forever.
-       */
+      lastDoc = snapshot.docs[snapshot.docs.length - 1];
+      if (snapshot.size < PAGE_SIZE) break;
     }
 
     logger.info("activateOfficialWeeks finished", {
@@ -131,6 +129,8 @@ async function activateUserOfficialWeek(
         reason: "user_not_found",
       };
     }
+
+    if (await isAccountDeleting(freshUserSnap.id, tx)) return { status: "skipped", reason: "account_deleting" };
 
     const user = freshUserSnap.data() as BuiltModeUser;
     const uid = freshUserSnap.id;

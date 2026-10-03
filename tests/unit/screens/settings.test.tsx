@@ -1,6 +1,8 @@
 import Settings from "@/app/(protected)/(tabs)/(profile)/settings";
 import { cancelDeloadWeek, checkForUserProfile, startDeloadWeek } from "@/services/user-service";
 import { useUserStore } from "@/stores/user-store";
+import { deleteBuiltModeAccount } from "@/services/delete-account-service";
+import { signOutUser } from "@/services/auth-service";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import React from "react";
@@ -10,14 +12,25 @@ jest.mock("@/services/user-service", () => ({
   cancelDeloadWeek: jest.fn(), startDeloadWeek: jest.fn(),
   checkForUserProfile: jest.fn(), changeWeeklyTarget: jest.fn(),
 }));
-jest.mock("@/stores/auth-store", () => ({ useAuthStore: () => ({ signout: jest.fn(), user: null }) }));
+jest.mock("@/stores/auth-store", () => ({
+  useAuthStore: Object.assign(() => ({ signout: jest.fn(), user: null }), { getState: () => ({ reset: jest.fn() }) }),
+}));
+jest.mock("@/services/delete-account-service", () => ({ deleteBuiltModeAccount: jest.fn() }));
+jest.mock("@/services/auth-service", () => ({ signOutUser: jest.fn() }));
+jest.mock("@/stores/workout-store", () => ({ useWorkoutStore: { getState: () => ({ clearWorkout: jest.fn() }) } }));
+jest.mock("@/stores/onboarding-store", () => ({ useOnboardingStore: { getState: () => ({ resetState: jest.fn() }) } }));
 jest.mock("@/hooks/user/useUpdateProfileAvatar", () => ({
   useUpdateProfileAvatar: () => ({ mutateAsync: jest.fn(), isPending: false }),
 }));
 jest.mock("@/components/settings/ChangeEmailModal", () => () => null);
 jest.mock("@/components/settings/ChangePasswordModal", () => () => null);
 jest.mock("@/components/settings/ChangeWeeklyTargetModal", () => () => null);
-jest.mock("@/components/settings/DeleteAccountModal", () => () => null);
+jest.mock("@/components/settings/DeleteAccountModal", () => {
+  const React = require("react");
+  const { Button } = require("react-native");
+  return ({ visible, onDeleteAccount }: any) => visible
+    ? <Button title="Confirm Test Deletion" onPress={onDeleteAccount} /> : null;
+});
 jest.mock("@/components/ui/Avatar", () => () => null);
 jest.mock("@/components/themed-text", () => ({ ThemedText: require("react-native").Text }));
 jest.mock("@expo/vector-icons", () => ({
@@ -110,5 +123,19 @@ describe("Settings deload refresh", () => {
       await completion;
     });
     expect(Alert.alert).toHaveBeenLastCalledWith("Deload Scheduled", "Scheduled.");
+  });
+
+  test.each(["completed", "pending"])("deletion clears local user and cached queries (%s)", async (status) => {
+    (deleteBuiltModeAccount as jest.Mock).mockResolvedValue({ success: true, status });
+    (signOutUser as jest.Mock).mockResolvedValue(undefined);
+    queryClient.setQueryData(["private-user-data"], { secret: "cached" });
+    renderSettings();
+    fireEvent.press(screen.getByText("Delete Account"));
+    await confirm("Continue");
+    await act(async () => { fireEvent.press(screen.getByText("Confirm Test Deletion")); });
+    await waitFor(() => expect(useUserStore.getState().user).toBeNull());
+    expect(queryClient.getQueryData(["private-user-data"])).toBeUndefined();
+    expect(signOutUser).toHaveBeenCalledTimes(1);
+    expect(Alert.alert).toHaveBeenLastCalledWith(status === "completed" ? "Account Deleted" : "Account Deletion Started", expect.any(String));
   });
 });
