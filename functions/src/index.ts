@@ -328,3 +328,5 @@ export const updateHomeTimezone = onCall(async (request) => {
 });
 
 export { changeUsersHomeTimezone } from "./scheduled/changeUsersHomeTimezone.js";
+
+export { registerPushToken, unregisterPushToken } from "./functions/pushTokens.js";

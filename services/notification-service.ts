@@ -1,8 +1,8 @@
 import { getAuth } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, writeBatch } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import { Platform } from "react-native";
 
-import { db } from "@/lib/firebase";
+import { functions } from "@/lib/firebase";
 
 import { getApp } from "@react-native-firebase/app";
 import {
@@ -39,62 +39,9 @@ export async function registerPushToken(): Promise<void> {
       return;
     }
 
-    const tokenId = createTokenId(token);
-
-    const globalTokenRef = doc(db, "pushTokens", tokenId);
-    const currentUserTokenRef = doc(db, "users", uid, "pushTokens", tokenId);
-
-    const globalTokenSnap = await getDoc(globalTokenRef);
-    const existingTokenOwnerUid = globalTokenSnap.exists() ? globalTokenSnap.data()?.uid : null;
-
-    const batch = writeBatch(db);
-
-    /**
-     * Important:
-     * A push token belongs to a device/app install, not a BuiltMode user.
-     * If User A and User B use the same physical device, they can produce the same token.
-     *
-     * This cleanup makes the token active for only the latest logged-in user.
-     */
-    if (
-      typeof existingTokenOwnerUid === "string" &&
-      existingTokenOwnerUid.length > 0 &&
-      existingTokenOwnerUid !== uid
-    ) {
-      const previousUserTokenRef = doc(db, "users", existingTokenOwnerUid, "pushTokens", tokenId);
-
-      batch.delete(previousUserTokenRef);
-    }
-
-    batch.set(
-      globalTokenRef,
-      {
-        uid,
-        token,
-        tokenId,
-        platform: Platform.OS,
-        enabled: true,
-        updatedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-      },
-      { merge: true },
-    );
-
-    batch.set(
-      currentUserTokenRef,
-      {
-        uid,
-        token,
-        tokenId,
-        platform: Platform.OS,
-        enabled: true,
-        updatedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-      },
-      { merge: true },
-    );
-
-    await batch.commit();
+    if (auth.currentUser?.uid !== uid) return;
+    const register = httpsCallable<{ token: string; platform: string }, { success: boolean }>(functions, "registerPushToken");
+    await register({ token, platform: Platform.OS });
   } catch (error) {
     console.warn("Failed to register push token:", error);
   }
@@ -124,35 +71,9 @@ export async function unregisterPushToken(): Promise<void> {
       return;
     }
 
-    const tokenId = createTokenId(token);
-
-    const globalTokenRef = doc(db, "pushTokens", tokenId);
-    const currentUserTokenRef = doc(db, "users", uid, "pushTokens", tokenId);
-
-    const globalTokenSnap = await getDoc(globalTokenRef);
-    const globalTokenOwnerUid = globalTokenSnap.exists() ? globalTokenSnap.data()?.uid : null;
-
-    const batch = writeBatch(db);
-
-    batch.delete(currentUserTokenRef);
-
-    if (globalTokenOwnerUid === uid) {
-      batch.set(
-        globalTokenRef,
-        {
-          uid: null,
-          lastUid: uid,
-          token,
-          tokenId,
-          platform: Platform.OS,
-          enabled: false,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
-    }
-
-    await batch.commit();
+    if (auth.currentUser?.uid !== uid) return;
+    const unregister = httpsCallable<{ token: string }, { success: boolean }>(functions, "unregisterPushToken");
+    await unregister({ token });
   } catch (error) {
     console.warn("Failed to unregister push token:", error);
   }
@@ -338,8 +259,4 @@ function handleNotificationNavigation(data?: NotificationData): void {
     router.push("/(protected)/(tabs)");
     return;
   }
-}
-
-function createTokenId(token: string): string {
-  return token.replace(/[.#$/[\]]/g, "_");
 }

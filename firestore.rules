@@ -1,0 +1,117 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function activeUser() {
+      return request.auth != null
+        && !exists(/databases/$(database)/documents/accountDeletions/$(request.auth.uid));
+    }
+
+    function owns(uid) {
+      return activeUser() && request.auth.uid == uid;
+    }
+
+    // Only the server creates these documents, after a friend request is accepted.
+    function canSeeProgress(uid) {
+      return activeUser() && (request.auth.uid == uid
+        || (exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(uid))
+          && !exists(/databases/$(database)/documents/accountDeletions/$(uid))));
+    }
+
+    function canSeePost(postId) {
+      return activeUser()
+        && canSeeProgress(get(/databases/$(database)/documents/feedItems/$(postId)).data.actorUid);
+    }
+
+    match /users/{uid} {
+      allow get: if owns(uid);
+
+      match /friends/{friendUid} {
+        allow read: if owns(uid);
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if owns(uid);
+      }
+      // Push-token records are server-only, including nested users/{uid}/pushTokens.
+    }
+
+    match /publicProfiles/{uid} {
+      allow get: if activeUser();
+    }
+
+    match /usernames/{username} {
+      // Onboarding checks a specific username, including before the profile exists.
+      allow get: if activeUser();
+    }
+
+    match /leaderboardEntries/{uid} {
+      allow read: if activeUser();
+    }
+
+    match /userStats/{uid} {
+      allow get: if canSeeProgress(uid);
+    }
+
+    match /userWeekAggregates/{aggregateId} {
+      // The UI expects a missing week to return null, not a permission error.
+      allow get: if activeUser() && (
+        !exists(/databases/$(database)/documents/userWeekAggregates/$(aggregateId))
+        || canSeeProgress(resource.data.uid));
+      allow list: if canSeeProgress(resource.data.uid);
+    }
+
+    match /userMonthAggregates/{aggregateId} {
+      allow get: if activeUser() && (
+        !exists(/databases/$(database)/documents/userMonthAggregates/$(aggregateId))
+        || owns(resource.data.uid));
+      allow list: if owns(resource.data.uid);
+    }
+
+    match /userWeekDays/{weekId}/days/{dayId} {
+      allow read: if owns(resource.data.uid);
+    }
+
+    match /workouts/{workoutId} {
+      allow get: if activeUser() && (
+        !exists(/databases/$(database)/documents/workouts/$(workoutId))
+        || canSeeProgress(resource.data.uid));
+      allow list: if canSeeProgress(resource.data.uid);
+    }
+
+    match /templates/{templateId} {
+      allow read: if owns(resource.data.uid);
+    }
+
+    match /friendRequests/{requestId} {
+      allow read: if activeUser()
+        && (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
+    }
+
+    match /userFeeds/{uid}/items/{postId} {
+      // Each user can read only the feed the server delivered to their account.
+      allow read: if owns(uid);
+    }
+
+    match /feedItems/{postId} {
+      allow get: if canSeeProgress(resource.data.actorUid);
+
+      match /respects/{uid} {
+        // Access is based on the parent post, so a missing respect is readable too.
+        allow read: if canSeePost(postId);
+      }
+    }
+
+    // Moderation is accessed through authenticated server code or Console IAM,
+    // never through client reads/writes, even by the reporter or reported user.
+    match /contentReports/{document=**} {
+      allow read, write: if false;
+    }
+
+    // All writes go through validated Cloud Functions using the Admin SDK.
+    // Also protects tokens, deletion jobs, and any future unlisted collections.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

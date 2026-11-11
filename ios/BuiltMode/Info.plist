@@ -66,11 +66,9 @@
 		<string>_expo._tcp</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow BuiltMode to access your camera</string>
+	<string>BuiltMode uses your camera to take a profile picture or attach a photo to a completed workout. For example, you can take a post-workout selfie and share it with your friends in the feed.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Expo Dev Launcher uses the local network to discover and connect to development servers running on your computer.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow BuiltMode to access your microphone</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow saving workout progress photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -88,10 +86,6 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>JetBrainsMono_500Medium.ttf</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>SplashScreen</string>
