@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { REPORT_POST_REASONS } from "../types/social.js";
 import { firestoreTimestampSchema } from "./firestore.js";
 
 export const friendSchema = z.object({
@@ -86,3 +87,12 @@ export type FriendListItem = z.infer<typeof friendListItemSchema>;
 export type SearchUserResult = z.infer<typeof searchUserResultSchema>;
 export type RelationshipStatus = z.infer<typeof relationshipStatusSchema>;
 export type FeedItem = z.infer<typeof feedItemSchema>;
+
+export const reportPostRequestSchema = z.object({
+  feedItemId: z.string().min(1).max(1500).regex(/^[A-Za-z0-9_-]+$/),
+  reason: z.enum(REPORT_POST_REASONS),
+  details: z.string().trim().max(1000).optional().default(""),
+}).strict().refine((value) => value.reason !== "other" || value.details.length > 0, {
+  message: "Please describe why you are reporting this post.",
+  path: ["details"],
+});

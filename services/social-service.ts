@@ -2,7 +2,7 @@ import { InfinitePage } from "@/hooks/useInfiniteQuery";
 import { db, functions } from "@/lib/firebase";
 import { chunkArray } from "@/lib/utils/chunk";
 import { firestoreTimestamp } from "@/packages/shared/src/types/firestore";
-import { FeedItem, FriendRequest, SearchUserResult } from "@builtmode/shared";
+import { FeedItem, FriendRequest, SearchUserResult, ReportPostRequest, ReportPostResponse } from "@builtmode/shared";
 import {
   collection,
   doc,
@@ -438,3 +438,8 @@ export const getFeedItemRespectUsers = async ({
     hasMore,
   };
 };
+
+export async function reportFeedPost(input: ReportPostRequest): Promise<ReportPostResponse> {
+  const report = httpsCallable<ReportPostRequest, ReportPostResponse>(functions, "reportFeedPost");
+  return (await report(input)).data;
+}

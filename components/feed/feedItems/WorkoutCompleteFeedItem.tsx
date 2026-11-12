@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
+import ReportPostModal from "../ReportPostModal";
 import FeedItemRespectUsersSheet from "../FeedItemRespectUsersSheet";
 import WeeklyProgressBar from "./WeeklyProgressBar";
 
@@ -23,6 +24,7 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
   const queryClient = useQueryClient();
   const currentUserUid = user?.uid ?? "";
   const router = useRouter();
+  const [isReportVisible, setIsReportVisible] = useState(false);
   const [isRespectUsersSheetVisible, setIsRespectUsersSheetVisible] = useState(false);
 
   const {
@@ -244,6 +246,20 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
               <ThemedText style={styles.username}> · {createdAt}</ThemedText>
             </View>
           </View>
+          {!isPostOwner && !!currentUserUid && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={`Post options for @${resolvedActorUsername}`}
+              hitSlop={12}
+              style={{ padding: 8 }}
+              onPress={() => Alert.alert("Post Options", undefined, [
+                { text: "Report Post", onPress: () => setIsReportVisible(true) },
+                { text: "Cancel", style: "cancel" },
+              ])}
+            >
+              <FontAwesome6 name="ellipsis" size={20} color={Colors.icon} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {photoUrl ? (
@@ -354,6 +370,13 @@ const WorkoutCompleteFeedItem = ({ feedItem }: { feedItem: FeedItem }) => {
         </TouchableOpacity>
       </View>
 
+      <ReportPostModal
+        key={`${currentUserUid}:${feedItemId}`}
+        visible={isReportVisible}
+        feedItemId={feedItemId}
+        authorUsername={resolvedActorUsername}
+        onClose={() => setIsReportVisible(false)}
+      />
       <FeedItemRespectUsersSheet
         visible={isRespectUsersSheetVisible}
         feedItemId={feedItemId}
