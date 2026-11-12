@@ -96,3 +96,7 @@ export const reportPostRequestSchema = z.object({
   message: "Please describe why you are reporting this post.",
   path: ["details"],
 });
+
+export const blockUserRequestSchema = z.object({
+  targetUid: z.string().min(1).max(128).regex(/^[^/]+$/).refine((uid) => uid !== "." && uid !== ".."),
+}).strict();

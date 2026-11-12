@@ -2,7 +2,7 @@ import { InfinitePage } from "@/hooks/useInfiniteQuery";
 import { db, functions } from "@/lib/firebase";
 import { chunkArray } from "@/lib/utils/chunk";
 import { firestoreTimestamp } from "@/packages/shared/src/types/firestore";
-import { FeedItem, FriendRequest, SearchUserResult, ReportPostRequest, ReportPostResponse } from "@builtmode/shared";
+import { FeedItem, FriendRequest, SearchUserResult, ReportPostRequest, ReportPostResponse, BlockedUser, BlockUserRequest, BlockUserResponse } from "@builtmode/shared";
 import {
   collection,
   doc,
@@ -13,6 +13,7 @@ import {
   getDocs,
   limit,
   orderBy,
+  onSnapshot,
   query,
   QueryDocumentSnapshot,
   startAfter,
@@ -442,4 +443,24 @@ export const getFeedItemRespectUsers = async ({
 export async function reportFeedPost(input: ReportPostRequest): Promise<ReportPostResponse> {
   const report = httpsCallable<ReportPostRequest, ReportPostResponse>(functions, "reportFeedPost");
   return (await report(input)).data;
+}
+
+export function subscribeToBlockedUsers(uid: string, onChange: (users: BlockedUser[]) => void, onError: (error: Error) => void) {
+  return onSnapshot(collection(db, `users/${uid}/blockedUsers`), { includeMetadataChanges: true }, (snapshot) => {
+    // Do not expose cached feed content before checking the current block list.
+    if (snapshot.metadata.fromCache) return;
+    onChange(snapshot.docs.map((document) => ({
+      uid: document.id,
+      username: document.data().username ?? null,
+      displayName: document.data().displayName ?? null,
+    })));
+  }, onError);
+}
+
+export async function blockUser(targetUid: string): Promise<BlockUserResponse> {
+  return (await httpsCallable<BlockUserRequest, BlockUserResponse>(functions, "blockUser")({ targetUid })).data;
+}
+
+export async function unblockUser(targetUid: string): Promise<BlockUserResponse> {
+  return (await httpsCallable<BlockUserRequest, BlockUserResponse>(functions, "unblockUser")({ targetUid })).data;
 }

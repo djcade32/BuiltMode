@@ -332,3 +332,7 @@ export { changeUsersHomeTimezone } from "./scheduled/changeUsersHomeTimezone.js"
 export { registerPushToken, unregisterPushToken } from "./functions/pushTokens.js";
 
 export { reportFeedPost } from "./functions/reportPost.js";
+
+export { blockUser, unblockUser, cleanUpBlockedUserFeed } from "./functions/blocking.js";
+
+export { acceptTerms } from "./functions/legal.js";

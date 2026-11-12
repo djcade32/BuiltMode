@@ -1,3 +1,4 @@
+import TermsAcceptanceGate from "@/components/auth/TermsAcceptanceGate";
 import HomeTimezoneSync from "@/components/system/HomeTimezoneSync";
 import PendingWorkoutPublisher from "@/components/system/PendingWorkoutPublisher";
 import {
@@ -14,9 +15,18 @@ import { useEffect } from "react";
 import { MenuProvider } from "react-native-popup-menu";
 
 const ProtectedLayout = () => {
-  // useUserStore.persist.clearStorage();
-  // useAuthStore.persist.clearStorage();
-  // useWorkoutStore.persist.clearStorage();
+  const { isAuthenticated, isHydrated, user } = useAuthStore();
+  if (!isHydrated) return null;
+  if (!isAuthenticated || !user?.uid) return <Redirect href="/(auth)/signin" />;
+  return (
+    <TermsAcceptanceGate key={user.uid} uid={user.uid}>
+      <AcceptedApp />
+    </TermsAcceptanceGate>
+  );
+};
+
+// Mount effects and navigators only after the agreement is confirmed.
+const AcceptedApp = () => {
   const { isAuthenticated, isHydrated, user } = useAuthStore();
   const { activeWorkoutDraft } = useWorkoutStore();
 

@@ -1,3 +1,5 @@
+import { AcceptTermsRequest, acceptTermsRequestSchema } from "@builtmode/shared/schemas/legal";
+import { acceptCurrentTerms } from "@/services/legal-service";
 import { handleGetWeekId } from "@/lib/utils/weekId";
 import { resetPassword, signInWithEmail, signOutUser, signUpWithEmail } from "@/services/auth-service";
 import { unregisterPushToken } from "@/services/notification-service";
@@ -15,7 +17,7 @@ type AuthStore = {
   error: string | null;
   setHydrated: (value: boolean) => void;
   signin: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, agreement: AcceptTermsRequest) => Promise<void>;
   signout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   reset: () => void;
@@ -71,12 +73,20 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      signup: async (name: string, email: string, password: string) => {
+      signup: async (name: string, email: string, password: string, agreement: AcceptTermsRequest) => {
+        // Validate consent before creating a Firebase Auth account.
+        const acceptedTerms = acceptTermsRequestSchema.parse(agreement);
         set({ isSigningIn: true, error: null });
         useUserStore.getState().setUser(null);
 
         try {
           const result = await signUpWithEmail({ name, email, password });
+          try {
+            await acceptCurrentTerms(result.user.uid, acceptedTerms);
+          } catch {
+            // The Auth account already exists. Continue to the acceptance gate
+            // for retry instead of asking the user to create the account again.
+          }
 
           set({
             user: {

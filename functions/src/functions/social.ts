@@ -1,5 +1,7 @@
 import { FeedItem, Friend, FriendRequest, SearchUserResult } from "@builtmode/shared/types/social";
 import { Exercise } from "@builtmode/shared/types/workout";
+import { HttpsError } from "firebase-functions/v2/https";
+import { isBlockedBetween } from "./blocking.js";
 import { Timestamp } from "firebase-admin/firestore";
 import {
   addFriendToUserList,
@@ -27,6 +29,9 @@ export async function handleSendFriendRequest(fromUid: string, toUid: string): P
   let requesterDisplayName = "";
 
   const response = await db.runTransaction(async (tx) => {
+    if (await isBlockedBetween(tx, fromUid, toUid)) {
+      throw new HttpsError("permission-denied", "This user is unavailable.");
+    }
     const forwardRequestId = `${fromUid}_${toUid}`;
     const reverseRequestId = `${toUid}_${fromUid}`;
 
@@ -124,6 +129,9 @@ export async function handleRespondToFriendRequest(
     if (friendRequest.status !== "pending") {
       console.error("Failed to respond to friend request. Can only respond to pending requests: ", requestId);
       return false;
+    }
+    if (await isBlockedBetween(tx, friendRequest.fromUid, friendRequest.toUid)) {
+      throw new HttpsError("permission-denied", "This request is unavailable.");
     }
     await getUserByUid(tx, friendRequest.fromUid);
     await getUserByUid(tx, friendRequest.toUid);
@@ -228,6 +236,7 @@ export async function handleSearchUserByUsername(
     }
 
     const foundUid = usernameData.uid;
+    if (foundUid !== requesterUid && await isBlockedBetween(tx, requesterUid, foundUid)) return null;
 
     const userSnap = await getUserByUid(tx, foundUid);
 
@@ -399,6 +408,13 @@ export async function fanoutFeedItemToFriends(actorUid: string, feedItem: FeedIt
   for (const viewerUid of viewerUids) {
     await db.runTransaction(async (tx) => {
       if (await isAccountDeleting(actorUid, tx) || await isAccountDeleting(viewerUid, tx)) return;
+      if (viewerUid !== actorUid) {
+        if (await isBlockedBetween(tx, actorUid, viewerUid)) return;
+        // Recheck friendship inside delivery: a stale recipient list cannot
+        // deliver a post after blocking, unblocking, or removing a friend.
+        const friend = await tx.get(db.doc(`users/${actorUid}/friends/${viewerUid}`));
+        if (!friend.exists) return;
+      }
       tx.set(db.doc(`userFeeds/${viewerUid}/items/${feedItem.feedItemId}`), feedItem);
     });
   }
@@ -407,6 +423,11 @@ export async function fanoutFeedItemToFriends(actorUid: string, feedItem: FeedIt
 export async function handleRespectFeedPost(uid: string, feedItemId: string) {
   return await db.runTransaction(async (tx) => {
     await getUserByUid(tx, uid);
+    const post = await tx.get(db.doc(`feedItems/${feedItemId}`));
+    if (!post.exists) throw new HttpsError("not-found", "This post is unavailable.");
+    if (await isBlockedBetween(tx, uid, post.get("actorUid"))) {
+      throw new HttpsError("permission-denied", "This post is unavailable.");
+    }
     const feedItemAlreadyRespected = await userHasRespectedFeedItem(tx, uid, feedItemId);
     console.log("feedItemAlreadyRespected: ", feedItemAlreadyRespected);
     if (!feedItemAlreadyRespected) {

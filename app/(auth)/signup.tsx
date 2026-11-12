@@ -1,3 +1,5 @@
+import TermsAgreement from "@/components/auth/TermsAgreement";
+import { CURRENT_TERMS_VERSION } from "@builtmode/shared/schemas/legal";
 import AuthHeader from "@/components/auth/AuthHeader";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -43,6 +45,7 @@ const Signup = () => {
     defaultValues: initialValues,
   });
   const { name, email, password, confirmPassword } = useWatch({ control });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showPasswordRules, setShowPasswordRules] = useState(false);
   const { signup, isSigningIn, error } = useAuthStore();
 
@@ -57,11 +60,11 @@ const Signup = () => {
   }, [password]);
 
   const handleSignup = async (data: FormInputProps) => {
-    if (!isValidForm(data)) return;
+    if (!acceptedTerms || !isValidForm(data)) return;
     const { email, password } = data;
     const name = data.name.trim();
     try {
-      await signup(name, email, password);
+      await signup(name, email, password, { accepted: true, termsVersion: CURRENT_TERMS_VERSION });
     } catch (error) {
       console.error("Error Signing up: ", error);
     }
@@ -163,13 +166,20 @@ const Signup = () => {
 
               {error && <ThemedText style={styles.formError}>{error}</ThemedText>}
 
+              <TermsAgreement checked={acceptedTerms} onChange={setAcceptedTerms} disabled={isSigningIn} />
               <ThemedButton
                 disabled={
                   name?.trim().length === 0 ||
                   email?.trim().length === 0 ||
                   password?.trim().length === 0 ||
                   confirmPassword?.trim().length === 0 ||
-                  isSigningIn
+                  isSigningIn ||
+                  !acceptedTerms ||
+                  !isValidPassword ||
+                  password !== confirmPassword ||
+                  !name?.trim() ||
+                  !email?.trim() ||
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
                 }
                 title="CREATE ACCOUNT"
                 onPress={handleSubmit(handleSignup)}
@@ -207,33 +217,6 @@ const Signup = () => {
               </Link>
             </ThemedView>
 
-            <ThemedView style={styles.footerContainer}>
-              <View
-                style={{
-                  borderTopColor: Colors.inputBorder,
-                  borderTopWidth: 1,
-                  padding: 16,
-                }}
-              >
-                <ThemedText style={styles.footerText}>
-                  By continuing, you agree to our
-                </ThemedText>
-                <View style={styles.legalLinks}>
-                  <Link href="/terms-of-service" push asChild>
-                    <TouchableOpacity accessibilityRole="link" style={styles.legalLinkButton}>
-                      <ThemedText style={styles.legalLinkText}>Terms of Service</ThemedText>
-                    </TouchableOpacity>
-                  </Link>
-                  <ThemedText style={styles.footerText}>and</ThemedText>
-                  <Link href="/privacy-policy" push asChild>
-                    <TouchableOpacity accessibilityRole="link" style={styles.legalLinkButton}>
-                      <ThemedText style={styles.legalLinkText}>Privacy Policy</ThemedText>
-                    </TouchableOpacity>
-                  </Link>
-                </View>
-              </View>
-            </ThemedView>
-
             <View style={styles.accentArt1} />
             <View style={styles.accentArt2} />
           </ThemedView>
@@ -252,22 +235,6 @@ const styles = StyleSheet.create({
     width: "90%",
     gap: 20,
   },
-  footerContainer: {
-    paddingHorizontal: 20,
-    bottom: 0,
-    flex: 1,
-    justifyContent: "flex-end",
-    marginTop: 30,
-  },
-  footerText: {
-    fontFamily: Typography.family.primary.regular,
-    fontSize: 12,
-    color: Colors.gray,
-    textAlign: "center",
-  },
-  legalLinks: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: "center", columnGap: 8 },
-  legalLinkButton: { minHeight: 44, justifyContent: "center" },
-  legalLinkText: { fontSize: 12, color: Colors.accent.primary, textDecorationLine: "underline" },
   formError: {
     color: "red",
     fontSize: Typography.size.xs,
