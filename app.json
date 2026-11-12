@@ -12,10 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.djcade32.BuiltMode",
       "infoPlist": {
-        "NSCameraUsageDescription": "This app uses the camera to capture workout photos and videos.",
+        "NSCameraUsageDescription": "BuiltMode uses your camera to take a profile picture or attach a photo to a completed workout. For example, you can take a post-workout selfie and share it with your friends in the feed.",
         "NSPhotoLibraryUsageDescription": "Allow access to save workout photos.",
-        "NSPhotoLibraryAddUsageDescription": "Allow saving workout progress photos.",
-        "NSMicrophoneUsageDescription": "Allow recording audio during workout videos."
+        "NSPhotoLibraryAddUsageDescription": "Allow saving workout progress photos."
       },
       "googleServicesFile": "./GoogleService-Info.plist",
       "entitlements": {
@@ -31,7 +30,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
+      "permissions": ["android.permission.CAMERA"],
       "googleServicesFile": "./google-services.json",
       "package": "com.djcade32.BuiltMode"
     },
@@ -67,9 +66,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow BuiltMode to access your camera",
-          "microphonePermission": "Allow BuiltMode to access your microphone",
-          "recordAudioAndroid": true
+          "cameraPermission": "BuiltMode uses your camera to take a profile picture or attach a photo to a completed workout. For example, you can take a post-workout selfie and share it with your friends in the feed.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
@@ -81,7 +80,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "BuiltMode accesses your photos to let you share them with your friends."
+          "photosPermission": "BuiltMode accesses your photos to let you share them with your friends.",
+          "cameraPermission": "BuiltMode uses your camera to take a profile picture or attach a photo to a completed workout. For example, you can take a post-workout selfie and share it with your friends in the feed.",
+          "microphonePermission": false
         }
       ],
       [
@@ -102,7 +103,15 @@
         }
       ],
       "expo-localization",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
       "@react-native-firebase/app",
       "@react-native-firebase/messaging",
       "expo-widgets",
