@@ -1,3 +1,5 @@
+import DropdownMenu from "@/components/ui/DropdownMenu";
+import { useBlockedUsers } from "@/hooks/social/useBlockedUsers";
 import AccountabilitySummaryWidget from "@/components/profile/AccountabilitySummaryWidget";
 import ThisWeekWidget from "@/components/profile/ThisWeekWidget";
 import { ThemedText } from "@/components/themed-text";
@@ -46,6 +48,25 @@ const FriendProfile = () => {
   const { returnTo } = useLocalSearchParams<{ returnTo?: RelativePathString }>();
 
   const queryClient = useQueryClient();
+  const blocks = useBlockedUsers(user?.uid ?? "");
+  const isBlocked = blocks.blockedUids.has(id);
+  const [isDropdownOpened, setIsDropdownOpened] = useState(false);
+
+  const confirmBlock = () => Alert.alert(
+    "Block this user?",
+    "Their posts will disappear from your feed. Your friendship and pending requests will be removed. You can unblock them in Settings.",
+    [
+      { text: "Cancel", style: "cancel" },
+      { text: "Block User", style: "destructive", onPress: async () => {
+        try {
+          await blocks.setBlocked({ uid: id, username: userInfo?.usernameLower ?? null, displayName: userInfo?.displayName ?? null }, true);
+          if (useUserStore.getState().user?.uid === user?.uid) router.replace("/(protected)/(tabs)/(feed)/feed");
+        } catch {
+          Alert.alert("Unable to block user", "Please check your connection and try again.");
+        }
+      } },
+    ],
+  );
 
   const [isLoadingData, setIsLoadingData] = useState(true);
 
@@ -145,6 +166,7 @@ const FriendProfile = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      {isDropdownOpened && <View pointerEvents="none" style={styles.dropdownBackdrop} />}
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity activeOpacity={0.8} style={styles.iconContainer} onPress={handleBack}>
@@ -155,11 +177,26 @@ const FriendProfile = () => {
           <ThemedText style={styles.headerText}>{userInfo?.usernameLower ?? ""}</ThemedText>
         </View>
 
-        {/* BUTTON PLACEHOLDER */}
-        <View style={styles.headerPlaceholder} />
+        {id && id !== user?.uid ? (
+          <DropdownMenu
+            onOpen={() => setIsDropdownOpened(true)}
+            onClose={() => setIsDropdownOpened(false)}
+            menuTriggerStyle={styles.iconContainer}
+            renderTriggerItem={<View accessible accessibilityLabel="User options" accessibilityRole="button"><FontAwesome6 name="ellipsis" size={18} color={Colors.gray} /></View>}
+            options={[{
+              text: isBlocked ? "User Blocked" : "Block User",
+              icon: <FontAwesome6 name="ban" size={20} color={Colors.error} />,
+              onSelect: confirmBlock,
+              disabled: blocks.isPending || blocks.isLoading || isBlocked || !!blocks.error,
+              menuOptionCustomStyles: { optionText: { color: Colors.error } },
+            }]}
+          />
+        ) : <View style={styles.headerPlaceholder} />}
       </View>
 
-      {isLoadingData ? (
+      {isBlocked ? (
+        <View style={styles.centerState}><ThemedText>This user is blocked.</ThemedText></View>
+      ) : isLoadingData ? (
         <View style={styles.centerState}>
           <ActivityIndicator color={Colors.icon} />
         </View>
@@ -291,6 +328,16 @@ const FriendProfile = () => {
 export default FriendProfile;
 
 const styles = StyleSheet.create({
+  dropdownBackdrop: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.background.primary,
+    opacity: 0.8,
+    zIndex: 100,
+  },
   container: {
     backgroundColor: Colors.background.primary,
     flex: 1,

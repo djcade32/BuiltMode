@@ -1,3 +1,4 @@
+import { normalizeExerciseUnits } from "@/packages/shared/src/utils/exerciseUnits";
 import {
   CompleteWorkoutRequest,
   CompleteWorkoutResponse,
@@ -106,7 +107,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           name,
           sessionId,
           uid,
-          exercises,
+          exercises: exercises.map(normalizeExerciseUnits),
           startedAtMs: Date.now(),
           status: "active",
           lastEditedAtMs: Date.now(),
@@ -125,7 +126,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             ...get().activeWorkoutDraft,
             sessionId,
             uid,
-            exercises,
+            exercises: exercises.map(normalizeExerciseUnits),
             startedAtMs: get().activeWorkoutDraft?.startedAtMs ?? Date.now(),
             status: "active",
             lastEditedAtMs: Date.now(),
@@ -142,7 +143,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             ? {
                 name: payload.name,
                 workoutType: payload.workoutType,
-                exercises: payload.exercises,
+                exercises: payload.exercises.map(normalizeExerciseUnits),
                 notes: payload.notes,
               }
             : null,
@@ -302,7 +303,10 @@ export const useWorkoutStore = create<WorkoutState>()(
         });
 
         const activeWorkoutDraft = get().activeWorkoutDraft;
-        if (!activeWorkoutDraft) return;
+        if (!activeWorkoutDraft) {
+          set({ isLoggingWorkout: false });
+          throw new Error("There is no active workout to complete.");
+        }
 
         const { sessionId, name, notes, exercises, workoutType } = activeWorkoutDraft;
 
@@ -311,12 +315,11 @@ export const useWorkoutStore = create<WorkoutState>()(
             sessionId,
             name: name ?? "",
             duration,
-            exercises,
+            exercises: exercises.map(normalizeExerciseUnits),
             notes: notes ?? "",
             workoutType,
           };
 
-          console.log("Sending complete request: ", request);
           const response = await createCompleteWorkout(request);
 
           if (response) {
@@ -346,7 +349,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         const request: SaveAsTemplateRequest = {
           id: template.id ? `${template.id}-template` : `${uuidv4()}-template`,
           name: template.name,
-          exercises: template.exercises,
+          exercises: template.exercises.map(normalizeExerciseUnits),
           notes: template.notes,
           workoutType: template.workoutType,
         };

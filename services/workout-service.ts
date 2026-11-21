@@ -1,8 +1,26 @@
 import { Workout } from "@/functions/src/types/workout";
 import { InfinitePage } from "@/hooks/useInfiniteQuery";
 import { db, functions } from "@/lib/firebase";
-import { CompleteWorkoutRequest, CompleteWorkoutResponse, PublishCompletedWorkoutToFeedResponse } from "@/packages/shared/src";
-import { collection, doc, DocumentData, getDoc, getDocs, limit, orderBy, query, QueryDocumentSnapshot, startAfter, Timestamp, where } from "firebase/firestore";
+import {
+  CompleteWorkoutRequest,
+  CompleteWorkoutResponse,
+  PublishCompletedWorkoutToFeedResponse,
+} from "@/packages/shared/src";
+import { completeWorkoutRequestSchema } from "@builtmode/shared/schemas/workout";
+import {
+  collection,
+  doc,
+  DocumentData,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  QueryDocumentSnapshot,
+  startAfter,
+  Timestamp,
+  where,
+} from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
 /**
@@ -16,16 +34,28 @@ import { httpsCallable } from "firebase/functions";
  * `CompleteWorkoutResponse` object.
  */
 export const createCompleteWorkout = async (workout: CompleteWorkoutRequest): Promise<CompleteWorkoutResponse> => {
-  const createWorkoutFunction = httpsCallable<CompleteWorkoutRequest, CompleteWorkoutResponse>(functions, "completeWorkout");
-  const workoutResponse = await createWorkoutFunction(workout);
+  const createWorkoutFunction = httpsCallable<CompleteWorkoutRequest, CompleteWorkoutResponse>(
+    functions,
+    "completeWorkout",
+  );
+  const parsed = completeWorkoutRequestSchema.safeParse(workout);
+  if (!parsed.success) {
+    const fields = [...new Set(parsed.error.issues.map((issue) => issue.path.join(".")))].join(", ");
+    throw new Error(`Please check these workout fields before completing: ${fields}.`);
+  }
+  const workoutResponse = await createWorkoutFunction(parsed.data);
   return workoutResponse.data;
 };
 
-export const publishCompletedWorkoutToFeed = async (sessionId: string, photoUrl: string | null, caption: string | null): Promise<PublishCompletedWorkoutToFeedResponse> => {
-  const publishCompletedWorkoutToFeedFunction = httpsCallable<{ sessionId: string; photoUrl: string | null; caption: string | null }, PublishCompletedWorkoutToFeedResponse>(
-    functions,
-    "publishCompletedWorkoutToFeed",
-  );
+export const publishCompletedWorkoutToFeed = async (
+  sessionId: string,
+  photoUrl: string | null,
+  caption: string | null,
+): Promise<PublishCompletedWorkoutToFeedResponse> => {
+  const publishCompletedWorkoutToFeedFunction = httpsCallable<
+    { sessionId: string; photoUrl: string | null; caption: string | null },
+    PublishCompletedWorkoutToFeedResponse
+  >(functions, "publishCompletedWorkoutToFeed");
   const response = await publishCompletedWorkoutToFeedFunction({ photoUrl, caption, sessionId });
   return response.data;
 };
@@ -50,7 +80,13 @@ export const getUserWorkouts = async ({
     const workoutsRef = collection(db, "workouts");
 
     const workoutsQuery = pageParam
-      ? query(workoutsRef, where("uid", "==", params.uid), orderBy("completedAt", "desc"), startAfter(pageParam), limit(pageSize))
+      ? query(
+          workoutsRef,
+          where("uid", "==", params.uid),
+          orderBy("completedAt", "desc"),
+          startAfter(pageParam),
+          limit(pageSize),
+        )
       : query(workoutsRef, where("uid", "==", params.uid), orderBy("completedAt", "desc"), limit(pageSize));
 
     const snapshot = await getDocs(workoutsQuery);
@@ -77,7 +113,11 @@ export const getUserWorkouts = async ({
   }
 };
 
-export const getWorkoutBySessionId = async ({ params }: { params: { sessionId: string } }): Promise<Workout | undefined> => {
+export const getWorkoutBySessionId = async ({
+  params,
+}: {
+  params: { sessionId: string };
+}): Promise<Workout | undefined> => {
   const workoutDoc = doc(db, `workouts/${params.sessionId}`);
   const fetchedDoc = await getDoc(workoutDoc);
 
@@ -88,7 +128,13 @@ export const getWorkoutBySessionId = async ({ params }: { params: { sessionId: s
   }
 };
 
-export const getPendingPublishWorkouts = async ({ uid, completedBefore }: { uid: string; completedBefore: Date }) => {
+export const getPendingPublishWorkouts = async ({
+  uid,
+  completedBefore,
+}: {
+  uid: string;
+  completedBefore: Date;
+}) => {
   const q = query(
     collection(db, "workouts"),
     where("uid", "==", uid),

@@ -54,6 +54,9 @@ describe("account deletion", () => {
       ["users/alice", { uid: "alice" }], ["users/bob", { uid: "bob" }],
       ["users/alice/friends/bob", { uid: "bob" }], ["users/bob/friends/alice", { uid: "alice" }],
       ["users/bob/friends/carol", { uid: "carol" }],
+      ["users/bob/blockedUsers/alice", { uid: "alice" }],
+      ["users/alice/blockedUsers/bob", { uid: "bob" }],
+      ["users/bob/blockedUsers/carol", { uid: "carol" }],
       ["friendRequests/incoming", { fromUid: "bob", toUid: "alice" }],
       ["friendRequests/outgoing", { fromUid: "alice", toUid: "bob" }],
       ["friendRequests/other", { fromUid: "bob", toUid: "carol" }],
@@ -103,6 +106,9 @@ describe("account deletion", () => {
     expect(records.has("feedItems/own/respects/bob")).toBe(false);
     expect(records.get("feedItems/other").respectCount).toBe(1);
     expect(records.has("users/bob/friends/carol")).toBe(true);
+    expect(records.has("users/bob/blockedUsers/carol")).toBe(true);
+    expect(records.has("users/bob/blockedUsers/alice")).toBe(false);
+    expect(records.has("users/alice/blockedUsers/bob")).toBe(false);
     expect(records.has("friendRequests/other")).toBe(true);
     expect(records.has("users/bob/notifications/n2")).toBe(true);
     expect(records.has("userWeekDays/alice_other_2026-10-05")).toBe(true);

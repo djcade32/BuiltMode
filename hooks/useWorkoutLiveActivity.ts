@@ -48,7 +48,7 @@ export const useWorkoutLiveActivity = ({
   });
 
   useEffect(() => {
-    if (!workout?.startedAtMs) {
+    if (!workout?.startedAtMs || workout.status !== "active") {
       return;
     }
 
@@ -63,7 +63,6 @@ export const useWorkoutLiveActivity = ({
       isPaused,
       isResting,
     });
-    console.log("liveActivityState: ", liveActivityState);
     void workoutLiveActivityService.sync(liveActivityState).catch((error) => {
       console.error("Failed to synchronize Workout Live Activity:", error);
     });

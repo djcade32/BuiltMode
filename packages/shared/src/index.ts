@@ -8,5 +8,6 @@ export * from "./types/social.js";
 export * from "./types/template.js";
 export * from "./types/user.js";
 export * from "./types/workout.js";
+export * from "./utils/exerciseUnits.js";
 export * from "./utils/time.js";
 export * from "./utils/week.js";

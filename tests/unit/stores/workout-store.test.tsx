@@ -1,3 +1,4 @@
+import { saveAsTemplate } from "@/services/template-service";
 import { useWorkoutStore } from "@/stores/workout-store";
 import { resetWorkoutStore } from "../../test-utils/reset-workout-store";
 import {
@@ -6,6 +7,8 @@ import {
   makeExercises,
   makeInitialWorkout,
 } from "../../test-utils/workout-fixtures";
+
+jest.mock("@/services/template-service", () => ({ saveAsTemplate: jest.fn() }));
 
 jest.mock("@/services/workout-service", () => ({
   createCompleteWorkout: jest.fn(),
@@ -25,13 +28,14 @@ describe("workout-store", () => {
     useWorkoutStore.getState().setInitialWorkout(payload);
 
     const state = useWorkoutStore.getState();
-    expect(state.initialWorkout).toEqual(payload);
+    expect(state.initialWorkout).toEqual({ ...payload, exercises: payload.exercises.map((exercise) => ({ ...exercise, units: exercise.metricType === "weight_reps" ? "lbs" : null })) });
   });
 
   it("starts workout and sets active workout draft", () => {
     const exercises = makeExercises();
 
     useWorkoutStore.getState().startWorkout({
+      name: "Strength Workout",
       sessionId: "session-1",
       uid: "user-1",
       exercises,
@@ -42,7 +46,7 @@ describe("workout-store", () => {
     expect(state.activeWorkoutDraft).toMatchObject({
       sessionId: "session-1",
       uid: "user-1",
-      exercises,
+      exercises: exercises.map((exercise) => ({ ...exercise, units: exercise.metricType === "weight_reps" ? "lbs" : null })),
       status: "active",
       workoutType: "strength",
     });
@@ -129,5 +133,34 @@ describe("workout-store", () => {
     expect(state.currentExerciseIndex).toBe(0);
     expect(state.duration).toBeUndefined();
     expect(state.completeWorkoutResponse).toBeUndefined();
+  });
+
+  it("normalizes a resumed legacy draft before completion without modifying its source", async () => {
+    const draft = makeActiveWorkoutDraft();
+    useWorkoutStore.setState({ activeWorkoutDraft: draft as any });
+    (createCompleteWorkout as jest.Mock).mockResolvedValue(makeCompleteWorkoutResponse());
+    await useWorkoutStore.getState().logWorkout(10);
+    expect((createCompleteWorkout as jest.Mock).mock.calls[0][0].exercises.map((e: any) => e.units)).toEqual(["lbs", null]);
+    expect(draft.exercises[0]).not.toHaveProperty("units");
+  });
+  it("retains the active draft and clears loading when save fails", async () => {
+    const draft = makeActiveWorkoutDraft();
+    useWorkoutStore.setState({ activeWorkoutDraft: draft as any });
+    (createCompleteWorkout as jest.Mock).mockRejectedValue(new Error("Network failure"));
+    await expect(useWorkoutStore.getState().logWorkout(10)).rejects.toThrow("Network failure");
+    expect(useWorkoutStore.getState().activeWorkoutDraft).toEqual(draft);
+    expect(useWorkoutStore.getState().isLoggingWorkout).toBe(false);
+  });
+  it("does not leave logging enabled when no draft exists", async () => {
+    await expect(useWorkoutStore.getState().logWorkout(10)).rejects.toThrow("no active workout");
+    expect(useWorkoutStore.getState().isLoggingWorkout).toBe(false);
+  });
+
+  it("normalizes legacy exercises when saving a template without mutating the source", async () => {
+    const template = { id: "t1", ...makeInitialWorkout() };
+    (saveAsTemplate as jest.Mock).mockResolvedValue({ id: "t1-template" });
+    await useWorkoutStore.getState().saveWorkoutAsTemplate(template);
+    expect((saveAsTemplate as jest.Mock).mock.calls[0][0].exercises.map((e: any) => e.units)).toEqual(["lbs", null]);
+    expect(template.exercises[0]).not.toHaveProperty("units");
   });
 });

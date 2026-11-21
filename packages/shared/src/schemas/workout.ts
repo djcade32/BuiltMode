@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeExerciseUnits } from "../utils/exerciseUnits.js";
 import { firestoreTimestampSchema } from "./firestore.js";
 import { homeTimezoneSchema } from "./user.js";
 
@@ -59,14 +60,16 @@ export const exerciseSetSchema = z.object({
   rpe: z.number().min(1).max(10).optional(),
 });
 
-export const exerciseSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  metricType: exerciseMetricTypeSchema,
-  sets: z.array(exerciseSetSchema),
-  units: unitsSchema.nullable(),
-  notes: z.string().trim().max(500).optional(),
-});
+export const exerciseSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    metricType: exerciseMetricTypeSchema,
+    sets: z.array(exerciseSetSchema),
+    units: unitsSchema.nullable().optional(),
+    notes: z.string().trim().max(500).optional(),
+  })
+  .transform(normalizeExerciseUnits);
 
 export const activeWorkoutDraftSchema = z.object({
   sessionId: z.string().min(1),

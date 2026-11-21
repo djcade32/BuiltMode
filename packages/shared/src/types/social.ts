@@ -97,3 +97,16 @@ export type SearchUserResult = {
 
   relationshipStatus: RelationshipStatus;
 };
+
+export const REPORT_POST_REASONS = ["harassment", "hate_speech", "sexual_content", "violence", "spam", "other"] as const;
+export type ReportPostReason = (typeof REPORT_POST_REASONS)[number];
+export type ReportPostRequest = { feedItemId: string; reason: ReportPostReason; details?: string };
+export type ReportPostResponse = { reportId: string; status: "submitted" | "already_reported" };
+
+export type BlockUserRequest = { targetUid: string };
+export type BlockUserResponse = { status: "blocked" | "unblocked" };
+export type BlockedUser = {
+  uid: string;
+  username: string | null;
+  displayName: string | null;
+};

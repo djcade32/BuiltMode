@@ -116,6 +116,7 @@ export async function deleteAccountData(uid: string): Promise<void> {
   });
 
   await deleteMatching(db.collectionGroup("friends").where("uid", "==", uid));
+  await deleteMatching(db.collectionGroup("blockedUsers").where("uid", "==", uid));
   for (const field of ["fromUid", "toUid"]) {
     await deleteMatching(db.collection("friendRequests").where(field, "==", uid));
   }
