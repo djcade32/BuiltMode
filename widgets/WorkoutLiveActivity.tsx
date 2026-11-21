@@ -93,7 +93,7 @@ export type WorkoutLiveActivityProps = {
   reps?: number;
   durationSeconds?: number;
   distance?: number;
-  distanceUnit?: "mi" | "km" | "m";
+  distanceUnit?: "mi" | "km" | "m" | "yd";
   units: ExerciseUnit | null;
 
   /**

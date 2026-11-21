@@ -20,6 +20,10 @@ let activeWorkoutId: string | null = null;
 let logoUriPromise: Promise<string> | null = null;
 let lastPayloadSignature: string | null = null;
 let lastSyncedState: WorkoutLiveActivityState | null = null;
+let operationEpoch = 0;
+let endedWorkoutId: string | null = null;
+let recoveryWorkoutId: string | null = null;
+let suppressedWorkoutId: string | null = null;
 let userInteractionSubscription: UserInteractionSubscription | null = null;
 
 /*
@@ -189,7 +193,6 @@ const ensureActivity = async (
 
     return existingActivity;
   }
-  console.log("props: ", props);
   const instance = WorkoutLiveActivity.start(props, `builtmode://active-workout/${state.workoutId}`);
 
   activeInstance = instance;
@@ -201,43 +204,46 @@ const ensureActivity = async (
   return instance;
 };
 
+const isMissingActivity = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("LiveActivityNotFoundException") || message.includes("Can't find live activity with id:");
+};
+
 const sync = async (state: WorkoutLiveActivityState): Promise<void> => {
-  if (Platform.OS !== "ios") {
-    return;
-  }
-
-  lastSyncedState = state;
+  if (Platform.OS !== "ios") return;
+  const epoch = operationEpoch;
+  const isCurrent = () => {
+    const draft = useWorkoutStore.getState().activeWorkoutDraft;
+    return epoch === operationEpoch && draft?.sessionId === state.workoutId
+      && draft.status === "active" && endedWorkoutId !== state.workoutId
+      && suppressedWorkoutId !== state.workoutId;
+  };
   ensureUserInteractionListener();
-
   return enqueueOperation(async () => {
+    if (!isCurrent()) return;
     const props = await createWidgetProps(state);
+    if (!isCurrent()) return;
     const instance = await ensureActivity(state, props);
-
+    lastSyncedState = state;
     const nextSignature = getPayloadSignature(props);
-
-    /*
-     * Avoid asking WidgetKit to render when nothing visible changed.
-     */
-    if (nextSignature === lastPayloadSignature) {
-      return;
+    if (nextSignature === lastPayloadSignature || !isCurrent()) return;
+    try {
+      await instance.update(props);
+      lastPayloadSignature = nextSignature;
+    } catch (error) {
+      if (!isMissingActivity(error)) throw error;
+      clearCachedActivity();
+      if (!isCurrent()) return;
+      // iOS may dismiss/end an activity independently. Recover once per workout,
+      // then stop retrying if iOS removes it again instead of spamming updates.
+      if (recoveryWorkoutId === state.workoutId) {
+        suppressedWorkoutId = state.workoutId;
+        return;
+      }
+      recoveryWorkoutId = state.workoutId;
+      await ensureActivity(state, props);
+      lastSyncedState = state;
     }
-
-    await instance.update(props);
-
-    lastPayloadSignature = nextSignature;
-
-    console.log("Workout Live Activity updated:", {
-      workoutId: props.workoutId,
-      exerciseName: props.exerciseName,
-      setNumber: props.setNumber,
-      totalSets: props.totalSets,
-      exerciseNumber: props.exerciseNumber,
-      totalExercises: props.totalExercises,
-      isWorkoutComplete: props.isWorkoutComplete,
-      isPaused: props.isPaused,
-      isResting: props.isResting,
-      canCompleteCurrentSet: props.canCompleteCurrentSet,
-    });
   });
 };
 
@@ -288,6 +294,9 @@ const end = async (): Promise<void> => {
     return;
   }
 
+  // Invalidate pending syncs immediately, before the queued native end runs.
+  operationEpoch += 1;
+  endedWorkoutId = useWorkoutStore.getState().activeWorkoutDraft?.sessionId ?? activeWorkoutId;
   return enqueueOperation(async () => {
     await endInternal();
 

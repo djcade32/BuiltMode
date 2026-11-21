@@ -10,6 +10,7 @@ import {
 } from "../../test-utils/workout-fixtures";
 
 const mockReplace = jest.fn();
+const mockEndActivity = jest.fn();
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({
@@ -32,7 +33,7 @@ jest.mock("react-timer-hook", () => ({
 
 jest.mock("@/hooks/useWorkoutLiveActivity", () => ({
   useWorkoutLiveActivity: () => ({
-    endWorkoutLiveActivity: jest.fn().mockResolvedValue(undefined),
+    endWorkoutLiveActivity: mockEndActivity,
   }),
 }));
 
@@ -40,6 +41,7 @@ describe("activeWorkout", () => {
   beforeEach(() => {
     resetWorkoutStore();
     jest.clearAllMocks();
+    mockEndActivity.mockResolvedValue(undefined);
 
     useWorkoutStore.setState({
       activeWorkoutDraft: makeActiveWorkoutDraft() as any,
@@ -121,5 +123,25 @@ describe("activeWorkout", () => {
     return waitFor(() => {
       expect(clearWorkoutSpy).toHaveBeenCalled();
     });
+  });
+
+  it("navigates after saving even when live activity cleanup fails", async () => {
+    jest.spyOn(useWorkoutStore.getState(), "logWorkout").mockResolvedValue(makeCompleteWorkoutResponse() as any);
+    mockEndActivity.mockRejectedValue(new Error("LiveActivityNotFoundException"));
+    useWorkoutStore.setState({ isWorkoutComplete: true });
+    const view = render(<ActiveWorkout />);
+    fireEvent.press(view.getByText("COMPLETE WORKOUT"));
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/(protected)/workoutComplete"));
+  });
+  it("shows a save error and preserves the workout for retry", async () => {
+    jest.spyOn(useWorkoutStore.getState(), "logWorkout").mockRejectedValue(new Error("Invalid field: exercises.0.units"));
+    const alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
+    useWorkoutStore.setState({ isWorkoutComplete: true });
+    const view = render(<ActiveWorkout />);
+    fireEvent.press(view.getByText("COMPLETE WORKOUT"));
+    await waitFor(() => expect(alert).toHaveBeenCalledWith("Unable to complete workout", "Invalid field: exercises.0.units"));
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockEndActivity).not.toHaveBeenCalled();
+    expect(useWorkoutStore.getState().activeWorkoutDraft).not.toBeNull();
   });
 });

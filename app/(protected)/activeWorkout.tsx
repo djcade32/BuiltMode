@@ -228,16 +228,18 @@ const ActiveWorkout = () => {
       pause();
 
       const response = await logWorkout(totalSeconds);
-      await endWorkoutLiveActivity();
+      if (!response) throw new Error("Your workout could not be saved. Please try again.");
 
       if (response) {
-        console.log("Workout logged: ", response);
+        // Lock-screen cleanup is optional and must not delay a saved workout.
+        void endWorkoutLiveActivity().catch((error) => console.warn("Unable to end Workout Live Activity:", error));
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
         router.replace("/(protected)/workoutComplete");
       }
     } catch (error) {
-      console.error("Error logging workout: ", error);
+      if (isRunning) start();
+      Alert.alert("Unable to complete workout", error instanceof Error ? error.message : "Your workout is still available. Please try again.");
     }
   };
 
