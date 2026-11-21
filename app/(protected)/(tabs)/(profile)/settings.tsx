@@ -490,6 +490,12 @@ const settings = () => {
           <ThemedText style={styles.settingsSectionTitle}>LEGAL & DATA</ThemedText>
           <View style={styles.settingsSection}>
             <SettingsRow
+              title="Blocked Users"
+              onPress={() => router.push("/(protected)/(tabs)/(profile)/blockedUsers")}
+              postIcon={{ familyIcon: Entypo, name: "chevron-right", color: Colors.icon }}
+            />
+            <View style={styles.separator} />
+            <SettingsRow
               title="Terms of Service"
               onPress={() => router.push("/terms-of-service")}
               titleStyle={{ color: Colors.text.secondary }}

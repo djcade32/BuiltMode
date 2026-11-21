@@ -218,4 +218,33 @@ test("deleting accounts lose access immediately, including public reads", async 
   await assertFails(dbFor("bob").doc("workouts/a1").get());
 });
 
+
+test("block lists are owner-readable and all client block mutations are denied", async () => {
+  await seed({ "users/alice/blockedUsers/bob": { uid: "bob" } });
+  await assertSucceeds(dbFor("alice").collection("users/alice/blockedUsers").get());
+  await assertFails(dbFor("bob").doc("users/alice/blockedUsers/bob").get());
+  await assertFails(dbFor("charlie").collection("users/alice/blockedUsers").get());
+  await assertFails(dbFor("alice").doc("users/alice/blockedUsers/bob").delete());
+  await assertFails(dbFor("alice").doc("users/alice/blockedUsers/charlie").set({ uid: "charlie" }));
+});
+test.each(["users/alice/blockedUsers/bob", "users/bob/blockedUsers/alice"])("a block at %s overrides stale friendships", async (path) => {
+  await seed({ [path]: { uid: path.split("/").at(-1) } });
+  await assertFails(dbFor("bob").doc("userStats/alice").get());
+  await assertFails(dbFor("bob").doc("feedItems/post1").get());
+  await assertFails(dbFor("bob").doc("feedItems/post1/respects/bob").get());
+  await assertFails(dbFor("bob").collection("workouts").where("uid", "==", "alice").get());
+  await assertSucceeds(dbFor("alice").doc("userStats/alice").get());
+});
+
+test("acceptance is owner-readable before onboarding and cannot be forged", async () => {
+  const path = "users/new-user/legalAcceptance/terms";
+  await assertSucceeds(dbFor("new-user").doc(path).get());
+  await seed({ [path]: { termsVersion: "2026-11-12", acceptedAt: 1 } });
+  await assertSucceeds(dbFor("new-user").doc(path).get());
+  await assertFails(dbFor("alice").doc(path).get());
+  await assertFails(env.unauthenticatedContext().firestore().doc(path).get());
+  await assertFails(dbFor("new-user").doc(path).set({ termsVersion: "2026-11-12", acceptedAt: 2 }));
+  await assertFails(dbFor("new-user").doc(path).delete());
+  await assertFails(dbFor("new-user").collection("users/new-user/legalAcceptance").get());
+});
 });

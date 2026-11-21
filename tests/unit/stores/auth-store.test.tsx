@@ -1,9 +1,12 @@
+import { acceptCurrentTerms } from "@/services/legal-service";
 import { signInWithEmail, signOutUser, signUpWithEmail } from "@/services/auth-service";
 import { checkForUserProfile } from "@/services/user-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { storage } from "@/stores/mmkv-storage-wrapper";
 import { useUserStore } from "@/stores/user-store";
 import { act } from "react";
+
+jest.mock("@/services/legal-service", () => ({ acceptCurrentTerms: jest.fn() }));
 
 jest.mock("@/services/auth-service", () => ({
   signInWithEmail: jest.fn(),
@@ -29,6 +32,7 @@ describe("auth store", () => {
   beforeEach(() => {
     storage.clearAll();
     jest.clearAllMocks();
+    (acceptCurrentTerms as jest.Mock).mockResolvedValue(undefined);
 
     useAuthStore.setState({
       user: null,
@@ -121,7 +125,7 @@ describe("auth store", () => {
     } as any);
 
     await act(async () => {
-      await useAuthStore.getState().signup("norman cade", "norman@example.com", "Password1");
+      await useAuthStore.getState().signup("norman cade", "norman@example.com", "Password1", { accepted: true, termsVersion: "2026-11-12" });
     });
 
     expect(mockedSignUpWithEmail).toHaveBeenCalledWith({
@@ -153,10 +157,31 @@ describe("auth store", () => {
     });
 
     await act(async () => {
-      await useAuthStore.getState().signup("norman cade", "norman@example.com", "Password1");
+      await useAuthStore.getState().signup("norman cade", "norman@example.com", "Password1", { accepted: true, termsVersion: "2026-11-12" });
     });
 
     expect(useAuthStore.getState().error).toBeNull();
+  });
+
+  test("signup rejects missing consent before creating an account", async () => {
+    await expect(useAuthStore.getState().signup("Name", "n@example.com", "Password1", undefined as any)).rejects.toThrow();
+    expect(mockedSignUpWithEmail).not.toHaveBeenCalled();
+  });
+
+  test("signup records the accepted version for the newly created account", async () => {
+    mockedSignUpWithEmail.mockResolvedValue({ user: { uid: "new-user", displayName: "Name", email: "n@example.com" } } as any);
+    await useAuthStore.getState().signup("Name", "n@example.com", "Password1", { accepted: true, termsVersion: "2026-11-12" });
+    expect(acceptCurrentTerms).toHaveBeenCalledWith("new-user", { accepted: true, termsVersion: "2026-11-12" });
+  });
+
+  test("failed acceptance leaves the new account signed in for the gate to retry", async () => {
+    mockedSignUpWithEmail.mockResolvedValue({ user: { uid: "new-user", displayName: "Name", email: "n@example.com" } } as any);
+    (acceptCurrentTerms as jest.Mock).mockRejectedValue(new Error("Network unavailable"));
+    await useAuthStore.getState().signup("Name", "n@example.com", "Password1", { accepted: true, termsVersion: "2026-11-12" });
+    expect(mockedSignUpWithEmail).toHaveBeenCalledTimes(1);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().isSigningIn).toBe(false);
+    expect(useAuthStore.getState().user?.uid).toBe("new-user");
   });
 
   test("signout clears user and auth state", async () => {

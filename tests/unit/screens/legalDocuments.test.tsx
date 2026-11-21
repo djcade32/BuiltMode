@@ -28,13 +28,13 @@ beforeEach(() => {
 });
 
 test.each([
-  ["Privacy Policy", PrivacyPolicy, "11. Contact Us"],
-  ["Terms of Service", TermsOfService, "14. Contact"],
-] as const)("%s displays the supplied document without requiring an account", (title, Screen, lastHeading) => {
+  ["Privacy Policy", PrivacyPolicy, "11. Contact Us", "October 3, 2026"],
+  ["Terms of Service", TermsOfService, "14. Contact", "November 12, 2026"],
+] as const)("%s displays the supplied document without requiring an account", (title, Screen, lastHeading, effectiveDate) => {
   render(<Screen />);
   expect(screen.getByText(title)).toBeTruthy();
   expect(screen.getByText(`BuiltMode ${title}`)).toBeTruthy();
-  expect(screen.getByText("Effective date: October 3, 2026")).toBeTruthy();
+  expect(screen.getByText(`Effective date: ${effectiveDate}`)).toBeTruthy();
   expect(screen.queryByText(/Placeholder/)).toBeNull();
   expect(screen.getByText(lastHeading)).toBeTruthy();
 });

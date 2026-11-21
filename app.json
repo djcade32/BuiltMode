@@ -2,7 +2,7 @@
   "expo": {
     "name": "BuiltMode",
     "slug": "BuiltMode",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/ios-icon.png",
     "scheme": "builtmode",
@@ -28,7 +28,6 @@
         "backgroundImage": "./assets/images/full_logo.png",
         "monochromeImage": "./assets/images/full_logo.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": ["android.permission.CAMERA"],
       "googleServicesFile": "./google-services.json",

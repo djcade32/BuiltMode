@@ -11,10 +11,15 @@ service cloud.firestore {
       return activeUser() && request.auth.uid == uid;
     }
 
+    function notBlocked(uid) {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(uid))
+        && !exists(/databases/$(database)/documents/users/$(uid)/blockedUsers/$(request.auth.uid));
+    }
+
     // Only the server creates these documents, after a friend request is accepted.
     function canSeeProgress(uid) {
       return activeUser() && (request.auth.uid == uid
-        || (exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(uid))
+        || (notBlocked(uid) && exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(uid))
           && !exists(/databases/$(database)/documents/accountDeletions/$(uid))));
     }
 
@@ -25,6 +30,14 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow get: if owns(uid);
+
+      match /legalAcceptance/{documentId} {
+        allow get: if owns(uid);
+      }
+
+      match /blockedUsers/{blockedUid} {
+        allow read: if owns(uid);
+      }
 
       match /friends/{friendUid} {
         allow read: if owns(uid);
