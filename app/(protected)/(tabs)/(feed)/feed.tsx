@@ -3,11 +3,12 @@ import { ThemedText } from "@/components/themed-text";
 import { Border, Colors, Typography } from "@/constants/theme";
 import { useUserFeedInfinite } from "@/hooks/social/useUserFeedInfinite";
 import { usePublicProfiles } from "@/hooks/user/usePublicProfile";
+import { subscribeToPendingFriendRequestCount } from "@/services/social-service";
 import { useUserStore } from "@/stores/user-store";
 import { FeedItem } from "@builtmode/shared";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -92,11 +93,27 @@ function EmptyFeedState({ onFindFriends, onLogWorkout }: { onFindFriends: () => 
   );
 }
 
-export default function feed() {
+export default function Feed() {
   const router = useRouter();
   const { user } = useUserStore();
 
   const uid = user?.uid ?? "";
+
+  const [requestCount, setRequestCount] = useState({ uid: "", count: 0 });
+  const pendingCount = uid && requestCount.uid === uid ? requestCount.count : 0;
+
+  useEffect(() => {
+    if (!uid) return;
+    let active = true;
+    const unsubscribe = subscribeToPendingFriendRequestCount(uid, (count) => {
+      if (active) setRequestCount({ uid, count });
+    }, (error) => {
+      if (!active) return;
+      setRequestCount({ uid, count: 0 });
+      console.warn("Unable to load pending friend request count:", error);
+    });
+    return () => { active = false; unsubscribe(); };
+  }, [uid]);
 
   const [feedFilter, setFeedFilter] = useState(FeedFilterOptions[0]);
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
@@ -225,8 +242,17 @@ export default function feed() {
           activeOpacity={0.8}
           style={styles.iconContainer}
           onPress={() => router.push("/(protected)/(tabs)/(feed)/friendsList")}
+          accessibilityRole="button"
+          accessibilityLabel={pendingCount > 0
+            ? `Friends, ${pendingCount > 9 ? "9+" : pendingCount} pending friend request${pendingCount === 1 ? "" : "s"}`
+            : "Friends"}
         >
           <FontAwesome5 name="user-friends" size={14} color={Colors.gray} />
+          {pendingCount > 0 ? (
+            <View pointerEvents="none" style={styles.requestBadge}>
+              <ThemedText style={styles.requestBadgeText}>{pendingCount > 9 ? "9+" : pendingCount}</ThemedText>
+            </View>
+          ) : null}
         </TouchableOpacity>
       </View>
 
@@ -337,6 +363,27 @@ const styles = StyleSheet.create({
     borderRadius: Border.radius.md,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  requestBadge: {
+    position: "absolute",
+    top: -7,
+    right: -7,
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 5,
+    borderRadius: 11,
+    backgroundColor: Colors.accent.primary,
+    borderWidth: 2,
+    borderColor: Colors.background.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  requestBadgeText: {
+    color: Colors.background.primary,
+    fontSize: 10,
+    lineHeight: 14,
+    fontFamily: Typography.family.primary.bold,
   },
 
   centerState: {

@@ -464,3 +464,18 @@ export async function blockUser(targetUid: string): Promise<BlockUserResponse> {
 export async function unblockUser(targetUid: string): Promise<BlockUserResponse> {
   return (await httpsCallable<BlockUserRequest, BlockUserResponse>(functions, "unblockUser")({ targetUid })).data;
 }
+
+// Ten documents are enough to distinguish 1–9 from 9+ without loading every request.
+export function subscribeToPendingFriendRequestCount(
+  uid: string,
+  onCount: (count: number) => void,
+  onError: (error: Error) => void,
+) {
+  const pendingRequests = query(
+    collection(db, "friendRequests"),
+    where("toUid", "==", uid),
+    where("status", "==", "pending"),
+    limit(10),
+  );
+  return onSnapshot(pendingRequests, (snapshot) => onCount(snapshot.size), onError);
+}
