@@ -4,6 +4,7 @@ import ThemedButton from "@/components/ui/ThemedButton";
 import { Colors, Typography } from "@/constants/theme";
 import { useQuery } from "@/hooks/useQuery";
 import { uploadImageAsync } from "@/lib/firestorage";
+import { formatWorkoutShareMessage } from "@/lib/utils/formatWorkoutShareMessage";
 import { breakdownSeconds } from "@/lib/utils/conversions";
 import { ExerciseMetricType } from "@/packages/shared/src";
 import { fetchUserStats } from "@/services/user-service";
@@ -12,16 +13,42 @@ import { useUserStore } from "@/stores/user-store";
 import { useWorkoutStore } from "@/stores/workout-store";
 import * as ImagePicker from "expo-image-picker";
 import { Redirect, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
-import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import React, { useMemo, useRef, useState } from "react";
+import { Alert, findNodeHandle, Image, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
 
-const workoutComplete = () => {
+const WorkoutComplete = () => {
   const router = useRouter();
   const { duration, completeWorkoutResponse, clearWorkout, activeWorkoutDraft } = useWorkoutStore();
   const { user } = useUserStore();
   const [workoutPhotoUri, setWorkoutPhotoUri] = useState<string | null>(null);
   const [isOpeningCamera, setIsOpeningCamera] = useState(false);
   const [isPublishingWorkout, setIsPublishingWorkout] = useState(false);
+
+  const [isSharingWorkout, setIsSharingWorkout] = useState(false);
+  const sharingWorkout = useRef(false);
+  const shareButtonRef = useRef<View>(null);
+  const canShareWorkout = !!activeWorkoutDraft && activeWorkoutDraft.sessionId === completeWorkoutResponse?.sessionId;
+
+  const handleShareWorkout = async () => {
+    if (!activeWorkoutDraft || !canShareWorkout || sharingWorkout.current || isPublishingWorkout) return;
+    sharingWorkout.current = true;
+    setIsSharingWorkout(true);
+    try {
+      const message = formatWorkoutShareMessage({ name: activeWorkoutDraft.name, durationSeconds: duration, exercises: activeWorkoutDraft.exercises });
+      const anchor = Platform.OS === "ios" ? findNodeHandle(shareButtonRef.current) : null;
+      await Share.share(
+        { message, ...(Platform.OS === "ios" && workoutPhotoUri ? { url: workoutPhotoUri } : {}) },
+        { dialogTitle: "Share workout", ...(anchor ? { anchor } : {}) },
+      );
+      // Closing the share sheet doesn't reliably indicate delivery. Keep the
+      // completed workout and photo available regardless of the share result.
+    } catch {
+      Alert.alert("Unable to share workout", "We couldn’t open sharing. Please try again.");
+    } finally {
+      sharingWorkout.current = false;
+      setIsSharingWorkout(false);
+    }
+  };
 
   const uid = user?.uid;
   const isPracticeWeek = user?.isPracticeWeek;
@@ -99,6 +126,7 @@ const workoutComplete = () => {
   };
 
   const handleShareToFeed = async () => {
+    if (sharingWorkout.current || isPublishingWorkout) return;
     if (!completeWorkoutResponse?.sessionId) {
       console.warn("Cannot publish workout to feed. No session id provided.");
       return;
@@ -433,14 +461,26 @@ const workoutComplete = () => {
         )}
 
         <View style={styles.footContainer}>
-          <ThemedButton title="SHARE TO FEED" onPress={handleShareToFeed} isLoading={isPublishingWorkout} />
+          <View ref={shareButtonRef} collapsable={false}>
+            <ThemedButton
+              title="SHARE WORKOUT"
+              accessibilityLabel="Share workout"
+              onPress={handleShareWorkout}
+              disabled={!canShareWorkout || isSharingWorkout || isPublishingWorkout}
+              isLoading={isSharingWorkout}
+              style={styles.shareWorkoutButton}
+              textStyle={{ color: Colors.accent.primary }}
+            />
+          </View>
+          <ThemedText style={styles.shareHint}>Choose Messages to send your workout by text.</ThemedText>
+          <ThemedButton title="SHARE TO FEED" onPress={handleShareToFeed} isLoading={isPublishingWorkout} disabled={isPublishingWorkout || isSharingWorkout} />
         </View>
       </ThemedView>
     </ScrollView>
   );
 };
 
-export default workoutComplete;
+export default WorkoutComplete;
 
 const styles = StyleSheet.create({
   container: {
@@ -582,7 +622,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     color: Colors.accent.primary,
   },
+  shareWorkoutButton: {
+    backgroundColor: Colors.background.secondary,
+    borderWidth: 1,
+    borderColor: Colors.inputBorder,
+  },
+  shareHint: { color: Colors.gray, fontSize: 12, lineHeight: 18, textAlign: "center" },
   footContainer: {
+    gap: 12,
     // paddingHorizontal: 24,
     // paddingTop: 24,
     padding: 24,
